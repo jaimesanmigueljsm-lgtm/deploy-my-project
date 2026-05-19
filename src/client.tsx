@@ -13,9 +13,13 @@ const app = (
 const staticRoot = document.getElementById("root");
 
 if (staticRoot) {
+  const router = getRouter();
+  const rootRoute = router.routesById.__root__ as { options: { shellComponent?: unknown } };
+  rootRoute.options.shellComponent = undefined;
+
   createRoot(staticRoot).render(
     <StrictMode>
-      <RouterProvider router={getRouter()} />
+      <RouterProvider router={router} />
     </StrictMode>,
   );
 } else {
