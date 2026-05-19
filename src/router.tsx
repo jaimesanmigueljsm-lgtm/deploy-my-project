@@ -2,6 +2,23 @@ import { createRouter } from "@tanstack/react-router";
 import { createQueryClient } from "@/lib/query-client";
 import { routeTree } from "./routeTree.gen";
 
+type RouterWithTransition = {
+  startTransition: (fn: () => void) => void;
+};
+
+function installSynchronousRouterTransitions(router: RouterWithTransition) {
+  const runImmediately = (fn: () => void) => fn();
+
+  Object.defineProperty(router, "startTransition", {
+    configurable: true,
+    get: () => runImmediately,
+    set: () => {
+      // Keep route loads outside React.startTransition; otherwise Vercel's
+      // static client can freeze when an auth input receives text.
+    },
+  });
+}
+
 export const getRouter = () => {
   const queryClient = createQueryClient();
 
@@ -11,6 +28,8 @@ export const getRouter = () => {
     // defaultPreloadStaleTime intentionally omitted — 0 causes a fetch storm
     // on mobile (every link hover/focus triggers an immediate preload).
   });
+
+  installSynchronousRouterTransitions(router);
 
   return router;
 };

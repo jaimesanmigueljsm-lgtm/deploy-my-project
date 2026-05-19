@@ -171,11 +171,12 @@ const html = `<!DOCTYPE html>
         });
       })();
     </script>
-    <!-- Pre-mount loading indicator — replaced by React on createRoot().render().
+    <!-- Pre-mount loading indicator — replaced by React during document hydration.
          If React never mounts (stale cache, missing JS chunks, JS error), the
          fallback below kicks in after 10s and offers a one-tap cache wipe + reload.
          This is the safety net for users stuck with a poisoned service worker. -->
-    <div id="root"><div id="__nest_boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:system-ui,sans-serif;gap:12px;padding:24px;text-align:center"><div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#22c55e;border-radius:50%;animation:__nestspin 0.8s linear infinite"></div><p style="font-size:13px;color:#64748b;margin:0">Loading Nest…</p></div><style>@keyframes __nestspin{to{transform:rotate(360deg)}}</style></div>
+    <div id="__nest_boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:system-ui,sans-serif;gap:12px;padding:24px;text-align:center"><div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#22c55e;border-radius:50%;animation:__nestspin 0.8s linear infinite"></div><p style="font-size:13px;color:#64748b;margin:0">Loading Nest…</p></div><style>@keyframes __nestspin{to{transform:rotate(360deg)}}</style>
+    <script id="__TSR_SSR__" type="application/json">{"matches":[]}</script>
     <script>
       // Boot fallback: if React hasn't replaced #__nest_boot after 10s, show a
       // recovery card. The "Recargar limpio" button purges every cache + every
@@ -221,7 +222,7 @@ const html = `<!DOCTYPE html>
             obs.disconnect();
           }
         });
-        obs.observe(document.getElementById("root"), { childList: true, subtree: false });
+        obs.observe(document.body, { childList: true, subtree: false });
       })();
     </script>
     <script type="module" crossorigin src="${entryJs}"></script>
