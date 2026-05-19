@@ -11,32 +11,34 @@
  *   No SSR — $_TSR bootstrap is absent. We use createRoot(#root) for
  *   pure CSR, bypassing hydrateStart() which requires $_TSR.
  *
- * WHY RouterProviderNoTransition exists:
- *   TanStack Router's RouterProvider overwrites router.startTransition in its
- *   render body to wrap every navigation in React.startTransition. While that
- *   transition is pending (the initial beforeLoad calls supabase.auth.getSession
- *   which is async), any user interaction (focus, keydown) triggers a synchronous
- *   flush of the entire pending transition on the main thread → instant freeze.
+ * WHY installSynchronousRouterTransitions exists:
+ *   TanStack Router's Transitioner assigns router.startTransition during render
+ *   and then immediately starts the initial route load in a layout effect. If
+ *   that first load is wrapped in React.startTransition, typing into auth inputs
+ *   can synchronously flush the pending transition and freeze the page.
  *
- *   Fix: a useLayoutEffect in the wrapper runs AFTER RouterProvider's render
- *   (which sets router.startTransition) but BEFORE RouterProvider's useEffect
- *   (which fires the first navigation). It patches router.startTransition back
- *   to a direct call so the initial async beforeLoad work is not deferred as a
- *   React transition. Subsequent navigations re-render RouterProvider which
- *   resets the wrapper, but by then the initial load is complete.
+ *   The previous useLayoutEffect patch ran too late on some browsers because the
+ *   child Transitioner layout effect can fire before the wrapper effect. Defining
+ *   startTransition as an accessor before rendering makes TanStack's render-time
+ *   assignment a no-op, so the initial load stays synchronous and inputs remain
+ *   responsive.
  */
-import { StrictMode, useLayoutEffect } from "react";
+import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { RouterProvider, type AnyRouter } from "@tanstack/react-router";
 import { StartClient } from "@tanstack/react-start/client";
 import { getRouter } from "./router";
 
-function RouterProviderNoTransition({ router }: { router: AnyRouter }) {
-  useLayoutEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (router as any).startTransition = (fn: () => void) => fn();
-  }, [router]);
-  return <RouterProvider router={router} />;
+function installSynchronousRouterTransitions(router: AnyRouter) {
+  const runImmediately = (fn: () => void) => fn();
+
+  Object.defineProperty(router, "startTransition", {
+    configurable: true,
+    get: () => runImmediately,
+    set: () => {
+      // Keep navigation updates outside React.startTransition to avoid input freezes.
+    },
+  });
 }
 
 const rootEl = document.getElementById("root");
@@ -44,9 +46,10 @@ const rootEl = document.getElementById("root");
 if (rootEl) {
   // Production CSR: #root exists from postbuild.js, $_TSR absent
   const router = getRouter();
+  installSynchronousRouterTransitions(router);
   createRoot(rootEl).render(
     <StrictMode>
-      <RouterProviderNoTransition router={router} />
+      <RouterProvider router={router} />
     </StrictMode>,
   );
 } else {
