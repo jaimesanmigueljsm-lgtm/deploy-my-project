@@ -14,7 +14,7 @@ const staticRoot = document.getElementById("root");
 
 if (staticRoot) {
   const router = getRouter();
-  const rootRoute = router.routesById.__root__ as { options: { shellComponent?: unknown } };
+  const rootRoute = (router.routesById as Record<string, { options: { shellComponent?: unknown } }>).__root__;
   rootRoute.options.shellComponent = undefined;
 
   createRoot(staticRoot).render(
