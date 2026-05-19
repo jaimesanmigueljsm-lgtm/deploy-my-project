@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { money, monthLabel, monthRange, relativeDate } from "@/lib/format";
 import { Plus, Receipt, X, Trash2, Filter, TrendingUp, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -305,15 +305,19 @@ function ExpenseDialog({
   const [kind, setKind]               = useState<"variable" | "fixed">("variable");
 
   const addExpense = useAddExpense();
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!open) {
       setAmount(""); setDescription(""); setCategoryId(""); setKind("variable");
+      submittingRef.current = false;
     }
   }, [open]);
 
   function save() {
+    if (submittingRef.current) return;
     if (!amount || Number(amount) <= 0) return;
+    submittingRef.current = true;
     addExpense.mutate(
       {
         amount: Number(amount),
@@ -326,6 +330,9 @@ function ExpenseDialog({
         onSuccess: () => {
           setAmount(""); setDescription(""); setCategoryId(""); setKind("variable");
           onClose();
+        },
+        onSettled: () => {
+          submittingRef.current = false;
         },
       },
     );
@@ -406,6 +413,7 @@ function IncomeDialog({
   const addIncome    = useAddIncome();
   const updateIncome = useUpdateIncome();
   const isPending    = addIncome.isPending || updateIncome.isPending;
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (editing) {
@@ -415,16 +423,23 @@ function IncomeDialog({
     } else {
       setSource(""); setAmount(""); setRecurring(true);
     }
+    submittingRef.current = false;
   }, [editing, open]);
 
   function save() {
+    if (submittingRef.current) return;
     if (!source || !amount || Number(amount) <= 0) return;
+    submittingRef.current = true;
     const payload = { source, amount: Number(amount), recurring };
+    const opts = {
+      onSuccess: onClose,
+      onSettled: () => { submittingRef.current = false; },
+    };
 
     if (editing) {
-      updateIncome.mutate({ id: editing.id, payload }, { onSuccess: onClose });
+      updateIncome.mutate({ id: editing.id, payload }, opts);
     } else {
-      addIncome.mutate(payload, { onSuccess: onClose });
+      addIncome.mutate(payload, opts);
     }
   }
 
