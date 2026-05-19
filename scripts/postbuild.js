@@ -12,7 +12,7 @@ import { readdir, writeFile, readFile, stat } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 
-const clientDir    = "dist/client";
+const clientDir = "dist/client";
 const clientAssets = "dist/client/assets";
 const serverAssets = "dist/server/assets";
 const viteManifest = "dist/client/.vite/manifest.json";
@@ -69,7 +69,10 @@ if (!entryJs) {
         }
       }
     } else {
-      console.warn("[postbuild] Strategy B: no _tanstack-start-manifest file found in", serverAssets);
+      console.warn(
+        "[postbuild] Strategy B: no _tanstack-start-manifest file found in",
+        serverAssets,
+      );
     }
   } catch (e) {
     console.warn("[postbuild] Strategy B failed:", e.message);
@@ -86,10 +89,7 @@ if (!entryJs) {
       indexFiles.map(async (f) => ({ f, size: (await stat(join(clientAssets, f))).size })),
     );
     withSizes.sort((a, b) => b.size - a.size);
-    console.log(
-      "[postbuild] Sizes:",
-      withSizes.map(({ f, size }) => `${f}=${size}`).join(", "),
-    );
+    console.log("[postbuild] Sizes:", withSizes.map(({ f, size }) => `${f}=${size}`).join(", "));
     entryJs = `/assets/${withSizes[0].f}`;
     console.log(`[postbuild] Strategy C: ${entryJs}`);
   }
@@ -171,12 +171,11 @@ const html = `<!DOCTYPE html>
         });
       })();
     </script>
-    <!-- Pre-mount loading indicator — replaced by React during document hydration.
+    <!-- Pre-mount loading indicator — replaced by React during SPA mount.
          If React never mounts (stale cache, missing JS chunks, JS error), the
          fallback below kicks in after 10s and offers a one-tap cache wipe + reload.
          This is the safety net for users stuck with a poisoned service worker. -->
-    <div id="__nest_boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:system-ui,sans-serif;gap:12px;padding:24px;text-align:center"><div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#22c55e;border-radius:50%;animation:__nestspin 0.8s linear infinite"></div><p style="font-size:13px;color:#64748b;margin:0">Loading Nest…</p></div><style>@keyframes __nestspin{to{transform:rotate(360deg)}}</style>
-    <script id="__TSR_SSR__" type="application/json">{"matches":[]}</script>
+    <div id="root"><div id="__nest_boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:system-ui,sans-serif;gap:12px;padding:24px;text-align:center"><div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#22c55e;border-radius:50%;animation:__nestspin 0.8s linear infinite"></div><p style="font-size:13px;color:#64748b;margin:0">Loading Nest…</p></div></div><style>@keyframes __nestspin{to{transform:rotate(360deg)}}</style>
     <script>
       // Boot fallback: if React hasn't replaced #__nest_boot after 10s, show a
       // recovery card. The "Recargar limpio" button purges every cache + every
@@ -222,7 +221,8 @@ const html = `<!DOCTYPE html>
             obs.disconnect();
           }
         });
-        obs.observe(document.body, { childList: true, subtree: false });
+        var root = document.getElementById("root") || document.body;
+        obs.observe(root, { childList: true, subtree: true });
       })();
     </script>
     <script type="module" crossorigin src="${entryJs}"></script>
