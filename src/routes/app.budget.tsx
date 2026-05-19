@@ -41,6 +41,26 @@ function Budget() {
   const [openIncome, setOpenIncome] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
 
+  // Open dialog when navigated with ?add=expense | ?add=income
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    if (search.add === "expense") { setOpen(true); navigate({ to: "/app/budget", search: {}, replace: true }); }
+    if (search.add === "income")  { setEditingIncome(null); setOpenIncome(true); navigate({ to: "/app/budget", search: {}, replace: true }); }
+  }, [search.add, navigate]);
+
+  // Dedupe categories by (name + kind) to avoid duplicated chips/aggregations
+  // when the user has accidentally seeded the same category multiple times.
+  const dedupedCategories = useMemo(() => {
+    const seen = new Set<string>();
+    return categories.filter((c) => {
+      const key = `${c.kind}|${c.name.trim().toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [categories]);
+
   const filtered = useMemo(() => {
     if (tab === "fixed")    return expenses.filter((e) => e.kind === "fixed");
     if (tab === "variable") return expenses.filter((e) => e.kind === "variable");
