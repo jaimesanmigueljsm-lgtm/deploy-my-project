@@ -281,9 +281,10 @@ function Budget() {
                         <button
                           onClick={() => deleteExpense.mutate(e.id)}
                           disabled={deleteExpense.isPending}
-                          className="text-muted-foreground opacity-0 group-hover:opacity-100 transition"
+                          aria-label="Delete expense"
+                          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative-soft/40 transition"
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-4" />
                         </button>
                       </div>
                     </div>
