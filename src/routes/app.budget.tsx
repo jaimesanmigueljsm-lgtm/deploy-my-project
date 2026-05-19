@@ -14,6 +14,9 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/app/budget")({
   component: Budget,
+  validateSearch: (search: Record<string, unknown>) => ({
+    add: search.add === "expense" || search.add === "income" ? (search.add as "expense" | "income") : undefined,
+  }),
 });
 
 type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind">;
@@ -38,6 +41,26 @@ function Budget() {
   const [openIncome, setOpenIncome] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
 
+  // Open dialog when navigated with ?add=expense | ?add=income
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    if (search.add === "expense") { setOpen(true); navigate({ to: "/app/budget", search: {}, replace: true }); }
+    if (search.add === "income")  { setEditingIncome(null); setOpenIncome(true); navigate({ to: "/app/budget", search: {}, replace: true }); }
+  }, [search.add, navigate]);
+
+  // Dedupe categories by (name + kind) to avoid duplicated chips/aggregations
+  // when the user has accidentally seeded the same category multiple times.
+  const dedupedCategories = useMemo(() => {
+    const seen = new Set<string>();
+    return categories.filter((c) => {
+      const key = `${c.kind}|${c.name.trim().toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [categories]);
+
   const filtered = useMemo(() => {
     if (tab === "fixed")    return expenses.filter((e) => e.kind === "fixed");
     if (tab === "variable") return expenses.filter((e) => e.kind === "variable");
@@ -58,15 +81,16 @@ function Budget() {
   const byCategory = useMemo(() => {
     const map = new Map<string, { name: string; color: string; total: number; count: number }>();
     for (const e of expenses.filter((x) => tab === "all" || x.kind === tab)) {
-      const cat = categories.find((c) => c.id === e.category_id);
-      const key = cat?.id ?? "_uncat";
+      const cat = dedupedCategories.find((c) => c.id === e.category_id);
+      // Group by name to merge duplicate categories into one row
+      const key = cat?.name.trim().toLowerCase() ?? "_uncat";
       const cur = map.get(key) ?? { name: cat?.name ?? "Uncategorized", color: cat?.color ?? "neutral", total: 0, count: 0 };
       cur.total += e.amount;
       cur.count += 1;
       map.set(key, cur);
     }
     return Array.from(map.values()).sort((a, b) => b.total - a.total);
-  }, [expenses, categories, tab]);
+  }, [expenses, dedupedCategories, tab]);
 
   if (isLoading) return <BudgetSkeleton />;
 
@@ -172,9 +196,10 @@ function Budget() {
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteIncome.mutate(i.id); }}
                         disabled={deleteIncome.isPending}
-                        className="text-muted-foreground opacity-0 group-hover:opacity-100 transition"
+                        aria-label="Delete income"
+                        className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative-soft/40 transition"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-4" />
                       </button>
                     </div>
                   </button>
@@ -236,7 +261,7 @@ function Budget() {
             ) : (
               <div className="card-flat divide-y divide-border-subtle">
                 {filtered.map((e) => {
-                  const cat = categories.find((c) => c.id === e.category_id);
+                  const cat = dedupedCategories.find((c) => c.id === e.category_id);
                   return (
                     <div key={e.id} className="group flex items-center justify-between px-4 py-3.5">
                       <div className="flex items-center gap-3 min-w-0">
@@ -256,9 +281,10 @@ function Budget() {
                         <button
                           onClick={() => deleteExpense.mutate(e.id)}
                           disabled={deleteExpense.isPending}
-                          className="text-muted-foreground opacity-0 group-hover:opacity-100 transition"
+                          aria-label="Delete expense"
+                          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative-soft/40 transition"
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-4" />
                         </button>
                       </div>
                     </div>
@@ -270,7 +296,7 @@ function Budget() {
         </>
       )}
 
-      <ExpenseDialog open={open} onClose={() => setOpen(false)} categories={categories} t={t} />
+      <ExpenseDialog open={open} onClose={() => setOpen(false)} categories={dedupedCategories} t={t} />
       <IncomeDialog
         open={openIncome}
         onClose={() => { setOpenIncome(false); setEditingIncome(null); }}

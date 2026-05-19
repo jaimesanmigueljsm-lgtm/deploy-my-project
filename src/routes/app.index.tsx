@@ -96,7 +96,9 @@ function Dashboard() {
           </button>
           <Link
             to="/app/budget"
-            className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition"
+            search={{ add: "expense" }}
+            className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition active:scale-95"
+            aria-label="Add expense"
           >
             <Plus className="size-4" />
           </Link>
