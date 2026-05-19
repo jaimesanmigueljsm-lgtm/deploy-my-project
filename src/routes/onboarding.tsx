@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,7 @@ const TOTAL_STEPS = 5;
 
 function Onboarding() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t } = useT();
   const [step, setStep]     = useState(0);
   const [loading, setLoading] = useState(false);
@@ -147,6 +149,9 @@ function Onboarding() {
       await supabase.from("categories").insert(allRows);
 
       toast.success(t("onboarding.toast.success"), { description: t("onboarding.toast.success.desc") });
+      // Invalidate cached profile check so /app guard reads fresh onboarded=true
+      await queryClient.invalidateQueries({ queryKey: ["profiles-auth-check", user.id] });
+      queryClient.removeQueries({ queryKey: ["profiles-auth-check", user.id] });
       navigate({ to: "/app" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save");
