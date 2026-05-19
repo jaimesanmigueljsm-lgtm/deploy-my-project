@@ -81,15 +81,16 @@ function Budget() {
   const byCategory = useMemo(() => {
     const map = new Map<string, { name: string; color: string; total: number; count: number }>();
     for (const e of expenses.filter((x) => tab === "all" || x.kind === tab)) {
-      const cat = categories.find((c) => c.id === e.category_id);
-      const key = cat?.id ?? "_uncat";
+      const cat = dedupedCategories.find((c) => c.id === e.category_id);
+      // Group by name to merge duplicate categories into one row
+      const key = cat?.name.trim().toLowerCase() ?? "_uncat";
       const cur = map.get(key) ?? { name: cat?.name ?? "Uncategorized", color: cat?.color ?? "neutral", total: 0, count: 0 };
       cur.total += e.amount;
       cur.count += 1;
       map.set(key, cur);
     }
     return Array.from(map.values()).sort((a, b) => b.total - a.total);
-  }, [expenses, categories, tab]);
+  }, [expenses, dedupedCategories, tab]);
 
   if (isLoading) return <BudgetSkeleton />;
 
