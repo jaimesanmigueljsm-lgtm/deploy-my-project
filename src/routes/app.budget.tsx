@@ -296,7 +296,7 @@ function Budget() {
         </>
       )}
 
-      <ExpenseDialog open={open} onClose={() => setOpen(false)} categories={categories} t={t} />
+      <ExpenseDialog open={open} onClose={() => setOpen(false)} categories={dedupedCategories} t={t} />
       <IncomeDialog
         open={openIncome}
         onClose={() => { setOpenIncome(false); setEditingIncome(null); }}
