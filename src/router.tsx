@@ -2,7 +2,11 @@ import { createRouter } from "@tanstack/react-router";
 import { createQueryClient } from "@/lib/query-client";
 import { routeTree } from "./routeTree.gen";
 
-function installSynchronousRouterTransitions(router: ReturnType<typeof createRouter>) {
+type RouterWithTransition = {
+  startTransition: (fn: () => void) => void;
+};
+
+function installSynchronousRouterTransitions(router: RouterWithTransition) {
   const runImmediately = (fn: () => void) => fn();
 
   Object.defineProperty(router, "startTransition", {
