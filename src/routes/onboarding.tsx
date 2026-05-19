@@ -73,6 +73,7 @@ const TOTAL_STEPS = 5;
 
 function Onboarding() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t } = useT();
   const [step, setStep]     = useState(0);
   const [loading, setLoading] = useState(false);
