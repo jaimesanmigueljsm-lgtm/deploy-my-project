@@ -1,16 +1,37 @@
 import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { resolve } from "path";
 
+/**
+ * Vitest configuration — standalone from the Lovable vite config so that
+ * TanStack Start's SSR plugins don't interfere with the test runner.
+ *
+ * Financial engine tests:  environment = "node"  (pure TS, fastest)
+ * React component tests:   environment = "jsdom" (via @vitest-environment jsdom)
+ */
 export default defineConfig({
-  plugins: [react()],
   test: {
-    environment: "jsdom",
     globals: true,
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    environment: "node",
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    exclude: ["**/node_modules/**", "**/dist/**", "**/.output/**"],
+    coverage: {
+      provider: "v8",
+      include: ["src/core/finance/**", "src/lib/**"],
+      exclude: ["src/**/*.test.ts", "src/lib/analytics.ts", "src/lib/monitoring.ts"],
+      reporter: ["text", "json-summary"],
+      thresholds: {
+        statements: 70,
+        branches:   65,
+        functions:  70,
+        lines:      70,
+      },
+    },
+    // Deterministic test ordering — prevents flakiness from import side effects
+    sequence: { shuffle: false },
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": resolve(__dirname, "./src"),
+    },
   },
 });
