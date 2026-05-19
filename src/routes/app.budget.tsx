@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { money, monthLabel, monthRange, relativeDate } from "@/lib/format";
 import { Plus, Receipt, X, Trash2, Filter, TrendingUp, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
