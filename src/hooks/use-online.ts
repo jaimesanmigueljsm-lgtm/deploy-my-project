@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 
 /** Returns true when the browser has network access. */
 export function useOnlineStatus(): boolean {
-  const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator !== "undefined" ? navigator.onLine : true,
-  );
+  // Always start "online" on both server and client to avoid SSR hydration mismatches.
+  const [isOnline, setIsOnline] = useState<boolean>(true);
 
   useEffect(() => {
+    // Sync with actual browser state after hydration.
+    if (typeof navigator !== "undefined") {
+      setIsOnline(navigator.onLine);
+    }
+
     function handleOnline()  { setIsOnline(true); }
     function handleOffline() { setIsOnline(false); }
 
