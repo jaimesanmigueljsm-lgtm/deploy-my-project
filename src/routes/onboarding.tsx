@@ -125,10 +125,28 @@ function Onboarding() {
   }
 
   async function finish() {
+    // Idempotency guard: ref flips synchronously so a 2nd click in the
+    // same tick (before setLoading commits) is a no-op.
+    if (finishingRef.current) return;
+    finishingRef.current = true;
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
+
+      // Re-check server state: if another tab/run already onboarded, bail
+      // out without re-inserting anything (prevents duplicate salary/income).
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("onboarded")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (existing?.onboarded) {
+        await queryClient.invalidateQueries({ queryKey: ["profiles-auth-check", user.id] });
+        queryClient.removeQueries({ queryKey: ["profiles-auth-check", user.id] });
+        navigate({ to: "/app" });
+        return;
+      }
 
       await supabase.from("profiles").update({
         monthly_savings_target: Number(savingsTarget),
@@ -137,31 +155,51 @@ function Onboarding() {
       }).eq("id", user.id);
 
       if (Number(income) > 0) {
-        await supabase.from("incomes").insert({
-          user_id: user.id,
-          source: "Monthly income",
-          amount: Number(income),
-          recurring: true,
+        // Only insert if no recurring "Monthly income" row already exists.
+        const { data: existingIncome } = await supabase
+          .from("incomes")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("source", "Monthly income")
+          .eq("recurring", true)
+          .limit(1);
+        if (!existingIncome || existingIncome.length === 0) {
+          await supabase.from("incomes").insert({
+            user_id: user.id,
+            source: "Monthly income",
+            amount: Number(income),
+            recurring: true,
+          });
+        }
+      }
+
+      // Only seed categories if the user has none yet — re-running onboarding
+      // must never duplicate the category list.
+      const { data: existingCats } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1);
+
+      if (!existingCats || existingCats.length === 0) {
+        const fixedRows = selectedFixed.map((id) => {
+          const cat = FIXED_CATS.find((c) => c.id === id)!;
+          return { user_id: user.id, name: t(`fixed.${id}`), icon: cat.dbIcon, color: cat.color, kind: "fixed" };
         });
-      }
+        const varRows = selectedVariable.map((id) => {
+          const cat = VARIABLE_CATS.find((c) => c.id === id)!;
+          return { user_id: user.id, name: t(`variable.${id}`), icon: cat.dbIcon, color: cat.color, kind: "variable" };
+        });
 
-      const fixedRows = selectedFixed.map((id) => {
-        const cat = FIXED_CATS.find((c) => c.id === id)!;
-        return { user_id: user.id, name: t(`fixed.${id}`), icon: cat.dbIcon, color: cat.color, kind: "fixed" };
-      });
-      const varRows = selectedVariable.map((id) => {
-        const cat = VARIABLE_CATS.find((c) => c.id === id)!;
-        return { user_id: user.id, name: t(`variable.${id}`), icon: cat.dbIcon, color: cat.color, kind: "variable" };
-      });
-
-      const allRows = [...fixedRows, ...varRows];
-      if (allRows.length === 0) {
-        allRows.push(
-          { user_id: user.id, name: t("fixed.rent"),          icon: "home",          color: "sky",  kind: "fixed" },
-          { user_id: user.id, name: t("variable.groceries"),  icon: "shopping-cart", color: "mint", kind: "variable" },
-        );
+        const allRows = [...fixedRows, ...varRows];
+        if (allRows.length === 0) {
+          allRows.push(
+            { user_id: user.id, name: t("fixed.rent"),          icon: "home",          color: "sky",  kind: "fixed" },
+            { user_id: user.id, name: t("variable.groceries"),  icon: "shopping-cart", color: "mint", kind: "variable" },
+          );
+        }
+        await supabase.from("categories").insert(allRows);
       }
-      await supabase.from("categories").insert(allRows);
 
       toast.success(t("onboarding.toast.success"), { description: t("onboarding.toast.success.desc") });
       // Invalidate cached profile check so /app guard reads fresh onboarded=true
@@ -169,6 +207,8 @@ function Onboarding() {
       queryClient.removeQueries({ queryKey: ["profiles-auth-check", user.id] });
       navigate({ to: "/app" });
     } catch (e) {
+      // Allow retry on error
+      finishingRef.current = false;
       toast.error(e instanceof Error ? e.message : "Could not save");
     } finally {
       setLoading(false);
