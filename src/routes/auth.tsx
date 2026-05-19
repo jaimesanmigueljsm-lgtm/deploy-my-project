@@ -1,5 +1,5 @@
-import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +17,6 @@ import {
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 
 export const Route = createFileRoute("/auth")({
-  beforeLoad: async () => {
-    if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/" });
-  },
   component: AuthPage,
 });
 
@@ -31,6 +26,14 @@ function AuthPage() {
   const navigate = useNavigate();
   const { t, locale, setLocale, locales } = useT();
   const [mode, setMode] = useState<Mode>("signin");
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted && data.session) navigate({ to: "/" });
+    });
+    return () => { mounted = false; };
+  }, [navigate]);
 
   // Shared fields
   const [email, setEmail] = useState("");
