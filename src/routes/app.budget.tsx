@@ -14,6 +14,9 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/app/budget")({
   component: Budget,
+  validateSearch: (search: Record<string, unknown>) => ({
+    add: search.add === "expense" || search.add === "income" ? (search.add as "expense" | "income") : undefined,
+  }),
 });
 
 type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind">;
