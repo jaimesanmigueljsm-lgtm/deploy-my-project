@@ -1,5 +1,5 @@
 import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Home, Wallet, Target, LineChart, BarChart3, Users, User } from "lucide-react";
