@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { LOCALES, TRANSLATIONS, type LocaleCode } from "./translations";
 
 export type TParams = Record<string, string | number>;
@@ -24,7 +24,13 @@ function detectInitial(): LocaleCode {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<LocaleCode>(detectInitial);
+  const [locale, setLocaleState] = useState<LocaleCode>("en");
+
+  useEffect(() => {
+    const initial = detectInitial();
+    setLocaleState(initial);
+    document.documentElement.lang = initial;
+  }, []);
 
   const value = useMemo<Ctx>(() => ({
     locale,
