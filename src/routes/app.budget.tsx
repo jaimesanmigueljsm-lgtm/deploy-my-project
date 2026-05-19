@@ -413,6 +413,7 @@ function IncomeDialog({
   const addIncome    = useAddIncome();
   const updateIncome = useUpdateIncome();
   const isPending    = addIncome.isPending || updateIncome.isPending;
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (editing) {
@@ -422,16 +423,23 @@ function IncomeDialog({
     } else {
       setSource(""); setAmount(""); setRecurring(true);
     }
+    submittingRef.current = false;
   }, [editing, open]);
 
   function save() {
+    if (submittingRef.current) return;
     if (!source || !amount || Number(amount) <= 0) return;
+    submittingRef.current = true;
     const payload = { source, amount: Number(amount), recurring };
+    const opts = {
+      onSuccess: onClose,
+      onSettled: () => { submittingRef.current = false; },
+    };
 
     if (editing) {
-      updateIncome.mutate({ id: editing.id, payload }, { onSuccess: onClose });
+      updateIncome.mutate({ id: editing.id, payload }, opts);
     } else {
-      addIncome.mutate(payload, { onSuccess: onClose });
+      addIncome.mutate(payload, opts);
     }
   }
 
