@@ -261,7 +261,7 @@ function Budget() {
             ) : (
               <div className="card-flat divide-y divide-border-subtle">
                 {filtered.map((e) => {
-                  const cat = categories.find((c) => c.id === e.category_id);
+                  const cat = dedupedCategories.find((c) => c.id === e.category_id);
                   return (
                     <div key={e.id} className="group flex items-center justify-between px-4 py-3.5">
                       <div className="flex items-center gap-3 min-w-0">
