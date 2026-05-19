@@ -305,15 +305,19 @@ function ExpenseDialog({
   const [kind, setKind]               = useState<"variable" | "fixed">("variable");
 
   const addExpense = useAddExpense();
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!open) {
       setAmount(""); setDescription(""); setCategoryId(""); setKind("variable");
+      submittingRef.current = false;
     }
   }, [open]);
 
   function save() {
+    if (submittingRef.current) return;
     if (!amount || Number(amount) <= 0) return;
+    submittingRef.current = true;
     addExpense.mutate(
       {
         amount: Number(amount),
@@ -326,6 +330,9 @@ function ExpenseDialog({
         onSuccess: () => {
           setAmount(""); setDescription(""); setCategoryId(""); setKind("variable");
           onClose();
+        },
+        onSettled: () => {
+          submittingRef.current = false;
         },
       },
     );
