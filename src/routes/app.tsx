@@ -84,23 +84,24 @@ function AppShell() {
   const { user } = useAuth();
   const loc = useLocation();
   const { t } = useT();
+  const [hideInvestments, setHideInvestments] = useState(false);
 
-  // Re-sync theme if it changes server-side via another tab
+  // Re-sync theme + read "hide investments" preference
   useEffect(() => {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("theme")
+      .select("theme, notification_prefs")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         document.documentElement.classList.toggle("dark", data?.theme === "dark");
+        const prefs = (data?.notification_prefs as Record<string, boolean> | null) ?? {};
+        setHideInvestments(!!prefs.investment_mode);
       });
-  }, [user]);
+  }, [user, loc.pathname]);
 
-  // beforeLoad already verified the session, so we render the full shell
-  // immediately. loading resolves in <100 ms (localStorage read); until then
-  // the dashboard shows its own skeleton via useDashboard()/isLoading.
+  const visibleTabs = hideInvestments ? tabs.filter((t) => t.to !== "/app/finances") : tabs;
 
   return (
     <div className="min-h-screen bg-background">
@@ -113,9 +114,9 @@ function AppShell() {
 
       {/* Bottom navigation — glass card, safe-area aware */}
       <nav className="fixed bottom-0 inset-x-0 z-50 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto max-w-2xl px-3 pb-3">
-          <div className="glass border border-border-subtle rounded-2xl shadow-float flex justify-between items-center p-1">
-            {tabs.map((tab) => {
+        <div className="mx-auto max-w-2xl px-2 pb-2">
+          <div className="glass border border-border-subtle rounded-2xl shadow-float flex justify-between items-center p-1 gap-0.5">
+            {visibleTabs.map((tab) => {
               const active = tab.exact
                 ? loc.pathname === tab.to
                 : loc.pathname.startsWith(tab.to);
@@ -124,17 +125,17 @@ function AppShell() {
                 <Link
                   key={tab.to}
                   to={tab.to}
-                  className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all ${
+                  className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 rounded-xl transition-all ${
                     active
                       ? "bg-foreground text-background"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Icon
-                    className="size-[17px]"
+                    className="size-[17px] shrink-0"
                     strokeWidth={active ? 2.4 : 1.9}
                   />
-                  <span className="text-[9.5px] font-medium tracking-wide">
+                  <span className="text-[9px] font-medium tracking-tight truncate max-w-full">
                     {t(tab.labelKey)}
                   </span>
                 </Link>
