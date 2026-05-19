@@ -1,8 +1,8 @@
 import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { Home, Wallet, Target, LineChart, BarChart3, Users, User } from "lucide-react";
+import { Home, Wallet, Target, BarChart3, Users, User } from "lucide-react";
 import { useT } from "@/i18n";
 import { OfflineBanner } from "@/components/offline-banner";
 
@@ -59,7 +59,6 @@ type TabDef = {
     | "/app"
     | "/app/budget"
     | "/app/goals"
-    | "/app/finances"
     | "/app/analytics"
     | "/app/family"
     | "/app/settings";
@@ -72,7 +71,6 @@ const tabs: TabDef[] = [
   { to: "/app",          labelKey: "nav.home",     icon: Home,      exact: true },
   { to: "/app/budget",   labelKey: "nav.budget",   icon: Wallet },
   { to: "/app/goals",    labelKey: "nav.goals",    icon: Target },
-  { to: "/app/finances", labelKey: "nav.invest",   icon: LineChart },
   { to: "/app/analytics",labelKey: "nav.insights", icon: BarChart3 },
   { to: "/app/family",   labelKey: "nav.family",   icon: Users },
   { to: "/app/settings", labelKey: "nav.you",      icon: User },
@@ -84,34 +82,26 @@ function AppShell() {
   const { user } = useAuth();
   const loc = useLocation();
   const { t } = useT();
-  // Default to showing investments tab unless the user explicitly disabled it.
-  const [showInvestments, setShowInvestments] = useState(true);
 
-  // Re-sync theme + read "show investments" preference.
-  // The settings toggle ("investment_mode") means: ON = show Investments tab.
+  // Re-sync theme when the app shell changes routes.
   useEffect(() => {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("theme, notification_prefs")
+      .select("theme")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         document.documentElement.classList.toggle("dark", data?.theme === "dark");
-        const prefs = (data?.notification_prefs as Record<string, boolean> | null) ?? {};
-        // Undefined → default ON (preserve existing UX for users who never touched it).
-        setShowInvestments(prefs.investment_mode === undefined ? true : !!prefs.investment_mode);
       });
   }, [user, loc.pathname]);
-
-  const visibleTabs = showInvestments ? tabs : tabs.filter((t) => t.to !== "/app/finances");
 
   return (
     <div className="min-h-screen bg-background">
       {/* Offline indicator (top, safe-area aware) */}
       <OfflineBanner />
 
-      <main className="mx-auto max-w-2xl pb-28">
+      <main className="mx-auto max-w-2xl pb-28 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:pt-0">
         <Outlet />
       </main>
 
@@ -119,7 +109,7 @@ function AppShell() {
       <nav className="fixed bottom-0 inset-x-0 z-50 pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-2xl px-2 pb-2">
           <div className="glass border border-border-subtle rounded-2xl shadow-float flex justify-between items-center p-1 gap-0.5">
-            {visibleTabs.map((tab) => {
+            {tabs.map((tab) => {
               const active = tab.exact
                 ? loc.pathname === tab.to
                 : loc.pathname.startsWith(tab.to);
