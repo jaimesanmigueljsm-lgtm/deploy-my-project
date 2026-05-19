@@ -84,9 +84,11 @@ function AppShell() {
   const { user } = useAuth();
   const loc = useLocation();
   const { t } = useT();
-  const [hideInvestments, setHideInvestments] = useState(false);
+  // Default to showing investments tab unless the user explicitly disabled it.
+  const [showInvestments, setShowInvestments] = useState(true);
 
-  // Re-sync theme + read "hide investments" preference
+  // Re-sync theme + read "show investments" preference.
+  // The settings toggle ("investment_mode") means: ON = show Investments tab.
   useEffect(() => {
     if (!user) return;
     supabase
@@ -97,11 +99,12 @@ function AppShell() {
       .then(({ data }) => {
         document.documentElement.classList.toggle("dark", data?.theme === "dark");
         const prefs = (data?.notification_prefs as Record<string, boolean> | null) ?? {};
-        setHideInvestments(!!prefs.investment_mode);
+        // Undefined → default ON (preserve existing UX for users who never touched it).
+        setShowInvestments(prefs.investment_mode === undefined ? true : !!prefs.investment_mode);
       });
   }, [user, loc.pathname]);
 
-  const visibleTabs = hideInvestments ? tabs.filter((t) => t.to !== "/app/finances") : tabs;
+  const visibleTabs = showInvestments ? tabs : tabs.filter((t) => t.to !== "/app/finances");
 
   return (
     <div className="min-h-screen bg-background">
