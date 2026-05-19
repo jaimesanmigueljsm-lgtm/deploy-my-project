@@ -12,7 +12,7 @@ import { readdir, writeFile, readFile, stat } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 
-const clientDir    = "dist/client";
+const clientDir = "dist/client";
 const clientAssets = "dist/client/assets";
 const serverAssets = "dist/server/assets";
 const viteManifest = "dist/client/.vite/manifest.json";
@@ -69,7 +69,10 @@ if (!entryJs) {
         }
       }
     } else {
-      console.warn("[postbuild] Strategy B: no _tanstack-start-manifest file found in", serverAssets);
+      console.warn(
+        "[postbuild] Strategy B: no _tanstack-start-manifest file found in",
+        serverAssets,
+      );
     }
   } catch (e) {
     console.warn("[postbuild] Strategy B failed:", e.message);
@@ -86,10 +89,7 @@ if (!entryJs) {
       indexFiles.map(async (f) => ({ f, size: (await stat(join(clientAssets, f))).size })),
     );
     withSizes.sort((a, b) => b.size - a.size);
-    console.log(
-      "[postbuild] Sizes:",
-      withSizes.map(({ f, size }) => `${f}=${size}`).join(", "),
-    );
+    console.log("[postbuild] Sizes:", withSizes.map(({ f, size }) => `${f}=${size}`).join(", "));
     entryJs = `/assets/${withSizes[0].f}`;
     console.log(`[postbuild] Strategy C: ${entryJs}`);
   }
