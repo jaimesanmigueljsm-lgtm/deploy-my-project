@@ -77,6 +77,10 @@ function Onboarding() {
   const { t } = useT();
   const [step, setStep]     = useState(0);
   const [loading, setLoading] = useState(false);
+  // Hard guard against double-invocation of finish() (React StrictMode,
+  // rapid double-clicks, button enable/disable race). A ref flips
+  // synchronously — state updates can't get there in time on a 2nd click.
+  const finishingRef = useRef(false);
 
   const [savingsTarget,    setSavingsTarget]    = useState("");
   const [income,           setIncome]           = useState("");
@@ -84,10 +88,21 @@ function Onboarding() {
   const [selectedVariable, setSelectedVariable] = useState<string[]>([]);
   const [priorities,       setPriorities]       = useState<string[]>([]);
 
+  // If the user is already onboarded, never let them re-run finish() — that
+  // would duplicate income/category rows on every visit to /onboarding.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) navigate({ to: "/auth" });
-    });
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { navigate({ to: "/auth" }); return; }
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("onboarded")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (!cancelled && prof?.onboarded) navigate({ to: "/app" });
+    })();
+    return () => { cancelled = true; };
   }, [navigate]);
 
   const canNext =
