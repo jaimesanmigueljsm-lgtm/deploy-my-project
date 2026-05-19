@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_events: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string | null
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string | null
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string | null
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bills: {
         Row: {
           active: boolean
@@ -145,6 +178,53 @@ export type Database = {
         }
         Relationships: []
       }
+      family_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string | null
+          expires_at: string
+          family_id: string
+          id: string
+          invited_by: string
+          invited_user_id: string | null
+          role: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          family_id: string
+          id?: string
+          invited_by: string
+          invited_user_id?: string | null
+          role?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          family_id?: string
+          id?: string
+          invited_by?: string
+          invited_user_id?: string | null
+          role?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_invitations_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_members: {
         Row: {
           created_at: string
@@ -208,7 +288,15 @@ export type Database = {
           note?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "goal_contributions_goal_fk"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "savings_goals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       incomes: {
         Row: {
@@ -320,53 +408,6 @@ export type Database = {
         }
         Relationships: []
       }
-      family_invitations: {
-        Row: {
-          id: string
-          family_id: string
-          invited_by: string
-          invited_user_id: string | null
-          email: string | null
-          role: string
-          token: string
-          expires_at: string
-          accepted_at: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          family_id: string
-          invited_by: string
-          invited_user_id?: string | null
-          email?: string | null
-          role?: string
-          token?: string
-          expires_at?: string
-          accepted_at?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          family_id?: string
-          invited_by?: string
-          invited_user_id?: string | null
-          email?: string | null
-          role?: string
-          token?: string
-          expires_at?: string
-          accepted_at?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "family_invitations_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           created_at: string
@@ -390,12 +431,12 @@ export type Database = {
           created_at?: string
           currency?: string
           family_id?: string | null
-          financial_username?: string
-          first_name?: string
+          financial_username: string
+          first_name: string
           full_name?: string | null
           health_score?: number
           id: string
-          last_name_1?: string
+          last_name_1: string
           last_name_2?: string | null
           monthly_savings_target?: number
           notification_prefs?: Json
@@ -542,71 +583,76 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_family_member: {
-        Args: { _family_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_family_owner: {
-        Args: { _user_id: string; _family_id: string }
-        Returns: boolean
+      accept_family_invite: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
       }
       add_goal_contribution: {
         Args: {
-          p_user_id: string
-          p_goal_id: string
           p_amount: number
-          p_note?: string | null
+          p_goal_id: string
+          p_note?: string
+          p_user_id: string
         }
         Returns: undefined
       }
       find_user_by_username: {
         Args: { p_username: string }
-        Returns: Array<{
-          id: string
-          first_name: string
-          last_name_1: string
+        Returns: {
           financial_username: string
-        }>
+          first_name: string
+          id: string
+          last_name_1: string
+        }[]
       }
-      send_family_invite: {
-        Args: { p_family_id: string; p_username: string }
+      generate_financial_username: {
+        Args: { p_first_name: string; p_last_name_1: string }
         Returns: string
       }
-      accept_family_invite: {
-        Args: { p_invitation_id: string }
-        Returns: undefined
+      get_family_sent_invitations: {
+        Args: { p_family_id: string }
+        Returns: {
+          created_at: string
+          expires_at: string
+          id: string
+          invited_first_name: string
+          invited_last_name_1: string
+          invited_user_id: string
+          invited_username: string
+          role: string
+        }[]
+      }
+      get_my_invitations: {
+        Args: never
+        Returns: {
+          created_at: string
+          expires_at: string
+          family_id: string
+          family_name: string
+          id: string
+          invited_by_first_name: string
+          invited_by_last_name_1: string
+          invited_by_username: string
+          role: string
+        }[]
+      }
+      is_family_member: {
+        Args: { _family_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_family_owner: {
+        Args: { _family_id: string; _user_id: string }
+        Returns: boolean
       }
       reject_family_invite: {
         Args: { p_invitation_id: string }
         Returns: undefined
       }
-      get_my_invitations: {
-        Args: Record<string, never>
-        Returns: Array<{
-          id: string
-          family_id: string
-          family_name: string
-          invited_by_first_name: string
-          invited_by_last_name_1: string
-          invited_by_username: string
-          role: string
-          expires_at: string
-          created_at: string
-        }>
+      send_family_invite: {
+        Args: { p_family_id: string; p_username: string }
+        Returns: string
       }
-      get_family_sent_invitations: {
-        Args: { p_family_id: string }
-        Returns: Array<{
-          id: string
-          invited_user_id: string
-          invited_first_name: string
-          invited_last_name_1: string
-          invited_username: string
-          role: string
-          expires_at: string
-          created_at: string
-        }>
-      }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

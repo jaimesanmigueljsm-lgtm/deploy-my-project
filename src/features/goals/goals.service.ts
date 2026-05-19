@@ -87,7 +87,7 @@ export async function addContribution(
     p_user_id: userId,
     p_goal_id: validated.goal_id,
     p_amount:  validated.amount,
-    p_note:    validated.note ?? null,
+    p_note:    validated.note ?? undefined,
   });
 
   if (error) throw new Error(error.message);
