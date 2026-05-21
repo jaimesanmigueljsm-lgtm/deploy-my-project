@@ -1,12 +1,17 @@
 import type { ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Bell, Shield, CreditCard, Database, Moon, Sun, LogOut, ChevronRight,
   Sparkles, Globe, Download, Languages, Check, TrendingUp,
+  Camera, AtSign, Copy, MapPin, User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { SectionHeader } from "@/components/nest";
 import { useT } from "@/i18n";
@@ -15,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, useUpdateProfile } from "@/features/profile/use-profile";
+import { uploadAvatar, type Profile } from "@/features/profile/profile.service";
 import { useExportData } from "@/features/settings/use-settings";
 
 export const Route = createFileRoute("/app/settings")({
@@ -28,6 +34,7 @@ function Settings() {
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const exportData    = useExportData();
+  const [openPrivacy, setOpenPrivacy] = useState(false);
 
   function toggleTheme() {
     const next = profile?.theme === "dark" ? "light" : "dark";
@@ -62,16 +69,31 @@ function Settings() {
         <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("settings.you")}</h1>
       </header>
 
-      {/* Profile card */}
-      <div className="card-soft p-5 flex items-center gap-4">
-        <div className="size-14 rounded-2xl bg-foreground text-background grid place-items-center text-lg font-semibold">
-          {initials}
+      {/* Profile card — clickable, opens the Privacy/Profile dialog */}
+      <button
+        onClick={() => setOpenPrivacy(true)}
+        className="card-soft p-5 flex items-center gap-4 w-full text-left hover:bg-muted/30 transition"
+      >
+        <div className="size-14 rounded-2xl overflow-hidden bg-foreground text-background grid place-items-center text-lg font-semibold shrink-0">
+          {profile.avatar_url ? (
+            <img
+              src={`${profile.avatar_url}?v=${profile.updated_at}`}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            initials
+          )}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-base font-semibold truncate">{profile.full_name ?? t("settings.addName")}</div>
           <div className="text-xs text-muted-foreground truncate">{email}</div>
+          {profile.financial_username && (
+            <div className="text-xs text-muted-foreground font-mono mt-0.5">@{profile.financial_username}</div>
+          )}
         </div>
-      </div>
+        <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+      </button>
 
       {/* Plan */}
       <div className="card-soft p-5 relative overflow-hidden" style={{ background: "oklch(0.18 0.02 250)", color: "white" }}>
@@ -161,7 +183,7 @@ function Settings() {
           <Row icon={<Shield className="size-4" />} label={t("settings.security.label")} value="Email & password" onClick={() => toast("Coming soon")} />
           <Row icon={<CreditCard className="size-4" />} label={t("settings.bankConnections")} value="None" onClick={() => toast("Coming soon")} />
           <Row icon={<Download className="size-4" />} label={t("settings.export")} onClick={() => exportData.mutate()} />
-          <Row icon={<Database className="size-4" />} label={t("settings.privacy")} value="Your data, your control" onClick={() => toast("Stored privately")} />
+          <Row icon={<Database className="size-4" />} label={t("settings.privacy")} value={t("settings.privacy.value")} onClick={() => setOpenPrivacy(true)} />
         </div>
       </section>
 
@@ -170,7 +192,228 @@ function Settings() {
       </Button>
 
       <p className="text-[10px] text-muted-foreground text-center pt-2">Nest · v0.1.0-beta · Closed beta</p>
+
+      <ProfileEditDialog
+        open={openPrivacy}
+        onClose={() => setOpenPrivacy(false)}
+        profile={profile}
+        userId={user?.id ?? ""}
+        t={t}
+      />
     </div>
+  );
+}
+
+// ─── ProfileEditDialog ────────────────────────────────────────────────────────
+
+function ProfileEditDialog({
+  open, onClose, profile, userId, t,
+}: {
+  open: boolean;
+  onClose: () => void;
+  profile: Profile;
+  userId: string;
+  t: (k: string) => string;
+}) {
+  const updateProfile = useUpdateProfile();
+  const fileInputRef  = useRef<HTMLInputElement>(null);
+
+  const [firstName,  setFirstName]  = useState("");
+  const [lastName1,  setLastName1]  = useState("");
+  const [lastName2,  setLastName2]  = useState("");
+  const [address,    setAddress]    = useState("");
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+  const [uploading,  setUploading]  = useState(false);
+  const [copied,     setCopied]     = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setFirstName(profile.first_name  ?? "");
+      setLastName1(profile.last_name_1 ?? "");
+      setLastName2(profile.last_name_2 ?? "");
+      setAddress(profile.address       ?? "");
+      setLocalAvatar(profile.avatar_url ?? null);
+    }
+  }, [open, profile]);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadAvatar(userId, file);
+      setLocalAvatar(`${url}?t=${Date.now()}`);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  function save() {
+    const trimFirst = firstName.trim();
+    const trimLast1 = lastName1.trim();
+    if (!trimFirst || !trimLast1) return;
+
+    const avatarBase = localAvatar?.split("?")[0] ?? profile.avatar_url ?? undefined;
+
+    updateProfile.mutate(
+      {
+        first_name:  trimFirst,
+        last_name_1: trimLast1,
+        last_name_2: lastName2.trim() || null,
+        full_name:   [trimFirst, trimLast1, lastName2.trim()].filter(Boolean).join(" "),
+        address:     address.trim() || null,
+        ...(avatarBase ? { avatar_url: avatarBase } : {}),
+      },
+      { onSuccess: onClose },
+    );
+  }
+
+  const initials = [firstName[0], lastName1[0]]
+    .filter(Boolean)
+    .map((s) => s.toUpperCase())
+    .join("") || "U";
+
+  function copyUsername() {
+    void navigator.clipboard.writeText(`@${profile.financial_username}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="rounded-2xl max-h-[92dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t("settings.privacy.dialog.title")}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+
+          {/* Avatar */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="relative group focus:outline-none"
+            >
+              <div className="size-20 rounded-full overflow-hidden bg-foreground text-background grid place-items-center text-2xl font-semibold">
+                {localAvatar ? (
+                  <img src={localAvatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{initials}</span>
+                )}
+              </div>
+              {/* hover overlay */}
+              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center pointer-events-none">
+                <Camera className="size-5 text-white" />
+              </div>
+              {/* uploading spinner */}
+              {uploading && (
+                <div className="absolute inset-0 rounded-full bg-black/60 grid place-items-center">
+                  <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </button>
+            <p className="text-[11px] text-muted-foreground">{t("settings.privacy.photo.hint")}</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+
+          {/* Name */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1">
+                <User className="size-3 text-muted-foreground" />
+                {t("settings.privacy.firstName")}
+              </Label>
+              <Input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                autoCapitalize="words"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("settings.privacy.lastName1")}</Label>
+              <Input
+                value={lastName1}
+                onChange={(e) => setLastName1(e.target.value)}
+                autoCapitalize="words"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("settings.privacy.lastName2")}</Label>
+            <Input
+              value={lastName2}
+              onChange={(e) => setLastName2(e.target.value)}
+              placeholder={t("settings.privacy.lastName2.placeholder")}
+              autoCapitalize="words"
+            />
+          </div>
+
+          {/* Address */}
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-1">
+              <MapPin className="size-3 text-muted-foreground" />
+              {t("settings.privacy.address")}
+            </Label>
+            <Input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder={t("settings.privacy.address.placeholder")}
+            />
+          </div>
+
+          {/* Username (read-only) */}
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-1">
+              <AtSign className="size-3 text-muted-foreground" />
+              {t("settings.privacy.username")}
+            </Label>
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted">
+              <span className="flex-1 text-sm font-mono text-muted-foreground">
+                @{profile.financial_username}
+              </span>
+              <button
+                onClick={copyUsername}
+                className="text-muted-foreground hover:text-foreground transition shrink-0"
+                aria-label="Copy username"
+              >
+                {copied
+                  ? <Check className="size-3.5 text-positive" />
+                  : <Copy className="size-3.5" />}
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              {t("settings.privacy.username.note")}
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={save}
+              disabled={updateProfile.isPending || uploading || !firstName.trim() || !lastName1.trim()}
+              className="flex-1"
+            >
+              {updateProfile.isPending
+                ? t("settings.privacy.saving")
+                : t("settings.privacy.save")}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -47,6 +47,8 @@ export const UpdateProfileSchema = z.object({
   last_name_1: z.string().trim().min(1).max(60).optional(),
   last_name_2: z.string().trim().max(60).optional().nullable(),
   financial_username: financialUsernameSchema.optional(),
+  avatar_url: z.string().max(500).optional().nullable(),
+  address: z.string().trim().max(200).optional().nullable(),
 
   full_name: z
     .string()
@@ -94,6 +96,8 @@ export const ProfileRowSchema = z.object({
   last_name_2: z.string().nullable().optional(),
   financial_username: z.string().default(""),
   full_name: z.string().nullable().optional(),
+  avatar_url: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
   currency: z.string().default("EUR"),
   onboarded: z.boolean().default(false),
   monthly_savings_target: nonNegativeAmountSchema,
