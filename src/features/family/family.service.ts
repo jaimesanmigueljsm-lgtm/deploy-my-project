@@ -48,6 +48,19 @@ export interface FamilyMember {
   first_name?: string;
   last_name_1?: string;
   financial_username?: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+}
+
+export interface FamilyMemberProfile {
+  member_id: string;
+  user_id: string;
+  role: string;
+  first_name: string;
+  last_name_1: string;
+  financial_username: string;
+  full_name: string | null;
+  avatar_url: string | null;
 }
 
 export interface SharedGoal {
@@ -198,6 +211,31 @@ export async function loadFamilyData(
     goals,
     isOwner: family.owner_id === currentUserId,
   };
+}
+
+// ─── Family profile (¿Quiénes somos?) ────────────────────────────────────────
+
+export async function getFamilyMembersProfiles(
+  familyId: string,
+): Promise<FamilyMemberProfile[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_family_members_profiles", {
+    p_family_id: familyId,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as FamilyMemberProfile[];
+}
+
+export async function updateFamilyName(
+  familyId: string,
+  name: string,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("update_family_name", {
+    p_family_id: familyId,
+    p_name: name,
+  });
+  if (error) throw new Error(error.message);
 }
 
 // ─── Family creation ──────────────────────────────────────────────────────────

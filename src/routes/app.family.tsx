@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tansta
 import { toast } from "sonner";
 import {
   Plus, Users, Crown, Baby, Heart, Target, Clock, Search, Send,
-  Pencil, TrendingUp, Calendar,
+  Pencil, TrendingUp, Calendar, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import {
   loadFamilyData,
   getMyInvitations,
   getFamilySentInvitations,
+  getFamilyMembersProfiles,
   searchUserByUsername,
   sendFamilyInvite,
   acceptFamilyInvite,
@@ -27,23 +28,26 @@ import {
   createSharedGoal,
   updateSharedGoal,
   addGoalContribution,
+  updateFamilyName,
   notifyFamilyMembers,
   type UserSearchResult,
   type ReceivedInvitation,
   type SentInvitation,
   type SharedGoal,
+  type FamilyMemberProfile,
 } from "@/features/family/family.service";
 import { queryKeys } from "@/lib/query-keys";
+
+const FK = {
+  data:     (familyId: string) => ["family", "data",     familyId] as const,
+  received: (userId:   string) => ["family", "received", userId]   as const,
+  sent:     (familyId: string) => ["family", "sent",     familyId] as const,
+  profiles: (familyId: string) => ["family", "profiles", familyId] as const,
+};
 
 export const Route = createFileRoute("/app/family")({
   component: FamilyPage,
 });
-
-const FK = {
-  data: (familyId: string) => ["family", "data", familyId] as const,
-  received: (userId: string) => ["family", "received", userId] as const,
-  sent: (familyId: string) => ["family", "sent", familyId] as const,
-};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -63,6 +67,7 @@ function FamilyPage() {
     queryFn: getMyInvitations,
     enabled: !!userId,
     staleTime: 30_000,
+    refetchInterval: 30_000,
   });
 
   const { data: familyData, isLoading: familyLoading } = useQuery({
@@ -79,6 +84,13 @@ function FamilyPage() {
     queryFn: () => getFamilySentInvitations(familyId!),
     enabled: !!familyId && familyData?.isOwner === true,
     staleTime: 30_000,
+  });
+
+  const { data: memberProfiles = [] } = useQuery({
+    queryKey: FK.profiles(familyId ?? ""),
+    queryFn: () => getFamilyMembersProfiles(familyId!),
+    enabled: !!familyId,
+    staleTime: 60_000,
   });
 
   const acceptMutation = useMutation({
@@ -114,6 +126,7 @@ function FamilyPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openInvite, setOpenInvite] = useState(false);
   const [openGoal, setOpenGoal] = useState(false);
+  const [openWhoAreWe, setOpenWhoAreWe] = useState(false);
   const [editingGoal, setEditingGoal] = useState<SharedGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<SharedGoal | null>(null);
 
@@ -187,14 +200,23 @@ function FamilyPage() {
           </p>
           <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{family.name}</h1>
         </div>
-        {isOwner && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setOpenInvite(true)}
-            className="size-10 rounded-full bg-foreground text-background grid place-items-center"
+            onClick={() => setOpenWhoAreWe(true)}
+            className="size-10 rounded-full bg-muted text-foreground grid place-items-center"
+            aria-label={t("family.whoarewe.button")}
           >
-            <Plus className="size-4" />
+            <Info className="size-4" />
           </button>
-        )}
+          {isOwner && (
+            <button
+              onClick={() => setOpenInvite(true)}
+              className="size-10 rounded-full bg-foreground text-background grid place-items-center"
+            >
+              <Plus className="size-4" />
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Hero */}
@@ -372,6 +394,19 @@ function FamilyPage() {
           </div>
         )}
       </section>
+
+      <WhoAreWeDialog
+        open={openWhoAreWe}
+        onClose={() => setOpenWhoAreWe(false)}
+        family={family}
+        members={memberProfiles}
+        isOwner={isOwner}
+        onRenamed={() => {
+          void qc.invalidateQueries({ queryKey: FK.data(family.id) });
+          void qc.invalidateQueries({ queryKey: FK.profiles(family.id) });
+        }}
+        t={t}
+      />
 
       {isOwner && (
         <InviteDialog
@@ -875,6 +910,117 @@ function ContributionDialog({
               {saving ? t("common.loading") : t("family.dialog.contribute.cta")}
             </Button>
           </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── WhoAreWeDialog ───────────────────────────────────────────────────────────
+
+function WhoAreWeDialog({
+  open, onClose, family, members, isOwner, onRenamed, t,
+}: {
+  open: boolean;
+  onClose: () => void;
+  family: { id: string; name: string; owner_id: string };
+  members: FamilyMemberProfile[];
+  isOwner: boolean;
+  onRenamed: () => void;
+  t: (k: string) => string;
+}) {
+  const [editName, setEditName] = useState(family.name);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setEditName(family.name);
+  }, [open, family.name]);
+
+  async function rename() {
+    if (!editName.trim() || editName.trim() === family.name) return;
+    setSaving(true);
+    try {
+      await updateFamilyName(family.id, editName.trim());
+      toast.success(t("family.toast.renamed"));
+      onRenamed();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="rounded-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t("family.whoarewe.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-5">
+          {/* Family name */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">{t("family.whoarewe.name.label")}</Label>
+            {isOwner ? (
+              <div className="flex gap-2">
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && void rename()}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={saving || !editName.trim() || editName.trim() === family.name}
+                  onClick={() => void rename()}
+                >
+                  {saving ? "..." : t("family.whoarewe.name.save")}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm font-semibold">{family.name}</p>
+            )}
+          </div>
+
+          {/* Members */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">{t("family.whoarewe.members.title")}</Label>
+            <div className="card-flat divide-y divide-border-subtle">
+              {members.map((m) => {
+                const RoleIcon = m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
+                const displayName = m.full_name
+                  ?? `${m.first_name} ${m.last_name_1}`.trim()
+                  ?? t("family.role.member");
+                return (
+                  <div key={m.member_id} className="flex items-center gap-3 px-4 py-3.5">
+                    {m.avatar_url ? (
+                      <img
+                        src={m.avatar_url}
+                        alt={displayName}
+                        className="size-10 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
+                        <RoleIcon className="size-4" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold truncate">{displayName}</div>
+                      {m.financial_username && (
+                        <div className="text-xs text-muted-foreground font-mono">@{m.financial_username}</div>
+                      )}
+                      <div className="text-[11px] text-muted-foreground capitalize">
+                        {t(`family.role.${m.role}`) ?? m.role}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <Button variant="outline" onClick={onClose} className="w-full">
+            {t("common.close")}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
