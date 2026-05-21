@@ -139,6 +139,7 @@ function FamilyPage() {
   const [openGoal, setOpenGoal] = useState(false);
   const [openWhoAreWe, setOpenWhoAreWe] = useState(false);
   const [openGoalPicker, setOpenGoalPicker] = useState(false);
+  const [viewingMember, setViewingMember] = useState<FamilyMemberProfile | null>(null);
   const [editingGoal, setEditingGoal] = useState<SharedGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<SharedGoal | null>(null);
 
@@ -302,19 +303,31 @@ function FamilyPage() {
       <section>
         <SectionHeader title={t("family.section.members")} />
         <div className="card-flat divide-y divide-border-subtle">
-          {members.map((m) => {
+          {(memberProfiles.length > 0 ? memberProfiles : members.map((m) => ({
+            member_id: m.id, user_id: m.user_id, role: m.role,
+            first_name: m.first_name ?? "", last_name_1: m.last_name_1 ?? "",
+            financial_username: m.financial_username ?? "",
+            full_name: m.full_name ?? null, avatar_url: m.avatar_url ?? null,
+          } as FamilyMemberProfile))).map((m) => {
             const Icon = m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
             const isMe = m.user_id === userId;
-            const displayName =
-              m.first_name && m.last_name_1
-                ? `${m.first_name} ${m.last_name_1}`
-                : (m.display_name ?? t("family.role.member"));
+            const displayName = m.full_name
+              ?? (m.first_name ? `${m.first_name} ${m.last_name_1}`.trim() : null)
+              ?? t("family.role.member");
             return (
-              <div key={m.id} className="flex items-center justify-between px-4 py-3.5">
+              <button
+                key={m.member_id}
+                onClick={() => setViewingMember(m)}
+                className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-muted/40 transition"
+              >
                 <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground">
-                    <Icon className="size-4" />
-                  </div>
+                  {m.avatar_url ? (
+                    <img src={m.avatar_url} alt={displayName} className="size-10 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
+                      <Icon className="size-4" />
+                    </div>
+                  )}
                   <div>
                     <div className="text-sm font-semibold">
                       {displayName}
@@ -334,7 +347,8 @@ function FamilyPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+                <Info className="size-3.5 text-muted-foreground shrink-0" />
+              </button>
             );
           })}
         </div>
@@ -433,6 +447,12 @@ function FamilyPage() {
           </div>
         )}
       </section>
+
+      <MemberProfileDialog
+        member={viewingMember}
+        onClose={() => setViewingMember(null)}
+        t={t}
+      />
 
       <GoalPickerDialog
         open={openGoalPicker}
@@ -964,6 +984,48 @@ function ContributionDialog({
             </Button>
           </div>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── MemberProfileDialog ─────────────────────────────────────────────────────
+
+function MemberProfileDialog({
+  member, onClose, t,
+}: {
+  member: FamilyMemberProfile | null;
+  onClose: () => void;
+  t: (k: string) => string;
+}) {
+  if (!member) return null;
+  const displayName = member.full_name
+    ?? (member.first_name ? `${member.first_name} ${member.last_name_1}`.trim() : null)
+    ?? t("family.role.member");
+  const RoleIcon = member.role === "owner" ? Crown : member.role === "child" ? Baby : Heart;
+
+  return (
+    <Dialog open={!!member} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="rounded-2xl max-w-xs">
+        <div className="flex flex-col items-center gap-3 pt-2 pb-1">
+          {member.avatar_url ? (
+            <img src={member.avatar_url} alt={displayName} className="size-20 rounded-full object-cover" />
+          ) : (
+            <div className="size-20 rounded-full bg-muted grid place-items-center text-foreground">
+              <RoleIcon className="size-7" />
+            </div>
+          )}
+          <div className="text-center">
+            <div className="text-base font-semibold">{displayName}</div>
+            {member.financial_username && (
+              <div className="text-sm text-muted-foreground font-mono mt-0.5">@{member.financial_username}</div>
+            )}
+            <div className="text-xs text-muted-foreground capitalize mt-1 px-2.5 py-0.5 rounded-full bg-muted inline-block">
+              {t(`family.role.${member.role}`) ?? member.role}
+            </div>
+          </div>
+        </div>
+        <Button variant="outline" onClick={onClose} className="w-full mt-2">{t("common.close")}</Button>
       </DialogContent>
     </Dialog>
   );

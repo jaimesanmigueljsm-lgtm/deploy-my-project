@@ -10,6 +10,7 @@ import { TrendingUp, TrendingDown, AlertTriangle, Moon, Calendar, Zap } from "lu
 import type { SpendingIntelligence } from "@/core/finance";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/nest";
+import { useT } from "@/i18n";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,10 +35,12 @@ const TONE_ICON_CLASS: Record<InsightTone, string> = {
 
 // ─── Build insight items from engine output ───────────────────────────────────
 
-function buildInsights(intel: SpendingIntelligence): InsightItem[] {
+function buildInsights(
+  intel: SpendingIntelligence,
+  t: (k: string) => string,
+): InsightItem[] {
   const items: InsightItem[] = [];
 
-  // Spending anomalies (highest severity first — already sorted by engine)
   for (const anomaly of intel.spendingAnomalies.slice(0, 2)) {
     const tone: InsightTone = anomaly.severity === "high" ? "warn" : "sky";
     items.push({
@@ -45,60 +48,58 @@ function buildInsights(intel: SpendingIntelligence): InsightItem[] {
       tone,
       icon: <AlertTriangle className="size-4" />,
       title: anomaly.description,
-      body: `Historical average: ${anomaly.historicalMean.toFixed(0)} · z-score ${anomaly.zScore.toFixed(1)}`,
+      body: t("insights.anomaly.body")
+        .replace("{avg}", anomaly.historicalMean.toFixed(0))
+        .replace("{z}", anomaly.zScore.toFixed(1)),
     });
   }
 
-  // Weekend spending pattern
   if (intel.weekendSpendingRatio > 1.5) {
     items.push({
       id: "weekend-pattern",
       tone: "violet",
       icon: <Moon className="size-4" />,
-      title: `Weekend spending is ${intel.weekendSpendingRatio.toFixed(1)}× weekday average`,
-      body: "Your discretionary spending rises significantly on weekends. Setting a weekend budget can help.",
+      title: t("insights.weekend.title").replace("{ratio}", intel.weekendSpendingRatio.toFixed(1)),
+      body: t("insights.weekend.body"),
     });
   }
 
-  // Month-end concentration
   if (intel.monthEndConcentration > 0.4) {
     items.push({
       id: "month-end-concentration",
       tone: "sky",
       icon: <Calendar className="size-4" />,
-      title: `${Math.round(intel.monthEndConcentration * 100)}% of this month's spend in the last 7 days`,
-      body: "End-of-month spending spikes can strain your budget. Try spreading purchases more evenly.",
+      title: t("insights.monthend.title").replace("{pct}", String(Math.round(intel.monthEndConcentration * 100))),
+      body: t("insights.monthend.body"),
     });
   }
 
-  // Spending trajectory
   if (intel.spendingTrajectory === "deteriorating") {
     items.push({
       id: "trajectory-deteriorating",
       tone: "warn",
       icon: <TrendingUp className="size-4" />,
-      title: "Spending is trending higher than your 3-month average",
-      body: `Month-over-month change: +${(intel.totalSpendMoMChange * 100).toFixed(1)}%. Check your top growing categories below.`,
+      title: t("insights.traj.bad.title"),
+      body: t("insights.traj.bad.body").replace("{pct}", (intel.totalSpendMoMChange * 100).toFixed(1)),
     });
   } else if (intel.spendingTrajectory === "improving") {
     items.push({
       id: "trajectory-improving",
       tone: "mint",
       icon: <TrendingDown className="size-4" />,
-      title: "Spending is below your 3-month average — great momentum",
-      body: "Keep it up. Consistent lower spending compounds into meaningful savings over time.",
+      title: t("insights.traj.good.title"),
+      body: t("insights.traj.good.body"),
     });
   }
 
-  // High-growth categories
   if (intel.highGrowthCategories.length > 0) {
     const cats = intel.highGrowthCategories.slice(0, 2).join(", ");
     items.push({
       id: "high-growth-categories",
       tone: "sky",
       icon: <Zap className="size-4" />,
-      title: `${cats} spending grew 20%+ vs last month`,
-      body: "These categories are growing faster than usual. Check if these are one-off spikes or a new trend.",
+      title: t("insights.highgrowth.title").replace("{cats}", cats),
+      body: t("insights.highgrowth.body"),
     });
   }
 
@@ -142,7 +143,8 @@ export function SmartInsightsFeed({
 }: {
   intelligence: SpendingIntelligence;
 }) {
-  const items = buildInsights(intelligence);
+  const { t } = useT();
+  const items = buildInsights(intelligence, t);
   if (items.length === 0) return null;
 
   return (

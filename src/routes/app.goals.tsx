@@ -102,7 +102,7 @@ function Goals() {
             size={72}
             stroke={6}
             label={`${Math.round(stats.progress)}%`}
-            sublabel="overall"
+            sublabel={t("goals.kpi.overall")}
           />
         </div>
         <div className="mt-4 h-1.5 bg-foreground/5 rounded-full overflow-hidden">
@@ -118,14 +118,18 @@ function Goals() {
         <StatCard
           label={t("goals.stat.monthly")}
           value={shortMoney(stats.monthly, currency)}
-          suffix={income > 0 ? `${Math.round((stats.monthly / income) * 100)}% of income` : "set up plan"}
+          suffix={income > 0
+            ? t("goals.kpi.pct_income").replace("{pct}", String(Math.round((stats.monthly / income) * 100)))
+            : t("goals.kpi.set_plan")}
           tone="mint"
           icon={<Calendar className="size-3.5" />}
         />
         <StatCard
           label={t("goals.stat.total")}
           value={shortMoney(Math.max(0, stats.total - stats.saved), currency)}
-          suffix={stats.monthly > 0 ? `~${Math.ceil((stats.total - stats.saved) / stats.monthly)} mo` : "no plan yet"}
+          suffix={stats.monthly > 0
+            ? t("goals.kpi.months_left").replace("{n}", String(Math.ceil((stats.total - stats.saved) / stats.monthly)))
+            : t("goals.kpi.no_plan")}
           tone="sky"
           icon={<TrendingUp className="size-3.5" />}
         />
@@ -161,7 +165,7 @@ function Goals() {
                 onAddMoney={() => setContribOpen(g)}
                 onEdit={() => { setEditing(g); setOpen(true); }}
                 onDelete={() => {
-                  if (!confirm(`Delete "${g.name}"?`)) return;
+                  if (!confirm(t("goals.confirm.delete").replace("{name}", g.name))) return;
                   deleteGoal.mutate(g.id);
                 }}
               />
@@ -224,12 +228,12 @@ function GoalCard({
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-sm truncate">{goal.name}</h3>
               {goal.priority === "high" && (
-                <span className="text-[9px] uppercase tracking-wider font-bold text-warn bg-warn-soft px-1.5 py-0.5 rounded">Priority</span>
+                <span className="text-[9px] uppercase tracking-wider font-bold text-warn bg-warn-soft px-1.5 py-0.5 rounded">{t("goals.card.priority")}</span>
               )}
             </div>
             <p className="text-[11px] text-muted-foreground num truncate">
               {money(Number(goal.current_amount), currency)} {t("common.of")} {money(Number(goal.target_amount), currency)}
-              {Number(goal.monthly_contribution) > 0 && ` · ${money(Number(goal.monthly_contribution), currency)}/mo`}
+              {Number(goal.monthly_contribution) > 0 && ` · ${money(Number(goal.monthly_contribution), currency)}/${t("goals.per_month")}`}
             </p>
           </div>
         </div>
@@ -269,22 +273,25 @@ function GoalCard({
         ) : projected ? (
           <span className="inline-flex items-center gap-1 text-muted-foreground">
             <Calendar className="size-3" />
-            At this pace: {projected.toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+            {t("goals.card.pace").replace("{date}", projected.toLocaleDateString(undefined, { month: "short", year: "numeric" }))}
           </span>
         ) : (
-          <span className="text-muted-foreground">Set a monthly amount to project completion</span>
+          <span className="text-muted-foreground">{t("goals.card.set_monthly")}</span>
         )}
         {nextMs !== null && (
           <span className="text-muted-foreground num">
-            Next: {nextMs}% ({money((Number(goal.target_amount) * nextMs / 100) - Number(goal.current_amount), currency)} away)
+            {t("goals.card.next")
+              .replace("{pct}", String(nextMs))
+              .replace("{amount}", money((Number(goal.target_amount) * nextMs / 100) - Number(goal.current_amount), currency))}
           </span>
         )}
       </div>
 
       {lastContrib && (
         <p className="text-[10px] text-muted-foreground border-t border-border-subtle pt-2">
-          Last deposit: <span className="num font-medium text-foreground">+{money(lastContrib.amount, currency)}</span> on{" "}
-          {new Date(lastContrib.contributed_at).toLocaleDateString()}
+          {t("goals.card.last_deposit")
+            .replace("{amount}", money(lastContrib.amount, currency))
+            .replace("{date}", new Date(lastContrib.contributed_at).toLocaleDateString())}
           {lastContrib.note && ` · ${lastContrib.note}`}
         </p>
       )}
@@ -340,7 +347,7 @@ function GoalDialog({
   }, [editing, open]);
 
   function save() {
-    if (!form.name || !form.target_amount) return toast.error("Name and target are required");
+    if (!form.name || !form.target_amount) return toast.error(t("goals.contrib.error"));
 
     const payload: AddGoalPayload = {
       name:                 form.name,
@@ -371,68 +378,67 @@ function GoalDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Name</Label>
-            <Input placeholder="e.g. New apartment" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Label>{t("goals.dialog.name")}</Label>
+            <Input placeholder={t("goals.dialog.name.placeholder")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Target ({currency})</Label>
+              <Label>{t("goals.dialog.target")} ({currency})</Label>
               <Input type="number" step="any" placeholder="20000" value={form.target_amount} onChange={(e) => setForm({ ...form, target_amount: e.target.value })} />
             </div>
             <div>
-              <Label>Already saved</Label>
+              <Label>{t("goals.dialog.already_saved")}</Label>
               <Input type="number" step="any" value={form.current_amount} onChange={(e) => setForm({ ...form, current_amount: e.target.value })} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Monthly contribution</Label>
+              <Label>{t("goals.dialog.monthly")}</Label>
               <Input type="number" step="any" placeholder="500" value={form.monthly_contribution} onChange={(e) => setForm({ ...form, monthly_contribution: e.target.value })} />
             </div>
             <div>
-              <Label>Deadline (optional)</Label>
+              <Label>{t("goals.deadline")}</Label>
               <Input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Icon</Label>
+              <Label>{t("goals.dialog.icon")}</Label>
               <Select value={form.icon} onValueChange={(v) => setForm({ ...form, icon: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(GOAL_ICONS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                  {Object.keys(GOAL_ICONS).map((k) => (
+                    <SelectItem key={k} value={k}>{t(`goals.icon.${k}`)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Color</Label>
+              <Label>{t("goals.dialog.color")}</Label>
               <Select value={form.color} onValueChange={(v) => setForm({ ...form, color: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="mint">Mint</SelectItem>
-                  <SelectItem value="sky">Sky</SelectItem>
-                  <SelectItem value="warn">Amber</SelectItem>
-                  <SelectItem value="violet">Violet</SelectItem>
+                  {(["mint", "sky", "warn", "violet"] as const).map((c) => (
+                    <SelectItem key={c} value={c}>{t(`goals.color.${c}`)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div>
-            <Label>Priority</Label>
+            <Label>{t("goals.dialog.priority")}</Label>
             <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
+                {(["high", "medium", "low"] as const).map((p) => (
+                  <SelectItem key={p} value={p}>{t(`goals.priority.${p}`)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Notes</Label>
-            <Textarea placeholder="Why does this matter?" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+            <Label>{t("goals.dialog.notes")}</Label>
+            <Textarea placeholder={t("goals.dialog.notes.placeholder")} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
           </div>
         </div>
         <DialogFooter>
@@ -465,7 +471,7 @@ function ContributionDialog({
   function save() {
     if (!goal) return;
     const n = Number(amount);
-    if (!n || n <= 0) return toast.error("Enter a valid amount");
+    if (!n || n <= 0) return toast.error(t("goals.contrib.error"));
     addContribution.mutate(
       { goal_id: goal.id, amount: n, note: note || null },
       { onSuccess: () => onClose() },
@@ -492,13 +498,13 @@ function ContributionDialog({
                 onClick={() => setAmount(String(goal!.monthly_contribution))}
                 className="text-[11px] text-muted-foreground hover:text-foreground mt-1"
               >
-                Use planned amount: {money(Number(goal!.monthly_contribution), currency)}
+                {t("goals.contrib.use_planned").replace("{amount}", money(Number(goal!.monthly_contribution), currency))}
               </button>
             ) : null}
           </div>
           <div>
             <Label>{t("goals.contrib.note")}</Label>
-            <Input placeholder="e.g. Bonus from work" value={note} onChange={(e) => setNote(e.target.value)} />
+            <Input placeholder={t("goals.contrib.note.placeholder")} value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
