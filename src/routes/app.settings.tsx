@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Bell, Shield, CreditCard, Database, Moon, Sun, LogOut, ChevronRight,
   Sparkles, Globe, Download, Languages, Check, TrendingUp,
-  Camera, AtSign, Copy, MapPin, User,
+  Camera, AtSign, Copy, MapPin, User, Loader2, XCircle, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,8 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, useUpdateProfile } from "@/features/profile/use-profile";
 import { uploadAvatar, regenerateUsername, type Profile } from "@/features/profile/profile.service";
+import { searchUserByUsername } from "@/features/family/family.service";
+import { financialUsernameSchema } from "@/schemas/profile.schema";
 import { useExportData } from "@/features/settings/use-settings";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -208,6 +210,8 @@ function Settings() {
 
 // ─── ProfileEditDialog ────────────────────────────────────────────────────────
 
+type UsernameStatus = "idle" | "own" | "checking" | "available" | "taken" | "invalid";
+
 function ProfileEditDialog({
   open, onClose, profile, userId, t,
 }: {
@@ -221,14 +225,17 @@ function ProfileEditDialog({
   const qc            = useQueryClient();
   const fileInputRef  = useRef<HTMLInputElement>(null);
 
-  const [firstName,  setFirstName]  = useState("");
-  const [lastName1,  setLastName1]  = useState("");
-  const [lastName2,  setLastName2]  = useState("");
-  const [address,    setAddress]    = useState("");
-  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
-  const [uploading,  setUploading]  = useState(false);
-  const [copied,     setCopied]     = useState(false);
+  const [firstName,      setFirstName]      = useState("");
+  const [lastName1,      setLastName1]      = useState("");
+  const [lastName2,      setLastName2]      = useState("");
+  const [address,        setAddress]        = useState("");
+  const [localAvatar,    setLocalAvatar]    = useState<string | null>(null);
+  const [localUsername,  setLocalUsername]  = useState("");
+  const [uploading,      setUploading]      = useState(false);
+  const [copied,         setCopied]         = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
 
+  // Pre-fill all fields when dialog opens
   useEffect(() => {
     if (open) {
       setFirstName(profile.first_name  ?? "");
@@ -236,8 +243,33 @@ function ProfileEditDialog({
       setLastName2(profile.last_name_2 ?? "");
       setAddress(profile.address       ?? "");
       setLocalAvatar(profile.avatar_url ?? null);
+      setLocalUsername(profile.financial_username ?? "");
+      setUsernameStatus(profile.financial_username?.trim() ? "own" : "idle");
     }
   }, [open, profile]);
+
+  // Debounced uniqueness check whenever localUsername changes
+  useEffect(() => {
+    const normalised = localUsername.trim().toLowerCase().replace(/^@/, "");
+    const current    = (profile.financial_username ?? "").trim();
+
+    if (!normalised) { setUsernameStatus("idle"); return; }
+    if (normalised === current) { setUsernameStatus("own"); return; }
+
+    const fmtCheck = financialUsernameSchema.safeParse(normalised);
+    if (!fmtCheck.success) { setUsernameStatus("invalid"); return; }
+
+    setUsernameStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const found = await searchUserByUsername(normalised);
+        setUsernameStatus(!found || found.id === userId ? "available" : "taken");
+      } catch {
+        setUsernameStatus("idle");
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [localUsername, profile.financial_username, userId]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -260,6 +292,9 @@ function ProfileEditDialog({
     if (!trimFirst || !trimLast1) return;
 
     const avatarBase = localAvatar?.split("?")[0] ?? profile.avatar_url ?? undefined;
+    const normUsername = localUsername.trim().toLowerCase().replace(/^@/, "");
+    const usernameChanged = normUsername !== (profile.financial_username ?? "").trim();
+    const includeUsername = usernameChanged && (usernameStatus === "available") && !!normUsername;
 
     try {
       await updateProfile.mutateAsync({
@@ -269,34 +304,39 @@ function ProfileEditDialog({
         full_name:   [trimFirst, trimLast1, lastName2.trim()].filter(Boolean).join(" "),
         address:     address.trim() || null,
         ...(avatarBase ? { avatar_url: avatarBase } : {}),
+        ...(includeUsername ? { financial_username: normUsername } : {}),
       });
 
-      // Auto-generate username if it was empty
-      if (!profile.financial_username?.trim()) {
+      // Auto-generate username if still empty after save
+      if (!profile.financial_username?.trim() && !includeUsername) {
         try {
           await regenerateUsername();
           await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
-        } catch {
-          // Non-critical — username can be regenerated later
-        }
+        } catch { /* non-critical */ }
       }
 
       onClose();
-    } catch {
-      // updateProfile already shows a toast via its onError handler
-    }
+    } catch { /* toast shown by useUpdateProfile */ }
   }
 
   const initials = [firstName[0], lastName1[0]]
-    .filter(Boolean)
-    .map((s) => s.toUpperCase())
-    .join("") || "U";
+    .filter(Boolean).map((s) => s.toUpperCase()).join("") || "U";
 
   function copyUsername() {
-    void navigator.clipboard.writeText(`@${profile.financial_username}`);
+    void navigator.clipboard.writeText(`@${localUsername}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
+
+  const saveBlocked = usernameStatus === "taken" || usernameStatus === "checking" || usernameStatus === "invalid";
+
+  const UsernameIcon = () => {
+    if (usernameStatus === "checking") return <Loader2 className="size-3.5 animate-spin text-muted-foreground" />;
+    if (usernameStatus === "taken")    return <XCircle className="size-3.5 text-negative" />;
+    if (usernameStatus === "available") return <CheckCircle2 className="size-3.5 text-positive" />;
+    if (usernameStatus === "own")      return <Copy className="size-3.5" />;
+    return null;
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -321,11 +361,9 @@ function ProfileEditDialog({
                   <span>{initials}</span>
                 )}
               </div>
-              {/* hover overlay */}
               <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center pointer-events-none">
                 <Camera className="size-5 text-white" />
               </div>
-              {/* uploading spinner */}
               {uploading && (
                 <div className="absolute inset-0 rounded-full bg-black/60 grid place-items-center">
                   <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -333,13 +371,7 @@ function ProfileEditDialog({
               )}
             </button>
             <p className="text-[11px] text-muted-foreground">{t("settings.privacy.photo.hint")}</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
 
           {/* Name */}
@@ -349,19 +381,11 @@ function ProfileEditDialog({
                 <User className="size-3 text-muted-foreground" />
                 {t("settings.privacy.firstName")}
               </Label>
-              <Input
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                autoCapitalize="words"
-              />
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} autoCapitalize="words" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">{t("settings.privacy.lastName1")}</Label>
-              <Input
-                value={lastName1}
-                onChange={(e) => setLastName1(e.target.value)}
-                autoCapitalize="words"
-              />
+              <Input value={lastName1} onChange={(e) => setLastName1(e.target.value)} autoCapitalize="words" />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -387,39 +411,50 @@ function ProfileEditDialog({
             />
           </div>
 
-          {/* Username (read-only) */}
+          {/* Username — editable with availability check */}
           <div className="space-y-1.5">
             <Label className="text-xs flex items-center gap-1">
               <AtSign className="size-3 text-muted-foreground" />
               {t("settings.privacy.username")}
             </Label>
-            {profile.financial_username?.trim() ? (
-              <>
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted">
-                  <span className="flex-1 text-sm font-mono text-muted-foreground">
-                    @{profile.financial_username}
-                  </span>
-                  <button
-                    onClick={copyUsername}
-                    className="text-muted-foreground hover:text-foreground transition shrink-0"
-                    aria-label="Copy username"
-                  >
-                    {copied
-                      ? <Check className="size-3.5 text-positive" />
-                      : <Copy className="size-3.5" />}
-                  </button>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-snug">
-                  {t("settings.privacy.username.note")}
-                </p>
-              </>
-            ) : (
-              <div className="px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-                <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
-                  {t("settings.privacy.username.pending")}
-                </p>
-              </div>
-            )}
+            <div className={`flex items-center gap-2 px-3 rounded-xl border transition ${
+              usernameStatus === "taken"   ? "border-negative bg-negative/5" :
+              usernameStatus === "invalid" ? "border-warn/60 bg-warn/5" :
+              usernameStatus === "available" ? "border-positive/60 bg-positive/5" :
+              "border-input bg-background"
+            }`}>
+              <span className="text-sm text-muted-foreground font-mono shrink-0">@</span>
+              <input
+                value={localUsername.replace(/^@/, "")}
+                onChange={(e) => setLocalUsername(e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, ""))}
+                placeholder={t("settings.privacy.username.placeholder")}
+                className="flex-1 py-2.5 text-sm font-mono bg-transparent outline-none"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <button
+                onClick={usernameStatus === "own" ? copyUsername : undefined}
+                className="shrink-0 text-muted-foreground hover:text-foreground transition"
+                tabIndex={-1}
+              >
+                {usernameStatus === "own" && copied
+                  ? <Check className="size-3.5 text-positive" />
+                  : <UsernameIcon />}
+              </button>
+            </div>
+            <p className={`text-[11px] leading-snug ${
+              usernameStatus === "taken"    ? "text-negative" :
+              usernameStatus === "invalid"  ? "text-warn" :
+              usernameStatus === "available"? "text-positive" :
+              "text-muted-foreground"
+            }`}>
+              {usernameStatus === "taken"     ? t("settings.privacy.username.taken") :
+               usernameStatus === "invalid"   ? t("settings.privacy.username.invalid") :
+               usernameStatus === "available" ? t("settings.privacy.username.available") :
+               usernameStatus === "idle"      ? t("settings.privacy.username.pending") :
+               t("settings.privacy.username.note")}
+            </p>
           </div>
 
           {/* Actions */}
@@ -428,8 +463,8 @@ function ProfileEditDialog({
               {t("common.cancel")}
             </Button>
             <Button
-              onClick={save}
-              disabled={updateProfile.isPending || uploading || !firstName.trim() || !lastName1.trim()}
+              onClick={() => void save()}
+              disabled={updateProfile.isPending || uploading || !firstName.trim() || !lastName1.trim() || saveBlocked}
               className="flex-1"
             >
               {updateProfile.isPending

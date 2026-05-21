@@ -77,12 +77,12 @@ function Budget() {
   useEffect(() => {
     if (search.add === "expense") {
       setOpen(true);
-      navigate({ to: "/app/budget", search: {}, replace: true });
+      navigate({ to: "/app/budget", search: { add: undefined }, replace: true });
     }
     if (search.add === "income") {
       setEditingIncome(null);
       setOpenIncome(true);
-      navigate({ to: "/app/budget", search: {}, replace: true });
+      navigate({ to: "/app/budget", search: { add: undefined }, replace: true });
     }
   }, [search.add, navigate]);
 
