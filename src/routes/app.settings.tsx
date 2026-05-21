@@ -61,7 +61,7 @@ function Settings() {
 
   const email     = user?.email ?? "";
   const initials  = (profile.full_name ?? email)
-    .split(/[ @.]/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("") || "U";
+    .split(/[ @.]/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase()).join("") || "U";
 
   const notifPrefs    = (profile.notification_prefs as Record<string, boolean> | null) ?? {};
   const currentLocale = locales.find((l) => l.code === locale)!;

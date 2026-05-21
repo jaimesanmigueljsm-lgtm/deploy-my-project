@@ -202,12 +202,41 @@ export async function loadFamilyData(
 
   const family = familyRes.data as { id: string; name: string; owner_id: string };
   const members = (membersRes.data ?? []) as FamilyMember[];
-  const memberProfiles = (profilesRes.data ?? []) as FamilyMemberProfile[];
   const goals = ((goalsRes.data ?? []) as SharedGoal[]).map((g) => ({
     ...g,
     target_amount: Number(g.target_amount),
     current_amount: Number(g.current_amount),
   }));
+
+  // Try RPC result first; fall back to direct profiles query if it failed/returned empty
+  let memberProfiles = (profilesRes.data ?? []) as FamilyMemberProfile[];
+
+  if (memberProfiles.length === 0 && members.length > 0) {
+    const userIds = members.map((m) => m.user_id);
+    const { data: profileRows } = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name_1, financial_username, full_name, avatar_url")
+      .in("id", userIds);
+
+    if (profileRows && profileRows.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const profileMap = new Map((profileRows as any[]).map((p) => [p.id, p]));
+      memberProfiles = members.map((m) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const p: any = profileMap.get(m.user_id) ?? {};
+        return {
+          member_id: m.id,
+          user_id: m.user_id,
+          role: m.role,
+          first_name: p.first_name ?? "",
+          last_name_1: p.last_name_1 ?? "",
+          financial_username: p.financial_username ?? "",
+          full_name: p.full_name ?? null,
+          avatar_url: p.avatar_url ?? null,
+        } as FamilyMemberProfile;
+      });
+    }
+  }
 
   return {
     family,

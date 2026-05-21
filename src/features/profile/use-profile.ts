@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,30 +9,51 @@ import {
   type ProfileUpdate,
 } from "./profile.service";
 
-// ─── Read ────────────────────────────────────────────────────────────────────
+// ─── localStorage persistence ─────────────────────────────────────────────────
 
-/**
- * Returns the current user's profile.
- * staleTime is 5 min — profile data (name, currency, theme) changes rarely.
- */
+const CACHE_KEY = (id: string) => `nest.profile.${id}`;
+
+function readCachedProfile(id: string) {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY(id));
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeCachedProfile(id: string, data: unknown) {
+  try { localStorage.setItem(CACHE_KEY(id), JSON.stringify(data)); } catch {}
+}
+
+// ─── Read ─────────────────────────────────────────────────────────────────────
+
 export function useProfile() {
   const { user } = useAuth();
+  const id = user?.id ?? "";
+
+  // Snapshot localStorage once per user — used as instant initial data
+  const cached = useMemo(() => readCachedProfile(id), [id]);
 
   return useQuery({
-    queryKey: queryKeys.profile(user?.id ?? ""),
-    queryFn: () => fetchProfile(user!.id),
-    enabled: !!user?.id,
+    queryKey: queryKeys.profile(id),
+    queryFn: async () => {
+      const data = await fetchProfile(user!.id);
+      writeCachedProfile(user!.id, data);
+      return data;
+    },
+    enabled: !!id,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
+    // Show cached data instantly; React Query refetches in background because
+    // initialDataUpdatedAt: 0 marks it as always stale.
+    initialData: cached ?? undefined,
+    initialDataUpdatedAt: cached ? 0 : undefined,
   });
 }
 
-// ─── Write ───────────────────────────────────────────────────────────────────
+// ─── Write ────────────────────────────────────────────────────────────────────
 
-/**
- * Optimistically updates the profile cache before the server responds so the
- * settings UI never appears to lag.
- */
 export function useUpdateProfile() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
