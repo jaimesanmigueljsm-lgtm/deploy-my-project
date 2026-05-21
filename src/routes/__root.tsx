@@ -166,6 +166,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  // Reset query cache and revalidate routes whenever the auth session changes
+  // (sign in / sign out / token refresh on a different user). Without this,
+  // after logging back in the UI keeps showing stale/empty data from the
+  // previous session until each query's staleTime expires.
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "INITIAL_SESSION") return;
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        queryClient.clear();
+        router.invalidate();
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [queryClient, router]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -177,3 +193,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
