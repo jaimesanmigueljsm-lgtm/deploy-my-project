@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Users, Crown, Baby, Heart, Target, Clock, Search, Send } from "lucide-react";
+import {
+  Plus, Users, Crown, Baby, Heart, Target, Clock, Search, Send,
+  Pencil, TrendingUp, Calendar,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +25,13 @@ import {
   rejectFamilyInvite,
   createFamily,
   createSharedGoal,
+  updateSharedGoal,
+  addGoalContribution,
+  notifyFamilyMembers,
   type UserSearchResult,
   type ReceivedInvitation,
   type SentInvitation,
+  type SharedGoal,
 } from "@/features/family/family.service";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -49,6 +56,7 @@ function FamilyPage() {
   const userId = user?.id ?? "";
   const familyId = profile?.family_id ?? null;
   const currency = profile?.currency ?? "EUR";
+  const myDisplayName = profile?.full_name ?? profile?.first_name ?? t("family.role.member");
 
   const { data: receivedInvitations = [] } = useQuery({
     queryKey: FK.received(userId),
@@ -63,6 +71,7 @@ function FamilyPage() {
     enabled: !!familyId && !!userId,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
+    refetchOnWindowFocus: true,
   });
 
   const { data: sentInvitations = [] } = useQuery({
@@ -73,12 +82,22 @@ function FamilyPage() {
   });
 
   const acceptMutation = useMutation({
-    mutationFn: acceptFamilyInvite,
-    onSuccess: async () => {
+    mutationFn: ({ id }: { id: string; invFamilyId: string }) => acceptFamilyInvite(id),
+    onSuccess: async (_, { invFamilyId }) => {
       toast.success(t("family.invite.accepted.toast"));
-      // Refetch profile first so familyId becomes available, then family data.
       await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
       void qc.invalidateQueries({ queryKey: FK.received(userId) });
+      // Notify existing family members that someone joined
+      try {
+        await notifyFamilyMembers(
+          invFamilyId,
+          "invite_accepted",
+          t("family.notif.joined.title"),
+          t("family.notif.joined.body").replace("{name}", myDisplayName),
+        );
+      } catch {
+        // Notification failure is non-critical
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -95,21 +114,15 @@ function FamilyPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openInvite, setOpenInvite] = useState(false);
   const [openGoal, setOpenGoal] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<SharedGoal | null>(null);
+  const [contributingGoal, setContributingGoal] = useState<SharedGoal | null>(null);
 
   if (profileLoading || (!!familyId && familyLoading && !familyData)) return <FamilySkeleton />;
 
   const isOwner = familyData?.isOwner ?? false;
-  const { family, members, goals } = familyData ?? {
-    family: null,
-    members: [],
-    goals: [],
-    isOwner: false,
-  };
+  const { family, members, goals } = familyData ?? { family: null, members: [], goals: [], isOwner: false };
 
   // ── No family ──────────────────────────────────────────────────────────────
-  // Only show empty state when profile confirms there's no family (familyId === null).
-  // Never show it while family data is still loading to avoid the disappearing flash.
-
   if (!familyId || (!familyLoading && !family)) {
     return (
       <div className="px-4 pt-5 space-y-5 animate-rise">
@@ -128,7 +141,7 @@ function FamilyPage() {
                 <InvitationCard
                   key={inv.id}
                   invitation={inv}
-                  onAccept={() => acceptMutation.mutate(inv.id)}
+                  onAccept={() => acceptMutation.mutate({ id: inv.id, invFamilyId: inv.family_id })}
                   onReject={() => rejectMutation.mutate(inv.id)}
                   busy={acceptMutation.isPending || rejectMutation.isPending}
                   t={t}
@@ -161,10 +174,10 @@ function FamilyPage() {
     );
   }
 
-  // ── Has family ─────────────────────────────────────────────────────────────
-  // Guard: if familyId exists but family data is still loading, show skeleton.
+  // Guard: familyId set but data still loading
   if (!family) return <FamilySkeleton />;
 
+  // ── Has family ─────────────────────────────────────────────────────────────
   return (
     <div className="px-4 pt-5 space-y-5 animate-rise">
       <header className="flex items-center justify-between pt-2">
@@ -210,7 +223,7 @@ function FamilyPage() {
               <InvitationCard
                 key={inv.id}
                 invitation={inv}
-                onAccept={() => acceptMutation.mutate(inv.id)}
+                onAccept={() => acceptMutation.mutate({ id: inv.id, invFamilyId: inv.family_id })}
                 onReject={() => rejectMutation.mutate(inv.id)}
                 busy={acceptMutation.isPending || rejectMutation.isPending}
                 t={t}
@@ -279,7 +292,10 @@ function FamilyPage() {
         <SectionHeader
           title={t("family.section.goals")}
           action={
-            <button onClick={() => setOpenGoal(true)} className="text-xs font-medium text-positive">
+            <button
+              onClick={() => { setEditingGoal(null); setOpenGoal(true); }}
+              className="text-xs font-medium text-positive"
+            >
               {t("family.add.goal")}
             </button>
           }
@@ -293,24 +309,51 @@ function FamilyPage() {
         ) : (
           <div className="space-y-2">
             {goals.map((g) => {
-              const pct =
-                g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0;
+              const pct = g.target_amount > 0
+                ? Math.min(100, (g.current_amount / g.target_amount) * 100)
+                : 0;
+              const remaining = Math.max(0, g.target_amount - g.current_amount);
               return (
                 <div key={g.id} className="card-flat p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-start justify-between mb-2 gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div className="size-9 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
                         <Target className="size-4" />
                       </div>
                       <div className="min-w-0">
                         <div className="text-sm font-semibold truncate">{g.name}</div>
                         <div className="text-[11px] text-muted-foreground num">
-                          {money(g.current_amount, currency)} {t("common.of")}{" "}
+                          {money(g.current_amount, currency)}{" "}
+                          <span className="opacity-60">{t("common.of")}</span>{" "}
                           {money(g.target_amount, currency)}
                         </div>
+                        {g.deadline && (
+                          <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <Calendar className="size-3" />
+                            {new Date(g.deadline).toLocaleDateString()}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="text-sm font-semibold num">{Math.round(pct)}%</div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-sm font-semibold num text-positive">
+                        {Math.round(pct)}%
+                      </span>
+                      <button
+                        onClick={() => setContributingGoal(g)}
+                        aria-label={t("family.goal.contribute")}
+                        className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-positive hover:bg-positive-soft/40 transition"
+                      >
+                        <TrendingUp className="size-3.5" />
+                      </button>
+                      <button
+                        onClick={() => { setEditingGoal(g); setOpenGoal(true); }}
+                        aria-label={t("common.edit")}
+                        className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
@@ -318,6 +361,11 @@ function FamilyPage() {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
+                  {remaining > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      {money(remaining, currency)} {t("family.goal.remaining")}
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -334,13 +382,32 @@ function FamilyPage() {
           t={t}
         />
       )}
+
       <GoalDialog
         open={openGoal}
-        onClose={() => setOpenGoal(false)}
+        onClose={() => { setOpenGoal(false); setEditingGoal(null); }}
         familyId={family.id}
+        editing={editingGoal}
+        myName={myDisplayName}
         onSaved={() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })}
         t={t}
       />
+
+      {contributingGoal && (
+        <ContributionDialog
+          open={!!contributingGoal}
+          onClose={() => setContributingGoal(null)}
+          goal={contributingGoal}
+          familyId={family.id}
+          myName={myDisplayName}
+          currency={currency}
+          onSaved={() => {
+            setContributingGoal(null);
+            void qc.invalidateQueries({ queryKey: FK.data(family.id) });
+          }}
+          t={t}
+        />
+      )}
     </div>
   );
 }
@@ -348,11 +415,7 @@ function FamilyPage() {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function InvitationCard({
-  invitation,
-  onAccept,
-  onReject,
-  busy,
-  t,
+  invitation, onAccept, onReject, busy, t,
 }: {
   invitation: ReceivedInvitation;
   onAccept: () => void;
@@ -379,13 +442,7 @@ function InvitationCard({
         </div>
       </div>
       <div className="flex gap-2 mt-3">
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1 h-8 text-xs"
-          disabled={busy}
-          onClick={onReject}
-        >
+        <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" disabled={busy} onClick={onReject}>
           {t("family.invite.reject")}
         </Button>
         <Button size="sm" className="flex-1 h-8 text-xs" disabled={busy} onClick={onAccept}>
@@ -414,11 +471,7 @@ function SentInvitationRow({ inv }: { inv: SentInvitation }) {
 }
 
 function CreateFamilyDialog({
-  open,
-  onClose,
-  userId,
-  onCreated,
-  t,
+  open, onClose, userId, onCreated, t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -466,11 +519,7 @@ function CreateFamilyDialog({
             <Button variant="outline" onClick={onClose} className="flex-1">
               {t("common.cancel")}
             </Button>
-            <Button
-              onClick={() => void create()}
-              disabled={saving || !name.trim()}
-              className="flex-1"
-            >
+            <Button onClick={() => void create()} disabled={saving || !name.trim()} className="flex-1">
               {saving ? t("family.dialog.create.creating") : t("family.dialog.create.cta")}
             </Button>
           </div>
@@ -481,11 +530,7 @@ function CreateFamilyDialog({
 }
 
 function InviteDialog({
-  open,
-  onClose,
-  familyId,
-  onSent,
-  t,
+  open, onClose, familyId, onSent, t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -499,16 +544,12 @@ function InviteDialog({
   const [result, setResult] = useState<UserSearchResult | null | "not-found">(null);
 
   function reset() {
-    setQuery("");
-    setResult(null);
-    setSearching(false);
-    setSending(false);
+    setQuery(""); setResult(null); setSearching(false); setSending(false);
   }
 
   async function doSearch() {
     if (!query.trim()) return;
-    setSearching(true);
-    setResult(null);
+    setSearching(true); setResult(null);
     try {
       const found = await searchUserByUsername(query.trim());
       setResult(found ?? "not-found");
@@ -525,9 +566,7 @@ function InviteDialog({
     try {
       await sendFamilyInvite(familyId, result.financial_username);
       toast.success(t("family.toast.invite.sent"));
-      onSent();
-      reset();
-      onClose();
+      onSent(); reset(); onClose();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -536,85 +575,48 @@ function InviteDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) {
-          reset();
-          onClose();
-        }
-      }}
-    >
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onClose(); } }}>
       <DialogContent className="rounded-2xl">
         <DialogHeader>
           <DialogTitle>{t("family.dialog.invite.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {/* Search field */}
           <div className="space-y-1.5">
             <Label>{t("family.invite.search.label")}</Label>
             <div className="flex gap-2">
               <Input
                 value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setResult(null);
-                }}
+                onChange={(e) => { setQuery(e.target.value); setResult(null); }}
                 placeholder={t("family.invite.search.placeholder")}
                 autoFocus
                 onKeyDown={(e) => e.key === "Enter" && void doSearch()}
               />
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={searching || !query.trim()}
-                onClick={() => void doSearch()}
-              >
+              <Button variant="outline" size="icon" disabled={searching || !query.trim()} onClick={() => void doSearch()}>
                 <Search className="size-4" />
               </Button>
             </div>
           </div>
-
-          {/* Result card */}
           {result === "not-found" && (
             <p className="text-sm text-muted-foreground text-center py-2">
               {t("family.invite.search.notfound")}
             </p>
           )}
-
           {result && result !== "not-found" && (
             <div className="card-flat p-4 flex items-center gap-3">
               <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
                 <Heart className="size-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold">
-                  {result.first_name} {result.last_name_1}
-                </div>
-                <div className="text-xs text-muted-foreground font-mono">
-                  @{result.financial_username}
-                </div>
+                <div className="text-sm font-semibold">{result.first_name} {result.last_name_1}</div>
+                <div className="text-xs text-muted-foreground font-mono">@{result.financial_username}</div>
               </div>
             </div>
           )}
-
-          {/* Actions */}
           <div className="flex gap-2 pt-1">
-            <Button
-              variant="outline"
-              onClick={() => {
-                reset();
-                onClose();
-              }}
-              className="flex-1"
-            >
+            <Button variant="outline" onClick={() => { reset(); onClose(); }} className="flex-1">
               {t("common.cancel")}
             </Button>
-            <Button
-              onClick={() => void doSend()}
-              disabled={!result || result === "not-found" || sending}
-              className="flex-1"
-            >
+            <Button onClick={() => void doSend()} disabled={!result || result === "not-found" || sending} className="flex-1">
               <Send className="size-3.5 mr-1.5" />
               {t("family.invite.send.cta")}
             </Button>
@@ -625,33 +627,79 @@ function InviteDialog({
   );
 }
 
+// ─── GoalDialog — handles both create and edit ────────────────────────────────
+
 function GoalDialog({
-  open,
-  onClose,
-  familyId,
-  onSaved,
-  t,
+  open, onClose, familyId, editing, myName, onSaved, t,
 }: {
   open: boolean;
   onClose: () => void;
   familyId: string;
+  editing: SharedGoal | null;
+  myName: string;
   onSaved: () => void;
   t: (k: string) => string;
 }) {
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
   const [current, setCurrent] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (editing) {
+        setName(editing.name);
+        setTarget(String(editing.target_amount));
+        setCurrent(String(editing.current_amount));
+        setDeadline(editing.deadline?.slice(0, 10) ?? "");
+      } else {
+        setName(""); setTarget(""); setCurrent(""); setDeadline("");
+      }
+    }
+  }, [open, editing]);
 
   async function save() {
     if (!name.trim() || !target) return;
     setSaving(true);
     try {
-      await createSharedGoal(familyId, name.trim(), Number(target), Number(current || 0));
-      toast.success(t("family.toast.goal.added"));
-      setName("");
-      setTarget("");
-      setCurrent("");
+      if (editing) {
+        await updateSharedGoal(editing.id, {
+          name: name.trim(),
+          target_amount: Number(target),
+          deadline: deadline || null,
+        });
+        toast.success(t("family.toast.goal.updated"));
+        // Notify family of the edit
+        try {
+          await notifyFamilyMembers(
+            familyId,
+            "goal_updated",
+            t("family.notif.goal.updated.title"),
+            t("family.notif.goal.updated.body")
+              .replace("{name}", myName)
+              .replace("{goal}", name.trim()),
+          );
+        } catch {
+          // Non-critical
+        }
+      } else {
+        await createSharedGoal(familyId, name.trim(), Number(target), Number(current || 0), deadline || null);
+        toast.success(t("family.toast.goal.added"));
+        // Notify family of new goal
+        try {
+          await notifyFamilyMembers(
+            familyId,
+            "goal_updated",
+            t("family.notif.goal.created.title"),
+            t("family.notif.goal.created.body")
+              .replace("{name}", myName)
+              .replace("{goal}", name.trim()),
+          );
+        } catch {
+          // Non-critical
+        }
+      }
       onSaved();
       onClose();
     } catch (e) {
@@ -662,10 +710,12 @@ function GoalDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{t("family.dialog.goal.title")}</DialogTitle>
+          <DialogTitle>
+            {editing ? t("family.dialog.goal.edit.title") : t("family.dialog.goal.title")}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
@@ -680,33 +730,149 @@ function GoalDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{t("family.dialog.goal.target")}</Label>
-              <Input
-                type="number"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="3000"
-              />
+              <Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="3000" />
             </div>
+            {!editing && (
+              <div className="space-y-1.5">
+                <Label>{t("family.dialog.goal.saved")}</Label>
+                <Input type="number" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="0" />
+              </div>
+            )}
+            {editing && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("family.dialog.goal.deadline")}</Label>
+                <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+              </div>
+            )}
+          </div>
+          {!editing && (
             <div className="space-y-1.5">
-              <Label>{t("family.dialog.goal.saved")}</Label>
-              <Input
-                type="number"
-                value={current}
-                onChange={(e) => setCurrent(e.target.value)}
-                placeholder="0"
-              />
+              <Label className="text-xs text-muted-foreground">{t("family.dialog.goal.deadline")}</Label>
+              <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+            </div>
+          )}
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={() => void save()} disabled={saving || !name.trim() || !target} className="flex-1">
+              {saving ? t("common.loading") : editing ? t("common.save") : t("family.dialog.goal.cta")}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── ContributionDialog ───────────────────────────────────────────────────────
+
+function ContributionDialog({
+  open, onClose, goal, familyId, myName, currency, onSaved, t,
+}: {
+  open: boolean;
+  onClose: () => void;
+  goal: SharedGoal;
+  familyId: string;
+  myName: string;
+  currency: string;
+  onSaved: () => void;
+  t: (k: string) => string;
+}) {
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    const n = Number(amount);
+    if (!n || n <= 0) return;
+    setSaving(true);
+    try {
+      await addGoalContribution(goal.id, goal.current_amount, n);
+      // Notify all other family members
+      try {
+        const bodyTpl = t("family.notif.contribution.body")
+          .replace("{name}", myName)
+          .replace("{amount}", money(n, currency))
+          .replace("{goal}", goal.name);
+        await notifyFamilyMembers(
+          familyId,
+          "contribution_added",
+          t("family.notif.contribution.title").replace("{goal}", goal.name),
+          note ? `${bodyTpl} — ${note}` : bodyTpl,
+        );
+      } catch {
+        // Non-critical
+      }
+      toast.success(t("family.toast.contribution.added"));
+      setAmount(""); setNote("");
+      onSaved();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const remaining = Math.max(0, goal.target_amount - goal.current_amount);
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { setAmount(""); setNote(""); onClose(); } }}>
+      <DialogContent className="rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>{t("family.dialog.contribute.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          {/* Goal summary */}
+          <div className="card-sunken p-3 flex items-center gap-3">
+            <div className="size-8 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
+              <Target className="size-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate">{goal.name}</div>
+              <div className="text-xs text-muted-foreground num">
+                {money(goal.current_amount, currency)} / {money(goal.target_amount, currency)}
+                {remaining > 0 && (
+                  <span className="ml-1 opacity-70">· {money(remaining, currency)} {t("family.goal.remaining")}</span>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Amount */}
+          <div className="card-sunken p-5 flex items-baseline gap-2">
+            <span className="text-xl text-muted-foreground">€</span>
+            <Input
+              type="number"
+              inputMode="decimal"
+              autoFocus
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0"
+              className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
+            />
+          </div>
+
+          {/* Optional note */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("family.dialog.contribute.note")}</Label>
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t("family.dialog.contribute.note.placeholder")}
+            />
+          </div>
+
           <div className="flex gap-2 pt-1">
             <Button variant="outline" onClick={onClose} className="flex-1">
               {t("common.cancel")}
             </Button>
             <Button
               onClick={() => void save()}
-              disabled={saving || !name.trim() || !target}
+              disabled={saving || !amount || Number(amount) <= 0}
               className="flex-1"
             >
-              {saving ? t("common.loading") : t("family.dialog.goal.cta")}
+              {saving ? t("common.loading") : t("family.dialog.contribute.cta")}
             </Button>
           </div>
         </div>

@@ -10,8 +10,6 @@ import {
   TrendingUp,
   Briefcase,
   Pencil,
-  Calendar,
-  CheckCircle2,
   Info,
   RepeatIcon,
 } from "lucide-react";
@@ -26,8 +24,6 @@ import {
   useAddIncome,
   useUpdateIncome,
   useDeleteIncome,
-  useToggleBill,
-  useDeleteBill,
 } from "@/features/budget/use-budget";
 import {
   useAddExpense,
@@ -61,22 +57,19 @@ function Budget() {
   const { t } = useT();
   const range = useMemo(() => monthRange(), []);
 
-  const { expenses, categories, incomes, bills, currency, isLoading } = useBudgetData(
+  const { expenses, categories, incomes, currency, isLoading } = useBudgetData(
     range.start,
     range.end,
   );
 
   const deleteExpense = useDeleteExpense();
   const deleteIncome = useDeleteIncome();
-  const toggleBill = useToggleBill();
-  const deleteBill = useDeleteBill();
 
   const [tab, setTab] = useState<Tab>("all");
   const [open, setOpen] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [editingExpense, setEditingExpense] = useState<EditableExpense | null>(null);
-  const [openBill, setOpenBill] = useState(false);
 
   // Open dialog when navigated with ?add=expense | ?add=income
   const search = Route.useSearch();
@@ -392,84 +385,6 @@ function Budget() {
             )}
           </section>
 
-          {/* ── Bills (recurring fixed) ─────────────────────────────────── */}
-          {tab === "all" && (
-            <section>
-              <SectionHeader
-                title={t("budget.section.bills")}
-                subtitle={t("budget.section.bills.sub")}
-                action={
-                  <button
-                    onClick={() => setOpenBill(true)}
-                    className="text-xs font-medium text-positive"
-                  >
-                    + {t("common.add")}
-                  </button>
-                }
-              />
-              {bills.length === 0 ? (
-                <EmptyState
-                  icon={<Calendar className="size-5" />}
-                  title={t("budget.empty.bills.title")}
-                  description={t("budget.empty.bills.desc")}
-                  action={
-                    <Button size="sm" onClick={() => setOpenBill(true)}>
-                      {t("budget.add.bill")}
-                    </Button>
-                  }
-                />
-              ) : (
-                <div className="card-flat divide-y divide-border-subtle">
-                  {bills.map((b) => (
-                    <div key={b.id} className="flex items-center justify-between px-4 py-3.5">
-                      <button
-                        onClick={() =>
-                          toggleBill.mutate({ id: b.id, paidThisMonth: !b.paid_this_month })
-                        }
-                        className="flex items-center gap-3 min-w-0 flex-1 text-left"
-                      >
-                        <div
-                          className={`size-9 rounded-xl grid place-items-center shrink-0 transition ${
-                            b.paid_this_month
-                              ? "bg-positive-soft text-positive"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          <CheckCircle2 className="size-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div
-                            className={`text-sm font-medium truncate ${b.paid_this_month ? "line-through text-muted-foreground" : ""}`}
-                          >
-                            {b.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {t("dashboard.bills.due")} {b.due_day} ·{" "}
-                            {b.paid_this_month ? t("budget.bill.paid") : t("budget.bill.pending")}
-                          </div>
-                        </div>
-                      </button>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div
-                          className={`text-sm font-semibold num ${b.paid_this_month ? "text-muted-foreground" : ""}`}
-                        >
-                          −{money(b.amount, currency)}
-                        </div>
-                        <button
-                          onClick={() => deleteBill.mutate(b.id)}
-                          disabled={deleteBill.isPending}
-                          aria-label={t("common.delete")}
-                          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative-soft/40 transition"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
         </>
       )}
 
@@ -492,7 +407,6 @@ function Budget() {
         editing={editingIncome}
         t={t}
       />
-      <BillDialog open={openBill} onClose={() => setOpenBill(false)} t={t} />
     </div>
   );
 }
@@ -868,108 +782,6 @@ function IncomeDialog({
             </Button>
             <Button onClick={save} disabled={isPending} className="flex-1">
               {isPending ? t("common.loading") : editing ? t("common.save") : t("common.add")}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── BillDialog ────────────────────────────────────────────────────────────────
-
-function BillDialog({
-  open,
-  onClose,
-  t,
-}: {
-  open: boolean;
-  onClose: () => void;
-  t: (k: string) => string;
-}) {
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [dueDay, setDueDay] = useState("1");
-
-  const addBill = useAddBill();
-  const submittingRef = useRef(false);
-
-  useEffect(() => {
-    if (!open) {
-      setName("");
-      setAmount("");
-      setDueDay("1");
-      submittingRef.current = false;
-    }
-  }, [open]);
-
-  function save() {
-    if (submittingRef.current) return;
-    if (!name.trim() || !amount || Number(amount) <= 0) return;
-    submittingRef.current = true;
-    addBill.mutate(
-      { name: name.trim(), amount: Number(amount), due_day: Number(dueDay) },
-      {
-        onSuccess: onClose,
-        onSettled: () => {
-          submittingRef.current = false;
-        },
-      },
-    );
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) onClose();
-      }}
-    >
-      <DialogContent className="rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("budget.dialog.bill.title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="card-sunken p-5 flex items-baseline gap-2">
-            <span className="text-xl text-muted-foreground">€</span>
-            <Input
-              type="number"
-              inputMode="decimal"
-              autoFocus
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0"
-              className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{t("budget.dialog.bill.name")}</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("budget.dialog.bill.name.placeholder")}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
-              {t("budget.dialog.bill.dueday")}
-            </Label>
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={31}
-              value={dueDay}
-              onChange={(e) => setDueDay(e.target.value)}
-              placeholder="1"
-            />
-          </div>
-          <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              <X className="size-4 mr-1" /> {t("common.cancel")}
-            </Button>
-            <Button onClick={save} disabled={addBill.isPending} className="flex-1">
-              {addBill.isPending ? t("common.loading") : t("common.add")}
             </Button>
           </div>
         </div>

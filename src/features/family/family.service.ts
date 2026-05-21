@@ -56,6 +56,7 @@ export interface SharedGoal {
   target_amount: number;
   current_amount: number;
   deadline: string | null;
+  notes?: string | null;
 }
 
 export interface FamilyData {
@@ -230,7 +231,7 @@ export async function createFamily(
   return familyId;
 }
 
-// ─── Shared goal creation ─────────────────────────────────────────────────────
+// ─── Shared goal mutations ────────────────────────────────────────────────────
 
 export async function createSharedGoal(
   familyId: string,
@@ -245,6 +246,49 @@ export async function createSharedGoal(
     target_amount: targetAmount,
     current_amount: currentAmount,
     deadline,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function updateSharedGoal(
+  goalId: string,
+  updates: { name?: string; target_amount?: number; deadline?: string | null },
+): Promise<void> {
+  const { error } = await supabase.from("shared_goals").update(updates).eq("id", goalId);
+  if (error) throw new Error(error.message);
+}
+
+export async function addGoalContribution(
+  goalId: string,
+  currentAmount: number,
+  delta: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from("shared_goals")
+    .update({ current_amount: currentAmount + delta })
+    .eq("id", goalId);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Family notifications ─────────────────────────────────────────────────────
+
+/**
+ * Calls the SECURITY DEFINER notify_family_members RPC which inserts a
+ * notification row for every family member EXCEPT the calling user.
+ * Requires the migration 20260521300000_family_rls_and_notifications.sql.
+ */
+export async function notifyFamilyMembers(
+  familyId: string,
+  type: "invite_accepted" | "contribution_added" | "goal_updated",
+  title: string,
+  body: string,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("notify_family_members", {
+    p_family_id: familyId,
+    p_type: type,
+    p_title: title,
+    p_body: body,
   });
   if (error) throw new Error(error.message);
 }
