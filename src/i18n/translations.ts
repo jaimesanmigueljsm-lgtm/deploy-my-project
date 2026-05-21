@@ -601,6 +601,25 @@ const en: Dict = {
   "dashboard.savings.networth": "Net worth",
   "dashboard.savings.networth.sub": "savings + investments",
 
+  // ── Home simplified sections ──────────────────────────────────────────────
+  "dashboard.yoursavings.title": "Your savings",
+  "dashboard.yoursavings.total": "Total saved",
+  "dashboard.yoursavings.account": "account",
+  "dashboard.yoursavings.accounts": "accounts",
+  "dashboard.yoursavings.emergency": "Emergency fund",
+  "dashboard.yoursavings.emergency.sub": "Emergency protection",
+  "dashboard.monthly.title": "This month",
+  "dashboard.monthly.saved": "Saved",
+  "dashboard.monthly.rate": "Savings rate",
+  "dashboard.monthly.better": "Better than last month",
+  "dashboard.monthly.great": "Excellent savings rate!",
+  "dashboard.monthly.good": "Keep it up",
+  "dashboard.monthly.ok": "Good progress",
+  "dashboard.monthly.over": "Spending more than earning",
+  "dashboard.goalcard.title": "Goal in progress",
+  "dashboard.goalcard.remaining": "remaining",
+  "dashboard.goalcard.viewall": "See all goals",
+
   // ── Analytics new keys ────────────────────────────────────────────────────
   "analytics.section.fixedVsVariable": "Fixed vs. variable",
   "analytics.section.fixedVsVariable.sub": "Monthly expense split",
@@ -1200,6 +1219,25 @@ const es: Dict = {
   "dashboard.savings.months": "meses",
   "dashboard.savings.networth": "Patrimonio neto",
   "dashboard.savings.networth.sub": "ahorros + inversiones",
+
+  // ── Secciones simplificadas del inicio ───────────────────────────────────
+  "dashboard.yoursavings.title": "Tus ahorros",
+  "dashboard.yoursavings.total": "Total ahorrado",
+  "dashboard.yoursavings.account": "cuenta",
+  "dashboard.yoursavings.accounts": "cuentas",
+  "dashboard.yoursavings.emergency": "Fondo de emergencia",
+  "dashboard.yoursavings.emergency.sub": "Protección de emergencia",
+  "dashboard.monthly.title": "Este mes",
+  "dashboard.monthly.saved": "Ahorrado",
+  "dashboard.monthly.rate": "Tasa de ahorro",
+  "dashboard.monthly.better": "Mejor que el mes pasado",
+  "dashboard.monthly.great": "¡Excelente tasa de ahorro!",
+  "dashboard.monthly.good": "Sigue así",
+  "dashboard.monthly.ok": "Buen progreso",
+  "dashboard.monthly.over": "Gastando más de lo que ganas",
+  "dashboard.goalcard.title": "Meta en progreso",
+  "dashboard.goalcard.remaining": "restante",
+  "dashboard.goalcard.viewall": "Ver todas las metas",
 
   // ── Analítica nuevas claves ───────────────────────────────────────────────
   "analytics.section.fixedVsVariable": "Fijos vs. variable",
