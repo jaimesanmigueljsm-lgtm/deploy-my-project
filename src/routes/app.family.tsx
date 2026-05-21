@@ -248,13 +248,6 @@ function FamilyPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setOpenWhoAreWe(true)}
-            className="size-10 rounded-full bg-muted text-foreground grid place-items-center"
-            aria-label={t("family.whoarewe.button")}
-          >
-            <Info className="size-4" />
-          </button>
           {isOwner && (
             <button
               onClick={() => setOpenInvite(true)}

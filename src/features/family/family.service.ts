@@ -273,10 +273,10 @@ export async function updateFamilyName(
 }
 
 export async function removeFamilyMember(memberId: string): Promise<void> {
-  const { error } = await supabase
-    .from("family_members")
-    .delete()
-    .eq("id", memberId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("remove_family_member", {
+    p_member_id: memberId,
+  });
   if (error) throw new Error(error.message);
 }
 
