@@ -7,7 +7,10 @@ import { AddBillSchema, AddIncomeSchema, UpdateIncomeSchema } from "@/schemas/bu
 
 export type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind">;
 export type Bill = Pick<Tables<"bills">, "id" | "name" | "amount" | "due_day" | "paid_this_month">;
-export type Income = Pick<Tables<"incomes">, "id" | "source" | "amount" | "recurring" | "received_at">;
+export type Income = Pick<
+  Tables<"incomes">,
+  "id" | "source" | "amount" | "recurring" | "received_at"
+>;
 
 export type AddBillPayload = Pick<TablesInsert<"bills">, "name" | "amount" | "due_day">;
 export type AddIncomePayload = Pick<TablesInsert<"incomes">, "source" | "amount" | "recurring">;
@@ -51,6 +54,11 @@ export async function addBill(userId: string, payload: AddBillPayload): Promise<
 
   if (error) throw new Error(error.message);
   return { ...data, amount: Number(data.amount) } as Bill;
+}
+
+export async function deleteBill(id: string): Promise<void> {
+  const { error } = await supabase.from("bills").delete().eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 export async function toggleBill(id: string, paidThisMonth: boolean): Promise<Bill> {

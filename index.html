@@ -24,6 +24,14 @@
 </head>
 
   <body>
+    <!-- Apply dark mode before React hydrates to prevent white flash -->
+    <script>
+      try {
+        if (localStorage.getItem('nest.theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

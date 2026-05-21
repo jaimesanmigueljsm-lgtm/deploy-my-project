@@ -248,12 +248,27 @@ const en: Dict = {
   "budget.add.expense": "Add expense",
   "budget.add.income": "Add income",
   "budget.dialog.expense.title": "New expense",
+  "budget.dialog.expense.edit.title": "Edit expense",
+  "budget.dialog.expense.date": "Date",
+  "budget.dialog.expense.description.placeholder": "Coffee, taxi…",
   "budget.dialog.income.title": "Add income source",
   "budget.dialog.income.edit.title": "Edit income source",
   "budget.dialog.income.source": "Source",
   "budget.dialog.income.source.placeholder": "Salary, freelance…",
   "budget.dialog.income.recurring": "Recurring monthly",
+  "budget.dialog.income.oneoff": "One-off",
+  "budget.dialog.bill.title": "New recurring bill",
+  "budget.dialog.bill.name": "Name",
+  "budget.dialog.bill.name.placeholder": "Rent, Netflix…",
+  "budget.dialog.bill.dueday": "Due day (1–31)",
   "budget.expense.recurring": "recurring",
+  "budget.section.bills": "Recurring bills",
+  "budget.section.bills.sub": "Monthly fixed costs",
+  "budget.empty.bills.title": "No recurring bills",
+  "budget.empty.bills.desc": "Add rent, utilities and subscriptions so they appear in your forecast.",
+  "budget.add.bill": "Add bill",
+  "budget.bill.paid": "Paid",
+  "budget.bill.pending": "Pending",
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   "analytics.title": "Insights",
@@ -435,6 +450,17 @@ const en: Dict = {
   "rec.budgetOverrunProjected.title": "Budget overrun projected",
   "rec.budgetOverrunProjected.explanation": "At your current pace, you'll exceed your income by {overrun} this month. Your safe daily budget is {safePerDay}.",
   "rec.budgetOverrunProjected.action": "Focus variable spending on essentials for the rest of the month. Pause non-urgent purchases.",
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  "notifications.title": "Notifications",
+  "notifications.empty": "No notifications yet",
+  "notifications.markAllRead": "Mark all read",
+
+  // ── Fallback insight cards (shown when no AI/engine data) ─────────────────
+  "dashboard.insight.roundup.title": "Round-up savings",
+  "dashboard.insight.roundup.body": "Auto-round transactions to the nearest euro. Average users save €27/mo without effort.",
+  "dashboard.insight.idlecash.title": "Idle cash",
+  "dashboard.insight.idlecash.body": "If you have over €1,000 not invested, a savings account at 3% adds €30/mo passively.",
 };
 
 const es: Dict = {
@@ -672,12 +698,27 @@ const es: Dict = {
   "budget.add.expense": "Añadir gasto",
   "budget.add.income": "Añadir ingreso",
   "budget.dialog.expense.title": "Nuevo gasto",
+  "budget.dialog.expense.edit.title": "Editar gasto",
+  "budget.dialog.expense.date": "Fecha",
+  "budget.dialog.expense.description.placeholder": "Café, taxi…",
   "budget.dialog.income.title": "Añadir fuente de ingresos",
   "budget.dialog.income.edit.title": "Editar ingreso",
   "budget.dialog.income.source": "Fuente",
   "budget.dialog.income.source.placeholder": "Sueldo, freelance…",
   "budget.dialog.income.recurring": "Mensual recurrente",
+  "budget.dialog.income.oneoff": "Pago único",
+  "budget.dialog.bill.title": "Nueva factura recurrente",
+  "budget.dialog.bill.name": "Nombre",
+  "budget.dialog.bill.name.placeholder": "Alquiler, Netflix…",
+  "budget.dialog.bill.dueday": "Día de vencimiento (1–31)",
   "budget.expense.recurring": "recurrente",
+  "budget.section.bills": "Facturas recurrentes",
+  "budget.section.bills.sub": "Gastos fijos mensuales",
+  "budget.empty.bills.title": "Sin facturas recurrentes",
+  "budget.empty.bills.desc": "Añade alquiler, servicios y suscripciones para que aparezcan en tu previsión.",
+  "budget.add.bill": "Añadir factura",
+  "budget.bill.paid": "Pagado",
+  "budget.bill.pending": "Pendiente",
 
   // ── Analytics ─────────────────────────────────────────────────────────────
   "analytics.title": "Análisis",
@@ -859,6 +900,17 @@ const es: Dict = {
   "rec.budgetOverrunProjected.title": "Se prevé superar el presupuesto",
   "rec.budgetOverrunProjected.explanation": "A tu ritmo actual, superarás tus ingresos en {overrun} este mes. Tu presupuesto diario seguro es {safePerDay}.",
   "rec.budgetOverrunProjected.action": "Centra el gasto variable en lo esencial el resto del mes. Pausa las compras no urgentes.",
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  "notifications.title": "Notificaciones",
+  "notifications.empty": "Sin notificaciones aún",
+  "notifications.markAllRead": "Marcar todo como leído",
+
+  // ── Fallback insight cards ─────────────────────────────────────────────────
+  "dashboard.insight.roundup.title": "Ahorro redondeado",
+  "dashboard.insight.roundup.body": "Redondea tus transacciones al euro más cercano. Los usuarios ahorran de media €27/mes sin esfuerzo.",
+  "dashboard.insight.idlecash.title": "Dinero inactivo",
+  "dashboard.insight.idlecash.body": "Si tienes más de €1.000 sin invertir, una cuenta de ahorro al 3% añade €30/mes de forma pasiva.",
 };
 
 const fr: Dict = {

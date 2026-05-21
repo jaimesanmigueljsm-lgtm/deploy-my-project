@@ -8,6 +8,7 @@ import { fetchExpenses } from "@/features/expenses/expenses.service";
 import {
   addBill,
   addIncome,
+  deleteBill,
   deleteIncome,
   fetchBills,
   fetchCategories,
@@ -63,8 +64,7 @@ export function useBudgetData(start: string, end: string) {
         queryFn: () => fetchProfile(uid),
         enabled: !!uid,
         staleTime: 5 * 60_000,
-        select: (profile: Awaited<ReturnType<typeof fetchProfile>>) =>
-          profile?.currency ?? "EUR",
+        select: (profile: Awaited<ReturnType<typeof fetchProfile>>) => profile?.currency ?? "EUR",
       },
     ],
   });
@@ -119,9 +119,7 @@ export function useToggleBill() {
       const previous = queryClient.getQueryData<Bill[]>(key);
 
       queryClient.setQueryData<Bill[]>(key, (old) =>
-        (old ?? []).map((b) =>
-          b.id === id ? { ...b, paid_this_month: paidThisMonth } : b,
-        ),
+        (old ?? []).map((b) => (b.id === id ? { ...b, paid_this_month: paidThisMonth } : b)),
       );
 
       return { previous, key };
@@ -132,6 +130,34 @@ export function useToggleBill() {
         queryClient.setQueryData(context.key, context.previous);
       }
       toast.error("Failed to update bill");
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.bills(user!.id) });
+    },
+  });
+}
+
+export function useDeleteBill() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteBill(id),
+
+    onMutate: async (deletedId) => {
+      const key = queryKeys.bills(user!.id);
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Bill[]>(key);
+      queryClient.setQueryData<Bill[]>(key, (old) => (old ?? []).filter((b) => b.id !== deletedId));
+      return { previous, key };
+    },
+
+    onError: (_err, _id, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(context.key, context.previous);
+      }
+      toast.error("Failed to delete bill");
     },
 
     onSettled: () => {

@@ -7,8 +7,10 @@ import {
   addExpense,
   deleteExpense,
   fetchExpenses,
+  updateExpense,
   type AddExpensePayload,
   type Expense,
+  type UpdateExpensePayload,
 } from "./expenses.service";
 
 // ─── Read ────────────────────────────────────────────────────────────────────
@@ -58,6 +60,50 @@ export function useAddExpense() {
 
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Failed to add expense");
+    },
+  });
+}
+
+/**
+ * Updates an expense with an optimistic cache patch.
+ */
+export function useUpdateExpense() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const range = monthRange();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateExpensePayload }) =>
+      updateExpense(id, payload),
+
+    onMutate: async ({ id, payload }) => {
+      const key = queryKeys.expenses(user!.id).byMonth(range.start, range.end);
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Expense[]>(key);
+
+      queryClient.setQueryData<Expense[]>(key, (old) =>
+        (old ?? []).map((e) => (e.id === id ? { ...e, ...payload } : e)),
+      );
+
+      return { previous, key };
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(context.key, context.previous);
+      }
+      toast.error("Failed to update expense");
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses(user!.id).all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard(user!.id, range.start),
+      });
+    },
+
+    onSuccess: () => {
+      toast.success("Expense updated");
     },
   });
 }

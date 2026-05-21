@@ -1,7 +1,6 @@
 import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { AuthProvider } from "@/hooks/use-auth";
 import { Home, Wallet, Target, BarChart3, Users, User } from "lucide-react";
 import { useT } from "@/i18n";
 import { OfflineBanner } from "@/components/offline-banner";
@@ -40,9 +39,17 @@ export const Route = createFileRoute("/app")({
       staleTime: 5 * 60_000,
     });
     if (!prof?.onboarded) throw redirect({ to: "/onboarding" });
-    // Apply theme synchronously before the shell renders to avoid flash
+    // Apply theme synchronously before the shell renders to avoid flash.
+    // Also mirror to localStorage so the inline script in index.html can
+    // apply it on subsequent page loads before React hydrates.
     if (typeof document !== "undefined") {
-      document.documentElement.classList.toggle("dark", prof?.theme === "dark");
+      const isDark = prof?.theme === "dark";
+      document.documentElement.classList.toggle("dark", isDark);
+      try {
+        localStorage.setItem("nest.theme", isDark ? "dark" : "light");
+      } catch {
+        // localStorage unavailable in some sandboxed environments — safe to ignore
+      }
     }
   },
   component: () => (
@@ -55,46 +62,26 @@ export const Route = createFileRoute("/app")({
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 type TabDef = {
-  to:
-    | "/app"
-    | "/app/budget"
-    | "/app/goals"
-    | "/app/analytics"
-    | "/app/family"
-    | "/app/settings";
+  to: "/app" | "/app/budget" | "/app/goals" | "/app/analytics" | "/app/family" | "/app/settings";
   labelKey: string;
   icon: typeof Home;
   exact?: boolean;
 };
 
 const tabs: TabDef[] = [
-  { to: "/app",          labelKey: "nav.home",     icon: Home,      exact: true },
-  { to: "/app/budget",   labelKey: "nav.budget",   icon: Wallet },
-  { to: "/app/goals",    labelKey: "nav.goals",    icon: Target },
-  { to: "/app/analytics",labelKey: "nav.insights", icon: BarChart3 },
-  { to: "/app/family",   labelKey: "nav.family",   icon: Users },
-  { to: "/app/settings", labelKey: "nav.you",      icon: User },
+  { to: "/app", labelKey: "nav.home", icon: Home, exact: true },
+  { to: "/app/budget", labelKey: "nav.budget", icon: Wallet },
+  { to: "/app/goals", labelKey: "nav.goals", icon: Target },
+  { to: "/app/analytics", labelKey: "nav.insights", icon: BarChart3 },
+  { to: "/app/family", labelKey: "nav.family", icon: Users },
+  { to: "/app/settings", labelKey: "nav.you", icon: User },
 ];
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
 function AppShell() {
-  const { user } = useAuth();
   const loc = useLocation();
   const { t } = useT();
-
-  // Re-sync theme when the app shell changes routes.
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("theme")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        document.documentElement.classList.toggle("dark", data?.theme === "dark");
-      });
-  }, [user, loc.pathname]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,9 +97,7 @@ function AppShell() {
         <div className="mx-auto max-w-2xl px-2 pb-2">
           <div className="glass border border-border-subtle rounded-2xl shadow-float flex justify-between items-center p-1 gap-0.5">
             {tabs.map((tab) => {
-              const active = tab.exact
-                ? loc.pathname === tab.to
-                : loc.pathname.startsWith(tab.to);
+              const active = tab.exact ? loc.pathname === tab.to : loc.pathname.startsWith(tab.to);
               const Icon = tab.icon;
               return (
                 <Link
@@ -124,10 +109,7 @@ function AppShell() {
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <Icon
-                    className="size-[17px] shrink-0"
-                    strokeWidth={active ? 2.4 : 1.9}
-                  />
+                  <Icon className="size-[17px] shrink-0" strokeWidth={active ? 2.4 : 1.9} />
                   <span className="text-[9px] font-medium tracking-tight truncate max-w-full">
                     {t(tab.labelKey)}
                   </span>

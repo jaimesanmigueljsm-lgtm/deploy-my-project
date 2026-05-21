@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { parseOrThrow } from "@/schemas";
-import { AddExpenseSchema } from "@/schemas/expense.schema";
+import { AddExpenseSchema, UpdateExpenseSchema } from "@/schemas/expense.schema";
 
 export type Expense = Tables<"expenses">;
 
@@ -9,6 +9,14 @@ export type AddExpensePayload = Omit<
   TablesInsert<"expenses">,
   "id" | "created_at" | "user_id" | "spent_at"
 > & { spent_at?: string };
+
+export type UpdateExpensePayload = {
+  description?: string;
+  amount?: number;
+  category_id?: string | null;
+  kind?: "fixed" | "variable";
+  spent_at?: string;
+};
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
@@ -47,15 +55,39 @@ export async function fetchPrevMonthTotal(
 
 // ─── Mutations ───────────────────────────────────────────────────────────────
 
-export async function addExpense(
-  userId: string,
-  payload: AddExpensePayload,
-): Promise<Expense> {
+export async function addExpense(userId: string, payload: AddExpensePayload): Promise<Expense> {
   const validated = parseOrThrow(AddExpenseSchema, payload, "addExpense");
 
   const { data, error } = await supabase
     .from("expenses")
     .insert({ ...validated, user_id: userId })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return { ...data, amount: Number(data.amount) };
+}
+
+export async function updateExpense(id: string, payload: UpdateExpensePayload): Promise<Expense> {
+  const validated = parseOrThrow(UpdateExpenseSchema, payload, "updateExpense");
+
+  // Build a typed update payload — omit null/undefined to avoid overwriting columns.
+  const updateData: TablesUpdate<"expenses"> = {};
+  if (validated.description !== undefined && validated.description !== null)
+    updateData.description = validated.description;
+  if (validated.amount !== undefined && validated.amount !== null)
+    updateData.amount = validated.amount;
+  if ("category_id" in validated) updateData.category_id = validated.category_id ?? null;
+  if (validated.kind !== undefined && validated.kind !== null) updateData.kind = validated.kind;
+  if (validated.spent_at !== undefined && validated.spent_at !== null)
+    updateData.spent_at = validated.spent_at;
+  if (validated.recurring !== undefined && validated.recurring !== null)
+    updateData.recurring = validated.recurring;
+
+  const { data, error } = await supabase
+    .from("expenses")
+    .update(updateData)
+    .eq("id", id)
     .select()
     .single();
 

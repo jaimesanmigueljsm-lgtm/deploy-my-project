@@ -1,27 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  Plus,
-  Users,
-  Crown,
-  Baby,
-  Heart,
-  Target,
-  Clock,
-  Search,
-  Send,
-} from "lucide-react";
+import { Plus, Users, Crown, Baby, Heart, Target, Clock, Search, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SectionHeader, EmptyState } from "@/components/nest";
 import { useT } from "@/i18n";
 import { useAuth } from "@/hooks/use-auth";
@@ -72,11 +57,12 @@ function FamilyPage() {
     staleTime: 30_000,
   });
 
-  const { data: familyData } = useQuery({
+  const { data: familyData, isLoading: familyLoading } = useQuery({
     queryKey: FK.data(familyId ?? ""),
     queryFn: () => loadFamilyData(familyId!, userId),
     enabled: !!familyId && !!userId,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: sentInvitations = [] } = useQuery({
@@ -88,10 +74,11 @@ function FamilyPage() {
 
   const acceptMutation = useMutation({
     mutationFn: acceptFamilyInvite,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(t("family.invite.accepted.toast"));
-      void qc.invalidateQueries({ queryKey: ["family"] });
-      void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+      // Refetch profile first so familyId becomes available, then family data.
+      await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+      void qc.invalidateQueries({ queryKey: FK.received(userId) });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -109,7 +96,7 @@ function FamilyPage() {
   const [openInvite, setOpenInvite] = useState(false);
   const [openGoal, setOpenGoal] = useState(false);
 
-  if (profileLoading) return <FamilySkeleton />;
+  if (profileLoading || (!!familyId && familyLoading && !familyData)) return <FamilySkeleton />;
 
   const isOwner = familyData?.isOwner ?? false;
   const { family, members, goals } = familyData ?? {
@@ -120,17 +107,17 @@ function FamilyPage() {
   };
 
   // ── No family ──────────────────────────────────────────────────────────────
+  // Only show empty state when profile confirms there's no family (familyId === null).
+  // Never show it while family data is still loading to avoid the disappearing flash.
 
-  if (!familyId || !family) {
+  if (!familyId || (!familyLoading && !family)) {
     return (
       <div className="px-4 pt-5 space-y-5 animate-rise">
         <header className="pt-2">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
             {t("family.subtitle")}
           </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">
-            {t("family.title")}
-          </h1>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("family.title")}</h1>
         </header>
 
         {receivedInvitations.length > 0 && (
@@ -167,9 +154,7 @@ function FamilyPage() {
           open={openCreate}
           onClose={() => setOpenCreate(false)}
           userId={userId}
-          onCreated={() =>
-            void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) })
-          }
+          onCreated={() => void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) })}
           t={t}
         />
       </div>
@@ -177,6 +162,8 @@ function FamilyPage() {
   }
 
   // ── Has family ─────────────────────────────────────────────────────────────
+  // Guard: if familyId exists but family data is still loading, show skeleton.
+  if (!family) return <FamilySkeleton />;
 
   return (
     <div className="px-4 pt-5 space-y-5 animate-rise">
@@ -185,9 +172,7 @@ function FamilyPage() {
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
             {t("family.subtitle")}
           </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">
-            {family.name}
-          </h1>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{family.name}</h1>
         </div>
         {isOwner && (
           <button
@@ -204,9 +189,7 @@ function FamilyPage() {
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Users className="size-3.5" />
           {members.length}{" "}
-          {members.length === 1
-            ? t("family.hero.member")
-            : t("family.hero.members")}
+          {members.length === 1 ? t("family.hero.member") : t("family.hero.members")}
         </div>
         <div className="mt-1 text-[22px] font-semibold tracking-tight">
           {t("family.hero.title")}
@@ -254,18 +237,14 @@ function FamilyPage() {
         <SectionHeader title={t("family.section.members")} />
         <div className="card-flat divide-y divide-border-subtle">
           {members.map((m) => {
-            const Icon =
-              m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
+            const Icon = m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
             const isMe = m.user_id === userId;
             const displayName =
               m.first_name && m.last_name_1
                 ? `${m.first_name} ${m.last_name_1}`
                 : (m.display_name ?? t("family.role.member"));
             return (
-              <div
-                key={m.id}
-                className="flex items-center justify-between px-4 py-3.5"
-              >
+              <div key={m.id} className="flex items-center justify-between px-4 py-3.5">
                 <div className="flex items-center gap-3">
                   <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground">
                     <Icon className="size-4" />
@@ -300,10 +279,7 @@ function FamilyPage() {
         <SectionHeader
           title={t("family.section.goals")}
           action={
-            <button
-              onClick={() => setOpenGoal(true)}
-              className="text-xs font-medium text-positive"
-            >
+            <button onClick={() => setOpenGoal(true)} className="text-xs font-medium text-positive">
               {t("family.add.goal")}
             </button>
           }
@@ -318,9 +294,7 @@ function FamilyPage() {
           <div className="space-y-2">
             {goals.map((g) => {
               const pct =
-                g.target_amount > 0
-                  ? Math.min(100, (g.current_amount / g.target_amount) * 100)
-                  : 0;
+                g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0;
               return (
                 <div key={g.id} className="card-flat p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -329,19 +303,14 @@ function FamilyPage() {
                         <Target className="size-4" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold truncate">
-                          {g.name}
-                        </div>
+                        <div className="text-sm font-semibold truncate">{g.name}</div>
                         <div className="text-[11px] text-muted-foreground num">
-                          {money(g.current_amount, currency)}{" "}
-                          {t("common.of")}{" "}
+                          {money(g.current_amount, currency)} {t("common.of")}{" "}
                           {money(g.target_amount, currency)}
                         </div>
                       </div>
                     </div>
-                    <div className="text-sm font-semibold num">
-                      {Math.round(pct)}%
-                    </div>
+                    <div className="text-sm font-semibold num">{Math.round(pct)}%</div>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
@@ -361,9 +330,7 @@ function FamilyPage() {
           open={openInvite}
           onClose={() => setOpenInvite(false)}
           familyId={family.id}
-          onSent={() =>
-            void qc.invalidateQueries({ queryKey: FK.sent(family.id) })
-          }
+          onSent={() => void qc.invalidateQueries({ queryKey: FK.sent(family.id) })}
           t={t}
         />
       )}
@@ -371,9 +338,7 @@ function FamilyPage() {
         open={openGoal}
         onClose={() => setOpenGoal(false)}
         familyId={family.id}
-        onSaved={() =>
-          void qc.invalidateQueries({ queryKey: FK.data(family.id) })
-        }
+        onSaved={() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })}
         t={t}
       />
     </div>
@@ -402,9 +367,7 @@ function InvitationCard({
           <Users className="size-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold truncate">
-            {invitation.family_name}
-          </div>
+          <div className="text-sm font-semibold truncate">{invitation.family_name}</div>
           <div className="text-xs text-muted-foreground">
             {t("family.invite.received.from", {
               name: `${invitation.invited_by_first_name} ${invitation.invited_by_last_name_1}`,
@@ -425,12 +388,7 @@ function InvitationCard({
         >
           {t("family.invite.reject")}
         </Button>
-        <Button
-          size="sm"
-          className="flex-1 h-8 text-xs"
-          disabled={busy}
-          onClick={onAccept}
-        >
+        <Button size="sm" className="flex-1 h-8 text-xs" disabled={busy} onClick={onAccept}>
           {t("family.invite.accept")}
         </Button>
       </div>
@@ -445,9 +403,7 @@ function SentInvitationRow({ inv }: { inv: SentInvitation }) {
         <div className="text-sm font-medium">
           {inv.invited_first_name} {inv.invited_last_name_1}
         </div>
-        <div className="text-xs text-muted-foreground font-mono">
-          @{inv.invited_username}
-        </div>
+        <div className="text-xs text-muted-foreground font-mono">@{inv.invited_username}</div>
       </div>
       <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
         <Clock className="size-3" />
@@ -507,11 +463,7 @@ function CreateFamilyDialog({
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-            >
+            <Button variant="outline" onClick={onClose} className="flex-1">
               {t("common.cancel")}
             </Button>
             <Button
@@ -519,9 +471,7 @@ function CreateFamilyDialog({
               disabled={saving || !name.trim()}
               className="flex-1"
             >
-              {saving
-                ? t("family.dialog.create.creating")
-                : t("family.dialog.create.cta")}
+              {saving ? t("family.dialog.create.creating") : t("family.dialog.create.cta")}
             </Button>
           </div>
         </div>
@@ -546,9 +496,7 @@ function InviteDialog({
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<UserSearchResult | null | "not-found">(
-    null,
-  );
+  const [result, setResult] = useState<UserSearchResult | null | "not-found">(null);
 
   function reset() {
     setQuery("");
@@ -591,7 +539,10 @@ function InviteDialog({
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        if (!v) { reset(); onClose(); }
+        if (!v) {
+          reset();
+          onClose();
+        }
       }}
     >
       <DialogContent className="rounded-2xl">
@@ -651,7 +602,10 @@ function InviteDialog({
           <div className="flex gap-2 pt-1">
             <Button
               variant="outline"
-              onClick={() => { reset(); onClose(); }}
+              onClick={() => {
+                reset();
+                onClose();
+              }}
               className="flex-1"
             >
               {t("common.cancel")}
@@ -693,12 +647,7 @@ function GoalDialog({
     if (!name.trim() || !target) return;
     setSaving(true);
     try {
-      await createSharedGoal(
-        familyId,
-        name.trim(),
-        Number(target),
-        Number(current || 0),
-      );
+      await createSharedGoal(familyId, name.trim(), Number(target), Number(current || 0));
       toast.success(t("family.toast.goal.added"));
       setName("");
       setTarget("");
@@ -749,11 +698,7 @@ function GoalDialog({
             </div>
           </div>
           <div className="flex gap-2 pt-1">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-            >
+            <Button variant="outline" onClick={onClose} className="flex-1">
               {t("common.cancel")}
             </Button>
             <Button

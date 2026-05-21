@@ -2,25 +2,49 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { money, monthLabel, monthRange, shortMoney, pct } from "@/lib/format";
 import {
-  Sparkles, TrendingUp, Bell, Plus, ArrowUpRight, ArrowDownRight,
-  ChevronRight, RefreshCw,
-  AlertTriangle, CheckCircle2, Lightbulb,
+  Sparkles,
+  TrendingUp,
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  ChevronRight,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+  Lightbulb,
 } from "lucide-react";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, Tooltip,
-  PieChart, Pie, Cell,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import {
-  ProgressRing, SectionHeader, InsightCard,
-  TrendBadge, CategoryDot, SkeletonBlock,
+  ProgressRing,
+  SectionHeader,
+  InsightCard,
+  TrendBadge,
+  CategoryDot,
+  SkeletonBlock,
 } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
 import { useDashboard, useGenerateInsights } from "@/features/dashboard/use-dashboard";
 import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
 import { useT } from "@/i18n";
 import { ForecastWidget, ForecastSkeleton } from "@/features/dashboard/components/forecast-widget";
-import { HealthCardSimple, HealthCardSimpleSkeleton } from "@/features/dashboard/components/health-card";
-import { RecommendationCards, RecommendationsSkeleton } from "@/features/dashboard/components/recommendation-cards";
+import {
+  HealthCardSimple,
+  HealthCardSimpleSkeleton,
+} from "@/features/dashboard/components/health-card";
+import {
+  RecommendationCards,
+  RecommendationsSkeleton,
+} from "@/features/dashboard/components/recommendation-cards";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/app/")({
@@ -29,7 +53,10 @@ export const Route = createFileRoute("/app/")({
 
 // ─── Derived types ────────────────────────────────────────────────────────────
 
-type Expense  = Pick<Tables<"expenses">,  "id" | "amount" | "description" | "spent_at" | "kind" | "category_id">;
+type Expense = Pick<
+  Tables<"expenses">,
+  "id" | "amount" | "description" | "spent_at" | "kind" | "category_id"
+>;
 type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind">;
 
 // ─── Score color (matches HEALTH_STATUS_BANDS) ────────────────────────────────
@@ -46,23 +73,28 @@ function scoreColor(score: number): string {
 function Dashboard() {
   const { t } = useT();
   const {
-    profile, expenses, prevMonthTotal, incomeTotal,
-    categories, recommendations,
-    isLoading, range,
+    profile,
+    expenses,
+    prevMonthTotal,
+    incomeTotal,
+    categories,
+    recommendations,
+    isLoading,
+    range,
   } = useDashboard();
 
   const { output: engine, isLoading: engineLoading } = useFinancialEngine();
   const { mutate: refreshInsights, isPending: refreshing } = useGenerateInsights();
 
   // ── Derived values (must be before any early return — Rules of Hooks) ────
-  const totalSpent  = useMemo(() => expenses.reduce((s, x) => s + x.amount, 0), [expenses]);
-  const series      = useMemo(() => buildSeries(expenses, range), [expenses, range]);
-  const dist        = useMemo(() => buildDistribution(expenses, categories), [expenses, categories]);
+  const totalSpent = useMemo(() => expenses.reduce((s, x) => s + x.amount, 0), [expenses]);
+  const series = useMemo(() => buildSeries(expenses, range), [expenses, range]);
+  const dist = useMemo(() => buildDistribution(expenses, categories), [expenses, categories]);
 
   if (isLoading) return <DashboardSkeleton />;
 
-  const currency    = profile?.currency ?? "EUR";
-  const remaining   = incomeTotal - totalSpent;
+  const currency = profile?.currency ?? "EUR";
+  const remaining = incomeTotal - totalSpent;
   const savingsRate = incomeTotal > 0 ? Math.max(0, remaining) / incomeTotal : 0;
 
   // Score 0–1000. Engine is authoritative; DB value (0–100) scaled as fallback.
@@ -72,14 +104,12 @@ function Dashboard() {
       ? profile.health_score * 10
       : Math.round((60 * savingsRate + 40 * (incomeTotal > 0 ? 1 : 0)) * 10));
 
-  const monthChange = prevMonthTotal > 0
-    ? ((totalSpent - prevMonthTotal) / prevMonthTotal) * 100
-    : 0;
+  const monthChange =
+    prevMonthTotal > 0 ? ((totalSpent - prevMonthTotal) / prevMonthTotal) * 100 : 0;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="px-4 pt-5 space-y-5 animate-rise">
-
       {/* ── Header ── */}
       <header className="flex items-center justify-between pt-2">
         <div>
@@ -91,9 +121,7 @@ function Dashboard() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <button className="size-10 rounded-full card-flat grid place-items-center text-muted-foreground hover:text-foreground transition">
-            <Bell className="size-4" />
-          </button>
+          <NotificationBell />
           <Link
             to="/app/budget"
             search={{ add: "expense" }}
@@ -164,17 +192,28 @@ function Dashboard() {
 
       {/* ── Forecast strip ── */}
       <section className="animate-rise-delay-1">
-        <SectionHeader title={t("dashboard.section.forecast")} subtitle={t("dashboard.section.forecast.sub")} />
-        {engineLoading || !engine
-          ? <ForecastSkeleton />
-          : <ForecastWidget forecast={engine.budgetForecast} currency={currency} savedSoFar={remaining} />
-        }
+        <SectionHeader
+          title={t("dashboard.section.forecast")}
+          subtitle={t("dashboard.section.forecast.sub")}
+        />
+        {engineLoading || !engine ? (
+          <ForecastSkeleton />
+        ) : (
+          <ForecastWidget
+            forecast={engine.budgetForecast}
+            currency={currency}
+            savedSoFar={remaining}
+          />
+        )}
       </section>
 
       {/* ── Where money goes ── */}
       {dist.length > 0 && (
         <section>
-          <SectionHeader title={t("dashboard.section.spending")} subtitle={t("dashboard.section.spending.sub")} />
+          <SectionHeader
+            title={t("dashboard.section.spending")}
+            subtitle={t("dashboard.section.spending.sub")}
+          />
           <div className="card-flat p-5 flex items-center gap-5">
             <div className="relative shrink-0">
               <ResponsiveContainer width={104} height={104}>
@@ -194,7 +233,9 @@ function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("dashboard.section.spending.total")}</div>
+                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">
+                  {t("dashboard.section.spending.total")}
+                </div>
                 <div className="text-sm font-semibold num">{shortMoney(totalSpent, currency)}</div>
               </div>
             </div>
@@ -227,10 +268,11 @@ function Dashboard() {
           title={t("dashboard.section.health")}
           subtitle={t("dashboard.section.health.sub")}
         />
-        {engineLoading || !engine
-          ? <HealthCardSimpleSkeleton />
-          : <HealthCardSimple healthScore={engine.healthScore} />
-        }
+        {engineLoading || !engine ? (
+          <HealthCardSimpleSkeleton />
+        ) : (
+          <HealthCardSimple healthScore={engine.healthScore} />
+        )}
       </section>
 
       {/* ── For you (recommendations) ── */}
@@ -252,49 +294,64 @@ function Dashboard() {
                 className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 disabled:opacity-50"
               >
                 <RefreshCw className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
-                {recommendations.length > 0 ? t("dashboard.insights.refresh") : t("dashboard.insights.generate.short")}
+                {recommendations.length > 0
+                  ? t("dashboard.insights.refresh")
+                  : t("dashboard.insights.generate.short")}
               </button>
             )
           }
         />
 
-        {engineLoading
-          ? <RecommendationsSkeleton />
-          : engine && engine.recommendations.length > 0
-            ? <RecommendationCards recommendations={engine.recommendations} currency={currency} />
-            : recommendations.length > 0
-              ? (
-                <div className="space-y-2">
-                  {recommendations.map((r) => {
-                    const tone = r.severity === "warning" ? "warn" : r.severity === "success" ? "mint" : "sky";
-                    const Icon = r.severity === "warning" ? AlertTriangle : r.severity === "success" ? CheckCircle2 : Lightbulb;
-                    return (
-                      <InsightCard
-                        key={r.id}
-                        tone={tone}
-                        icon={<Icon className="size-4" />}
-                        title={r.title}
-                        body={r.body}
-                      />
-                    );
-                  })}
-                </div>
-              )
-              : (
-                <>
-                  <InsightCard tone="mint" icon={<Lightbulb className="size-4" />} title="Round-up savings" body="Auto-round transactions to the nearest euro. Average users save €27/mo without effort." />
-                  <InsightCard tone="sky" icon={<TrendingUp className="size-4" />} title="Idle cash" body="If you have over €1,000 not invested, a savings account at 3% adds €30/mo passively." />
-                  <button
-                    onClick={() => refreshInsights()}
-                    disabled={refreshing}
-                    className="w-full card-flat p-3 text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1.5 transition disabled:opacity-50"
-                  >
-                    <Sparkles className="size-3.5" />
-                    {refreshing ? t("dashboard.insights.analyzing") : t("dashboard.insights.generate")}
-                  </button>
-                </>
-              )
-        }
+        {engineLoading ? (
+          <RecommendationsSkeleton />
+        ) : engine && engine.recommendations.length > 0 ? (
+          <RecommendationCards recommendations={engine.recommendations} currency={currency} />
+        ) : recommendations.length > 0 ? (
+          <div className="space-y-2">
+            {recommendations.map((r) => {
+              const tone =
+                r.severity === "warning" ? "warn" : r.severity === "success" ? "mint" : "sky";
+              const Icon =
+                r.severity === "warning"
+                  ? AlertTriangle
+                  : r.severity === "success"
+                    ? CheckCircle2
+                    : Lightbulb;
+              return (
+                <InsightCard
+                  key={r.id}
+                  tone={tone}
+                  icon={<Icon className="size-4" />}
+                  title={r.title}
+                  body={r.body}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <>
+            <InsightCard
+              tone="mint"
+              icon={<Lightbulb className="size-4" />}
+              title={t("dashboard.insight.roundup.title")}
+              body={t("dashboard.insight.roundup.body")}
+            />
+            <InsightCard
+              tone="sky"
+              icon={<TrendingUp className="size-4" />}
+              title={t("dashboard.insight.idlecash.title")}
+              body={t("dashboard.insight.idlecash.body")}
+            />
+            <button
+              onClick={() => refreshInsights()}
+              disabled={refreshing}
+              className="w-full card-flat p-3 text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+            >
+              <Sparkles className="size-3.5" />
+              {refreshing ? t("dashboard.insights.analyzing") : t("dashboard.insights.generate")}
+            </button>
+          </>
+        )}
       </section>
     </div>
   );
