@@ -87,8 +87,8 @@ export function ForecastWidget({
   const savedTone: "positive" | "warn" | "neutral" =
     saved > 0 ? "positive" : saved < 0 ? "warn" : "neutral";
 
-  // Tile 3 — Projected closing balance (income − projected total spend)
-  const closing = forecast.projectedSavings; // expectedMonthlyIncome - projectedTotalWithFixed
+  // Tile 3 — Closing balance: income − already spent − pending bills (Task 6)
+  const closing = forecast.projectedClosingBalance;
   const closingTone: "positive" | "warn" | "negative" =
     closing > 0 ? "positive" : closing > -50 ? "warn" : "negative";
   const ClosingIcon = closing > 0 ? TrendingUp : closing > -50 ? Minus : TrendingDown;

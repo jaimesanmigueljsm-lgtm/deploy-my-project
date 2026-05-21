@@ -12,6 +12,9 @@ import {
   Pencil,
   Info,
   RepeatIcon,
+  PiggyBank,
+  Landmark,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +28,13 @@ import {
   useUpdateIncome,
   useDeleteIncome,
 } from "@/features/budget/use-budget";
+import {
+  useSavingsAccounts,
+  useAddSavingsAccount,
+  useUpdateSavingsAccount,
+  useDeleteSavingsAccount,
+} from "@/features/savings/use-savings";
+import type { SavingsAccount, SavingsAccountType } from "@/features/savings/savings.service";
 import {
   useAddExpense,
   useDeleteExpense,
@@ -51,7 +61,7 @@ type EditableExpense = Pick<
   "id" | "amount" | "description" | "spent_at" | "kind" | "category_id" | "recurring"
 >;
 
-type Tab = "all" | "fixed" | "variable" | "income";
+type Tab = "all" | "fixed" | "variable" | "income" | "savings";
 
 function Budget() {
   const { t } = useT();
@@ -70,6 +80,11 @@ function Budget() {
   const [openIncome, setOpenIncome] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [editingExpense, setEditingExpense] = useState<EditableExpense | null>(null);
+  const [openSavings, setOpenSavings] = useState(false);
+  const [editingSavings, setEditingSavings] = useState<SavingsAccount | null>(null);
+
+  const { data: savingsAccounts = [] } = useSavingsAccounts();
+  const deleteSavingsAccount = useDeleteSavingsAccount();
 
   // Open dialog when navigated with ?add=expense | ?add=income
   const search = Route.useSearch();
@@ -144,11 +159,15 @@ function Budget() {
 
   if (isLoading) return <BudgetSkeleton />;
 
+  const totalSavingsBalance = savingsAccounts.reduce((s, a) => s + a.balance, 0);
+  const emergencyBalance = savingsAccounts.filter((a) => a.is_emergency_fund).reduce((s, a) => s + a.balance, 0);
+
   const tabs: [Tab, string][] = [
     ["all", t("budget.tab.all")],
     ["fixed", t("budget.tab.fixed")],
     ["variable", t("budget.tab.variable")],
     ["income", t("budget.tab.income")],
+    ["savings", t("budget.tab.savings")],
   ];
 
   return (
@@ -197,8 +216,87 @@ function Budget() {
         ))}
       </div>
 
-      {/* ── Income tab ────────────────────────────────────────────────────────── */}
-      {tab === "income" ? (
+      {/* ── Savings tab ───────────────────────────────────────────────────────── */}
+      {tab === "savings" ? (
+        <>
+          <div className="card-soft p-5 gradient-mint">
+            <p className="text-xs text-muted-foreground">{t("savings.summary.total")}</p>
+            <div className="num-display text-[40px] font-semibold mt-0.5">
+              {money(totalSavingsBalance, currency)}
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border-subtle">
+              <Stat label={t("savings.summary.emergency")} value={money(emergencyBalance, currency)} />
+              <Stat label={t("savings.summary.accounts")} value={`${savingsAccounts.length}`} />
+            </div>
+          </div>
+          <section>
+            <SectionHeader
+              title={t("savings.section.title")}
+              action={
+                <button
+                  onClick={() => { setEditingSavings(null); setOpenSavings(true); }}
+                  className="text-xs font-medium text-positive"
+                >
+                  + {t("common.add")}
+                </button>
+              }
+            />
+            {savingsAccounts.length === 0 ? (
+              <EmptyState
+                icon={<PiggyBank className="size-5" />}
+                title={t("savings.empty.title")}
+                description={t("savings.empty.desc")}
+                action={
+                  <Button size="sm" onClick={() => { setEditingSavings(null); setOpenSavings(true); }}>
+                    {t("savings.add.button")}
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="card-flat divide-y divide-border-subtle">
+                {savingsAccounts.map((acc) => (
+                  <button
+                    key={acc.id}
+                    onClick={() => { setEditingSavings(acc); setOpenSavings(true); }}
+                    className="group w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-muted/40 transition"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="size-9 rounded-xl bg-sky-soft text-sky grid place-items-center shrink-0">
+                        {acc.is_emergency_fund ? <ShieldCheck className="size-4" /> : <Landmark className="size-4" />}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate">{acc.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {t(`savings.type.${acc.type}`)}
+                          {acc.institution_name ? ` · ${acc.institution_name}` : ""}
+                          {acc.is_emergency_fund ? ` · ${t("savings.badge.emergency")}` : ""}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-semibold num text-positive">
+                        {money(acc.balance, currency)}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSavingsAccount.mutate(acc.id);
+                        }}
+                        disabled={deleteSavingsAccount.isPending}
+                        aria-label={t("common.delete")}
+                        className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative-soft/40 transition"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      ) : /* ── Income tab ───────────────────────────────────────────────────────── */
+      tab === "income" ? (
         <>
           <div className="card-soft p-5 gradient-mint">
             <p className="text-xs text-muted-foreground">{t("budget.income.total")}</p>
@@ -405,6 +503,16 @@ function Budget() {
           setEditingIncome(null);
         }}
         editing={editingIncome}
+        t={t}
+      />
+      <SavingsDialog
+        open={openSavings}
+        onClose={() => {
+          setOpenSavings(false);
+          setEditingSavings(null);
+        }}
+        editing={editingSavings}
+        currency={currency}
         t={t}
       />
     </div>
@@ -781,6 +889,159 @@ function IncomeDialog({
               {t("common.cancel")}
             </Button>
             <Button onClick={save} disabled={isPending} className="flex-1">
+              {isPending ? t("common.loading") : editing ? t("common.save") : t("common.add")}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── SavingsDialog ─────────────────────────────────────────────────────────────
+
+const SAVINGS_TYPES: SavingsAccountType[] = ["checking", "savings", "cash", "emergency", "other"];
+
+function SavingsDialog({
+  open,
+  onClose,
+  editing,
+  currency,
+  t,
+}: {
+  open: boolean;
+  onClose: () => void;
+  editing: SavingsAccount | null;
+  currency: string;
+  t: (k: string) => string;
+}) {
+  const [name, setName] = useState("");
+  const [type, setType] = useState<SavingsAccountType>("savings");
+  const [balance, setBalance] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [isEmergency, setIsEmergency] = useState(false);
+
+  const addSavings = useAddSavingsAccount();
+  const updateSavings = useUpdateSavingsAccount();
+  const isPending = addSavings.isPending || updateSavings.isPending;
+  const submittingRef = useRef(false);
+
+  useEffect(() => {
+    if (editing) {
+      setName(editing.name);
+      setType(editing.type);
+      setBalance(String(editing.balance));
+      setInstitution(editing.institution_name ?? "");
+      setIsEmergency(editing.is_emergency_fund);
+    } else {
+      setName("");
+      setType("savings");
+      setBalance("");
+      setInstitution("");
+      setIsEmergency(false);
+    }
+    submittingRef.current = false;
+  }, [editing, open]);
+
+  function save() {
+    if (submittingRef.current) return;
+    if (!name || !balance || Number(balance) < 0) return;
+    submittingRef.current = true;
+    const payload = {
+      name,
+      type,
+      balance: Number(balance),
+      currency,
+      institution_name: institution || null,
+      is_emergency_fund: isEmergency,
+    };
+    const opts = {
+      onSuccess: onClose,
+      onSettled: () => { submittingRef.current = false; },
+    };
+    if (editing) {
+      updateSavings.mutate({ id: editing.id, updates: payload }, opts);
+    } else {
+      addSavings.mutate(payload, opts);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {editing ? t("savings.dialog.edit.title") : t("savings.dialog.add.title")}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="card-sunken p-5 flex items-baseline gap-2">
+            <span className="text-xl text-muted-foreground">€</span>
+            <Input
+              type="number"
+              inputMode="decimal"
+              autoFocus
+              value={balance}
+              onChange={(e) => setBalance(e.target.value)}
+              placeholder="0"
+              className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("savings.field.name")}</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("savings.field.name.placeholder")}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("savings.field.type")}</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {SAVINGS_TYPES.map((tp) => (
+                <button
+                  key={tp}
+                  type="button"
+                  onClick={() => setType(tp)}
+                  className={`px-3 py-1.5 rounded-full text-xs border transition ${
+                    type === tp
+                      ? "bg-foreground text-background border-foreground"
+                      : "border-border bg-surface hover:border-foreground/20"
+                  }`}
+                >
+                  {t(`savings.type.${tp}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("savings.field.institution")}</Label>
+            <Input
+              value={institution}
+              onChange={(e) => setInstitution(e.target.value)}
+              placeholder={t("savings.field.institution.placeholder")}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEmergency((v) => !v)}
+            className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 border transition text-left ${
+              isEmergency
+                ? "bg-positive-soft border-positive text-positive"
+                : "bg-surface border-border text-muted-foreground hover:border-foreground/20"
+            }`}
+          >
+            <ShieldCheck className="size-4 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold">{t("savings.field.emergency.label")}</div>
+              <div className="text-[11px] opacity-70 leading-snug">{t("savings.field.emergency.desc")}</div>
+            </div>
+          </button>
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              <X className="size-4 mr-1" /> {t("common.cancel")}
+            </Button>
+            <Button onClick={save} disabled={isPending || !name || Number(balance) < 0} className="flex-1">
               {isPending ? t("common.loading") : editing ? t("common.save") : t("common.add")}
             </Button>
           </div>

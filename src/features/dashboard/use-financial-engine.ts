@@ -18,6 +18,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { fetchExpenses } from "@/features/expenses/expenses.service";
 import { fetchIncomes, fetchBills, fetchCategories } from "@/features/budget/budget.service";
 import { fetchInvestments } from "@/features/finances/finances.service";
+import { fetchSavingsAccounts } from "@/features/savings/savings.service";
 import { fetchDashboardGoals, fetchDashboardProfile } from "./dashboard.service";
 import { buildEngineContext, runFinancialEngine } from "@/core/finance";
 import type { FinancialEngineOutput } from "@/core/finance";
@@ -91,10 +92,17 @@ export function useFinancialEngine(): {
         enabled: !!uid,
         staleTime: 5 * 60_000,
       },
+      // 7 — Savings accounts
+      {
+        queryKey: queryKeys.savings(uid),
+        queryFn: () => fetchSavingsAccounts(uid),
+        enabled: !!uid,
+        staleTime: 5 * 60_000,
+      },
     ],
   });
 
-  const [profileQ, expensesQ, incomesQ, billsQ, goalsQ, investmentsQ, categoriesQ] = results;
+  const [profileQ, expensesQ, incomesQ, billsQ, goalsQ, investmentsQ, categoriesQ, savingsQ] = results;
 
   const output = useMemo((): FinancialEngineOutput | null => {
     const profile = profileQ.data;
@@ -108,10 +116,11 @@ export function useFinancialEngine(): {
       profile,
       expenses,
       incomes,
-      bills:       billsQ.data       ?? [],
-      goals:       goalsQ.data       ?? [],
-      investments: investmentsQ.data ?? [],
-      categories:  categoriesQ.data  ?? [],
+      bills:           billsQ.data        ?? [],
+      goals:           goalsQ.data        ?? [],
+      investments:     investmentsQ.data  ?? [],
+      categories:      categoriesQ.data   ?? [],
+      savingsAccounts: savingsQ.data      ?? [],
     });
 
     return runFinancialEngine(ctx);
@@ -123,6 +132,7 @@ export function useFinancialEngine(): {
     goalsQ.data,
     investmentsQ.data,
     categoriesQ.data,
+    savingsQ.data,
   ]);
 
   return {

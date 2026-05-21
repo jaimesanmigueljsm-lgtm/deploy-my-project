@@ -111,6 +111,12 @@ function scoreEmergencyReadiness(
   ctx: FinancialEngineContext,
   essentialMonthlyExpenses: number,
 ): SubScore {
+  // Primary: savings accounts explicitly flagged as emergency fund
+  const emergencyAccountBalance = ctx.savingsAccounts
+    .filter((a) => a.isEmergencyFund)
+    .reduce((s, a) => s + a.balance, 0);
+
+  // Secondary: emergency-tagged savings goals
   const emergencyGoals = ctx.goals.filter(
     (g) =>
       g.name.toLowerCase().includes("emergency") ||
@@ -118,12 +124,12 @@ function scoreEmergencyReadiness(
   );
   const goalBalance = emergencyGoals.reduce((s, g) => s + g.currentAmount, 0);
 
-  // Savings-type investments also count as emergency reserves
+  // Tertiary: savings-type investments (legacy fallback)
   const savingsInvestments = ctx.investments
     .filter((i) => i.type === "savings")
     .reduce((s, i) => s + i.quantity * i.currentPrice, 0);
 
-  const totalReserves = goalBalance + savingsInvestments;
+  const totalReserves = emergencyAccountBalance + goalBalance + savingsInvestments;
   const months = safeDivide(totalReserves, essentialMonthlyExpenses, 0);
 
   const entry = lookupThreshold(EMERGENCY_FUND_THRESHOLDS, "maxMonths", months);
@@ -269,13 +275,17 @@ function buildRiskIndicators(
     });
   }
 
-  // Emergency readiness
+  // Emergency readiness — mirrors scoreEmergencyReadiness sources
+  const emergencyAccountBalance = ctx.savingsAccounts
+    .filter((a) => a.isEmergencyFund)
+    .reduce((s, a) => s + a.balance, 0);
   const emergencyGoals = ctx.goals.filter(
     (g) =>
       g.name.toLowerCase().includes("emergency") ||
       g.category.toLowerCase().includes("emergency"),
   );
   const emergencyBalance =
+    emergencyAccountBalance +
     emergencyGoals.reduce((s, g) => s + g.currentAmount, 0) +
     ctx.investments
       .filter((i) => i.type === "savings")

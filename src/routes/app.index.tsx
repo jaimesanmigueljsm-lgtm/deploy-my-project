@@ -12,6 +12,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Lightbulb,
+  PiggyBank,
+  ShieldCheck,
+  Wallet2,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -189,6 +192,45 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* ── Total savings strip (shown only when engine has data and totalSavings > 0) ── */}
+      {engine && (engine.totalSavings > 0 || engine.netWorth > 0) && (
+        <section className="animate-rise-delay-1">
+          <SectionHeader
+            title={t("dashboard.savings.title")}
+            subtitle={t("dashboard.savings.subtitle")}
+          />
+          <div className="grid grid-cols-3 gap-2.5">
+            <SavingsTile
+              label={t("dashboard.savings.total")}
+              value={shortMoney(engine.totalSavings, currency)}
+              sublabel={t("dashboard.savings.total.sub")}
+              icon={<PiggyBank className="size-3" />}
+              tone="positive"
+            />
+            <SavingsTile
+              label={t("dashboard.savings.emergency")}
+              value={shortMoney(
+                engine.healthScore.subScores.emergencyReadiness.rawValue > 0
+                  ? engine.healthScore.essentialMonthlyExpenses *
+                      engine.healthScore.subScores.emergencyReadiness.rawValue
+                  : 0,
+                currency,
+              )}
+              sublabel={`${engine.healthScore.subScores.emergencyReadiness.rawValue.toFixed(1)} ${t("dashboard.savings.months")}`}
+              icon={<ShieldCheck className="size-3" />}
+              tone={engine.healthScore.subScores.emergencyReadiness.rawValue >= 3 ? "positive" : engine.healthScore.subScores.emergencyReadiness.rawValue >= 1 ? "warn" : "negative"}
+            />
+            <SavingsTile
+              label={t("dashboard.savings.networth")}
+              value={shortMoney(engine.netWorth, currency)}
+              sublabel={t("dashboard.savings.networth.sub")}
+              icon={<Wallet2 className="size-3" />}
+              tone={engine.netWorth >= 0 ? "positive" : "negative"}
+            />
+          </div>
+        </section>
+      )}
 
       {/* ── Forecast strip ── */}
       <section className="animate-rise-delay-1">
@@ -372,6 +414,45 @@ function buildSeries(expenses: Expense[], range: ReturnType<typeof monthRange>) 
     out.push({ day: d, cumulative: Math.round(cum) });
   }
   return out;
+}
+
+function SavingsTile({
+  label,
+  value,
+  sublabel,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  sublabel: string;
+  icon: React.ReactNode;
+  tone: "positive" | "warn" | "negative" | "neutral";
+}) {
+  const toneClasses = {
+    positive: "text-positive",
+    warn: "text-warn",
+    negative: "text-negative",
+    neutral: "text-muted-foreground",
+  };
+  const toneIconBg = {
+    positive: "bg-positive-soft text-positive",
+    warn: "bg-warn-soft text-warn",
+    negative: "bg-negative-soft text-negative",
+    neutral: "bg-muted text-muted-foreground",
+  };
+  return (
+    <div className="card-flat p-3.5 flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <span className="label-overline">{label}</span>
+        <span className={`size-5 rounded-lg grid place-items-center ${toneIconBg[tone]}`}>{icon}</span>
+      </div>
+      <div className={`num text-xl font-semibold tracking-tight leading-none ${toneClasses[tone]}`}>
+        {value}
+      </div>
+      <div className="text-[10px] text-muted-foreground leading-tight">{sublabel}</div>
+    </div>
+  );
 }
 
 function buildDistribution(expenses: Expense[], cats: Category[]) {

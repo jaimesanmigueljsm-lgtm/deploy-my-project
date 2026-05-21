@@ -42,6 +42,9 @@ export const queryKeys = {
   // ─── Investments ─────────────────────────────────────────────────────────────
   investments: (userId: string) => ["investments", userId] as const,
 
+  // ─── Savings accounts ────────────────────────────────────────────────────────
+  savings: (userId: string) => ["savings", userId] as const,
+
   // ─── Analytics (6-month expense window) ──────────────────────────────────────
   analytics: (userId: string, windowStart: string) =>
     ["analytics", userId, windowStart] as const,

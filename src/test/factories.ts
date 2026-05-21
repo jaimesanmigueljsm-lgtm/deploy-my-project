@@ -169,6 +169,7 @@ export function makeCtx(overrides: Partial<FinancialEngineContext> = {}): Financ
     goals: [],
     investments: [],
     categories: [{ id: "cat-1", name: "Groceries", kind: "variable" }],
+    savingsAccounts: [],
     asOf: REF_DATE,
     ...overrides,
   };

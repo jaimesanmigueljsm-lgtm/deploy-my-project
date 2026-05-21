@@ -84,6 +84,10 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
     : 0;
   const safeToSpendToday = safeToSpendPerDay;
 
+  // ── Improved closing balance (Task 6) ────────────────────────────────────
+  // income − already spent − pending fixed bills (does not pace-project variable)
+  const projectedClosingBalance = expectedMonthlyIncome - currentSpend - pendingFixedCosts;
+
   // ── Confidence based on elapsed days ─────────────────────────────────────
   const confidence = daysElapsed < MIN_DAYS_FOR_CONFIDENT_FORECAST
     ? clamp(daysElapsed / MIN_DAYS_FOR_CONFIDENT_FORECAST, 0, 1) * 0.5
@@ -104,6 +108,7 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
     projectedSavings,
     projectedOverrun,
     overrunProbability,
+    projectedClosingBalance,
     safeToSpendPerDay,
     safeToSpendToday,
     variableBudgetRemaining,

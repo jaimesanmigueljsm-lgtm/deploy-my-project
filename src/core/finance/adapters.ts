@@ -19,6 +19,7 @@ import type {
   EngineGoal,
   EngineInvestment,
   EngineCategory,
+  EngineSavingsAccount,
   FinancialEngineContext,
 } from "./types";
 
@@ -85,6 +86,15 @@ interface RawCategory {
   id: string;
   name: string;
   kind?: string | null;
+}
+
+interface RawSavingsAccount {
+  id: string;
+  name: string;
+  type?: string | null;
+  balance: number;
+  currency?: string | null;
+  is_emergency_fund?: boolean | null;
 }
 
 // ─── Adapter functions ────────────────────────────────────────────────────────
@@ -176,6 +186,17 @@ export function adaptCategories(categories: RawCategory[]): EngineCategory[] {
   }));
 }
 
+export function adaptSavingsAccounts(accounts: RawSavingsAccount[]): EngineSavingsAccount[] {
+  return accounts.map((a) => ({
+    id: a.id,
+    name: a.name,
+    type: (a.type as EngineSavingsAccount["type"]) ?? "other",
+    balance: Number(a.balance),
+    currency: a.currency ?? "EUR",
+    isEmergencyFund: a.is_emergency_fund ?? false,
+  }));
+}
+
 /**
  * Assemble a complete FinancialEngineContext from raw Supabase data.
  *
@@ -191,6 +212,7 @@ export function buildEngineContext(params: {
   goals: RawGoal[];
   investments: RawInvestment[];
   categories: RawCategory[];
+  savingsAccounts?: RawSavingsAccount[];
   asOf?: Date;
 }): FinancialEngineContext {
   return {
@@ -201,6 +223,7 @@ export function buildEngineContext(params: {
     goals: adaptGoals(params.goals),
     investments: adaptInvestments(params.investments),
     categories: adaptCategories(params.categories),
+    savingsAccounts: adaptSavingsAccounts(params.savingsAccounts ?? []),
     asOf: params.asOf ?? new Date(),
   };
 }

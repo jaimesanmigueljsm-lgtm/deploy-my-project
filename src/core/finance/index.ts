@@ -26,6 +26,7 @@ export type {
   EngineGoal,
   EngineInvestment,
   EngineCategory,
+  EngineSavingsAccount,
   HealthScore,
   HealthStatus,
   SubScore,
@@ -85,12 +86,17 @@ export function runFinancialEngine(ctx: FinancialEngineContext): FinancialEngine
   const portfolioAnalytics = computePortfolioAnalytics(ctx);
   const recommendations = computeRecommendations(ctx, healthScore, portfolioAnalytics, budgetForecast);
 
+  const totalSavings = ctx.savingsAccounts.reduce((s, a) => s + a.balance, 0);
+  const netWorth = totalSavings + portfolioAnalytics.totalValue;
+
   return {
     healthScore,
     budgetForecast,
     spendingIntelligence,
     portfolioAnalytics,
     recommendations,
+    totalSavings,
+    netWorth,
     computedAt: ctx.asOf.toISOString(),
   };
 }

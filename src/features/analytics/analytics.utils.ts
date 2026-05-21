@@ -76,6 +76,34 @@ export function buildIncomeExpenseSeries(
   });
 }
 
+export type FixedVariablePoint = {
+  label: string;
+  fixed: number;
+  variable: number;
+};
+
+/**
+ * Breaks down monthly expenses into fixed vs variable for the given window.
+ */
+export function buildFixedVariableSeries(
+  expenses: { amount: number; spent_at: string; kind?: string | null }[],
+  months = 6,
+): FixedVariablePoint[] {
+  const now = new Date();
+  return Array.from({ length: months }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+    const yr = d.getFullYear();
+    const mo = d.getMonth();
+    const inMonth = expenses.filter((x) => {
+      const r = new Date(x.spent_at);
+      return r.getFullYear() === yr && r.getMonth() === mo;
+    });
+    const fixed = inMonth.filter((x) => x.kind === "fixed").reduce((s, x) => s + x.amount, 0);
+    const variable = inMonth.filter((x) => x.kind !== "fixed").reduce((s, x) => s + x.amount, 0);
+    return { label: shortMonth(d), fixed: Math.round(fixed), variable: Math.round(variable) };
+  });
+}
+
 /**
  * Returns the top N spending categories for the given date range.
  */

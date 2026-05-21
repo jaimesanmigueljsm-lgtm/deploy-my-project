@@ -80,6 +80,15 @@ export interface EngineCategory {
   kind: "fixed" | "variable" | "income";
 }
 
+export interface EngineSavingsAccount {
+  id: string;
+  name: string;
+  type: "checking" | "savings" | "cash" | "emergency" | "other";
+  balance: number;
+  currency: string;
+  isEmergencyFund: boolean;
+}
+
 /**
  * The complete context passed to every engine function.
  *
@@ -103,6 +112,8 @@ export interface FinancialEngineContext {
   investments: EngineInvestment[];
   /** User's expense categories */
   categories: EngineCategory[];
+  /** All savings accounts (checking, savings, emergency, etc.) */
+  savingsAccounts: EngineSavingsAccount[];
   /** Reference date for all time-sensitive calculations */
   asOf: Date;
 }
@@ -219,6 +230,11 @@ export interface BudgetForecast {
   projectedOverrun: boolean;
   /** Probability 0–1 that month-end spend exceeds income */
   overrunProbability: number;
+  /**
+   * Simple closing balance: income − already spent − pending bills.
+   * More conservative than projectedSavings — doesn't extrapolate variable pace.
+   */
+  projectedClosingBalance: number;
 
   // ── Actionable ────────────────────────────────────────────────────────────
   /** (available_variable_budget - current_variable_spend) / daysRemaining */
@@ -394,6 +410,10 @@ export interface FinancialEngineOutput {
   spendingIntelligence: SpendingIntelligence;
   portfolioAnalytics: PortfolioAnalytics;
   recommendations: Recommendation[];
+  /** Sum of all savings account balances */
+  totalSavings: number;
+  /** Net worth: totalSavings + portfolio value (debts = 0) */
+  netWorth: number;
   /** ISO timestamp of when this output was computed */
   computedAt: string;
 }
