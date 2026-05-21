@@ -615,6 +615,19 @@ export type Database = {
         Args: { p_first_name: string; p_last_name_1: string }
         Returns: string
       }
+      get_family_members_profiles: {
+        Args: { p_family_id: string }
+        Returns: {
+          avatar_url: string
+          financial_username: string
+          first_name: string
+          full_name: string
+          last_name_1: string
+          member_id: string
+          role: string
+          user_id: string
+        }[]
+      }
       get_family_sent_invitations: {
         Args: { p_family_id: string }
         Returns: {
@@ -659,6 +672,10 @@ export type Database = {
         Returns: string
       }
       unaccent: { Args: { "": string }; Returns: string }
+      update_family_name: {
+        Args: { p_family_id: string; p_name: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
