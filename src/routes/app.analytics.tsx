@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { money, monthRange, shortMoney } from "@/lib/format";
-import { Sparkles, TrendingUp as TUp, PiggyBank, ShieldCheck, Wallet2 } from "lucide-react";
+import { Sparkles, TrendingUp as TUp, PiggyBank, Wallet2 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   ReferenceLine, Legend,
@@ -13,6 +13,11 @@ import { useAnalyticsData } from "@/features/analytics/use-analytics";
 import { buildTopCategories, buildIncomeExpenseSeries, buildFixedVariableSeries } from "@/features/analytics/analytics.utils";
 import { HealthCard, HealthCardSkeleton } from "@/features/dashboard/components/health-card";
 import { SmartInsightsFeed, SmartInsightsSkeleton } from "@/features/dashboard/components/smart-insights";
+import { ForecastWidget, ForecastSkeleton } from "@/features/dashboard/components/forecast-widget";
+import {
+  RecommendationCards,
+  RecommendationsSkeleton,
+} from "@/features/dashboard/components/recommendation-cards";
 import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -78,6 +83,37 @@ function Analytics() {
     [expenses, months],
   );
 
+  // ── Tu ahorro: current-month snapshot (independent of period selector) ────
+  const currentMonthStart = useMemo(() => range.end.slice(0, 7) + "-01", [range.end]);
+
+  const monthIncome = useMemo(
+    () =>
+      incomes
+        .filter((i) => i.received_at >= currentMonthStart && i.received_at <= range.end)
+        .reduce((s, i) => s + i.amount, 0),
+    [incomes, currentMonthStart, range.end],
+  );
+  const monthExpenses = useMemo(
+    () =>
+      expenses
+        .filter((e) => e.spent_at >= currentMonthStart && e.spent_at <= range.end)
+        .reduce((s, e) => s + e.amount, 0),
+    [expenses, currentMonthStart, range.end],
+  );
+
+  // 6-month rolling average net savings (used regardless of period selector)
+  const sixMonthSeries = useMemo(
+    () => buildIncomeExpenseSeries(expenses, incomes, 6),
+    [expenses, incomes],
+  );
+  const avgMonthlySavings = useMemo(
+    () =>
+      sixMonthSeries.length > 0
+        ? Math.round(sixMonthSeries.reduce((s, m) => s + m.net, 0) / sixMonthSeries.length)
+        : 0,
+    [sixMonthSeries],
+  );
+
   if (isLoading) return <AnalyticsSkeleton />;
 
   if (expenses.length === 0) {
@@ -91,6 +127,9 @@ function Analytics() {
       </div>
     );
   }
+
+  const monthRemaining = monthIncome - monthExpenses;
+  const monthSavingsRate = monthIncome > 0 ? Math.max(0, monthRemaining) / monthIncome : 0;
 
   const periods: { key: Period; label: string }[] = [
     { key: "month",    label: t("analytics.period.month") },
@@ -219,6 +258,74 @@ function Analytics() {
         </div>
       </section>
 
+      {/* Tu ahorro */}
+      <section>
+        <SectionHeader
+          title={t("analytics.section.yoursavings")}
+          subtitle={t("analytics.section.yoursavings.sub")}
+        />
+        {engineLoading || !engine ? (
+          <div className="grid grid-cols-3 gap-2.5">
+            <SkeletonBlock className="h-20" />
+            <SkeletonBlock className="h-20" />
+            <SkeletonBlock className="h-20" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="card-flat p-3.5 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="label-overline">{t("analytics.yoursavings.total")}</p>
+                <PiggyBank className="size-3.5 text-positive" />
+              </div>
+              <p className="text-base font-semibold num text-positive">
+                {shortMoney(engine.totalSavings + Math.max(0, monthRemaining), currency)}
+              </p>
+              <p className="text-[10px] text-muted-foreground">{t("analytics.yoursavings.total.sub")}</p>
+            </div>
+            <div className="card-flat p-3.5 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="label-overline">{t("analytics.yoursavings.rate")}</p>
+                <TUp className="size-3.5 text-sky" />
+              </div>
+              <p className={cn(
+                "text-base font-semibold num",
+                monthSavingsRate >= 0.1 ? "text-positive" : monthRemaining < 0 ? "text-negative" : "text-muted-foreground",
+              )}>
+                {monthIncome > 0 ? `${Math.round(monthSavingsRate * 100)}%` : "—"}
+              </p>
+              <p className="text-[10px] text-muted-foreground">{t("analytics.yoursavings.rate.sub")}</p>
+            </div>
+            <div className="card-flat p-3.5 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="label-overline">{t("analytics.yoursavings.avg")}</p>
+                <Wallet2 className="size-3.5 text-muted-foreground" />
+              </div>
+              <p className={cn(
+                "text-base font-semibold num",
+                avgMonthlySavings >= 0 ? "text-positive" : "text-negative",
+              )}>
+                {shortMoney(avgMonthlySavings, currency)}
+              </p>
+              <p className="text-[10px] text-muted-foreground">{t("analytics.yoursavings.avg.sub")}</p>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Monthly forecast */}
+      {(engineLoading || engine) && (
+        <section>
+          <SectionHeader
+            title={t("dashboard.section.forecast")}
+            subtitle={t("dashboard.section.forecast.sub")}
+          />
+          {engineLoading || !engine
+            ? <ForecastSkeleton />
+            : <ForecastWidget forecast={engine.budgetForecast} currency={currency} savedSoFar={monthRemaining} />
+          }
+        </section>
+      )}
+
       {/* Financial health */}
       <section>
         <SectionHeader title={t("analytics.section.healthDetail")} />
@@ -228,40 +335,6 @@ function Analytics() {
         }
       </section>
 
-      {/* Savings & Net Worth position */}
-      {!engineLoading && engine && (engine.totalSavings > 0 || engine.netWorth > 0) && (
-        <section>
-          <SectionHeader title={t("analytics.section.savings")} subtitle={t("analytics.section.savings.sub")} />
-          <div className="grid grid-cols-3 gap-2.5">
-            <div className="card-flat p-3.5 space-y-1">
-              <div className="flex items-center justify-between">
-                <p className="label-overline">{t("analytics.savings.total")}</p>
-                <PiggyBank className="size-3.5 text-positive" />
-              </div>
-              <p className="text-base font-semibold num text-positive">{shortMoney(engine.totalSavings, currency)}</p>
-            </div>
-            <div className="card-flat p-3.5 space-y-1">
-              <div className="flex items-center justify-between">
-                <p className="label-overline">{t("analytics.savings.emergency")}</p>
-                <ShieldCheck className="size-3.5 text-sky" />
-              </div>
-              <p className={cn("text-base font-semibold num", engine.healthScore.subScores.emergencyReadiness.rawValue >= 3 ? "text-positive" : "text-warn")}>
-                {engine.healthScore.subScores.emergencyReadiness.rawValue.toFixed(1)} {t("dashboard.savings.months")}
-              </p>
-            </div>
-            <div className="card-flat p-3.5 space-y-1">
-              <div className="flex items-center justify-between">
-                <p className="label-overline">{t("analytics.savings.networth")}</p>
-                <Wallet2 className="size-3.5 text-muted-foreground" />
-              </div>
-              <p className={cn("text-base font-semibold num", engine.netWorth >= 0 ? "text-positive" : "text-negative")}>
-                {shortMoney(engine.netWorth, currency)}
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Spending signals */}
       {(engineLoading || (engine && engine.spendingIntelligence)) && (
         <section>
@@ -269,6 +342,20 @@ function Analytics() {
           {engineLoading || !engine
             ? <SmartInsightsSkeleton />
             : <SmartInsightsFeed intelligence={engine.spendingIntelligence} />
+          }
+        </section>
+      )}
+
+      {/* Recommendations */}
+      {(engineLoading || (engine && engine.recommendations.length > 0)) && (
+        <section>
+          <SectionHeader
+            title={t("dashboard.section.recommendations")}
+            subtitle={t("dashboard.section.recommendations.sub.engine")}
+          />
+          {engineLoading || !engine
+            ? <RecommendationsSkeleton />
+            : <RecommendationCards recommendations={engine.recommendations} currency={currency} />
           }
         </section>
       )}

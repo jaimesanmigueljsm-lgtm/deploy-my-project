@@ -611,6 +611,14 @@ const en: Dict = {
   "analytics.savings.total": "Total saved",
   "analytics.savings.emergency": "Emergency cover",
   "analytics.savings.networth": "Net worth",
+  "analytics.section.yoursavings": "Your savings",
+  "analytics.section.yoursavings.sub": "Total · Monthly rate · 6-month average",
+  "analytics.yoursavings.total": "Total savings",
+  "analytics.yoursavings.total.sub": "Accounts + this month",
+  "analytics.yoursavings.rate": "Monthly rate",
+  "analytics.yoursavings.rate.sub": "of monthly income",
+  "analytics.yoursavings.avg": "Monthly avg",
+  "analytics.yoursavings.avg.sub": "Last 6 months",
 };
 
 const es: Dict = {
@@ -1211,6 +1219,14 @@ const es: Dict = {
   "analytics.savings.total": "Total ahorrado",
   "analytics.savings.emergency": "Cobertura emergencia",
   "analytics.savings.networth": "Patrimonio neto",
+  "analytics.section.yoursavings": "Tu ahorro",
+  "analytics.section.yoursavings.sub": "Total · Tasa mensual · Media 6 meses",
+  "analytics.yoursavings.total": "Ahorro total",
+  "analytics.yoursavings.total.sub": "Cuentas + este mes",
+  "analytics.yoursavings.rate": "Tasa mensual",
+  "analytics.yoursavings.rate.sub": "del ingreso mensual",
+  "analytics.yoursavings.avg": "Media mensual",
+  "analytics.yoursavings.avg.sub": "Últimos 6 meses",
 };
 
 const fr: Dict = {

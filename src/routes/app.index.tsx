@@ -1,20 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { money, monthLabel, monthRange, shortMoney, pct } from "@/lib/format";
+import { money, monthLabel, monthRange, shortMoney } from "@/lib/format";
 import {
   Sparkles,
   TrendingUp,
   Plus,
   ArrowUpRight,
   ArrowDownRight,
-  ChevronRight,
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
   Lightbulb,
-  PiggyBank,
-  ShieldCheck,
-  Wallet2,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -27,26 +23,14 @@ import {
   Cell,
 } from "recharts";
 import {
-  ProgressRing,
   SectionHeader,
   InsightCard,
   TrendBadge,
-  CategoryDot,
   SkeletonBlock,
 } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
 import { useDashboard, useGenerateInsights } from "@/features/dashboard/use-dashboard";
-import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
 import { useT } from "@/i18n";
-import { ForecastWidget, ForecastSkeleton } from "@/features/dashboard/components/forecast-widget";
-import {
-  HealthCardSimple,
-  HealthCardSimpleSkeleton,
-} from "@/features/dashboard/components/health-card";
-import {
-  RecommendationCards,
-  RecommendationsSkeleton,
-} from "@/features/dashboard/components/recommendation-cards";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -61,15 +45,6 @@ type Expense = Pick<
   "id" | "amount" | "description" | "spent_at" | "kind" | "category_id"
 >;
 type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind">;
-
-// ─── Score color (matches HEALTH_STATUS_BANDS) ────────────────────────────────
-
-function scoreColor(score: number): string {
-  if (score >= 850) return "var(--positive)";
-  if (score >= 500) return "var(--sky)";
-  if (score >= 300) return "var(--warn)";
-  return "var(--negative)";
-}
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -86,10 +61,9 @@ function Dashboard() {
     range,
   } = useDashboard();
 
-  const { output: engine, isLoading: engineLoading } = useFinancialEngine();
   const { mutate: refreshInsights, isPending: refreshing } = useGenerateInsights();
 
-  // ── Derived values (must be before any early return — Rules of Hooks) ────
+  // ── Derived values (before any early return — Rules of Hooks) ────────────
   const totalSpent = useMemo(() => expenses.reduce((s, x) => s + x.amount, 0), [expenses]);
   const series = useMemo(() => buildSeries(expenses, range), [expenses, range]);
   const dist = useMemo(() => buildDistribution(expenses, categories), [expenses, categories]);
@@ -98,15 +72,6 @@ function Dashboard() {
 
   const currency = profile?.currency ?? "EUR";
   const remaining = incomeTotal - totalSpent;
-  const savingsRate = incomeTotal > 0 ? Math.max(0, remaining) / incomeTotal : 0;
-
-  // Score 0–1000. Engine is authoritative; DB value (0–100) scaled as fallback.
-  const score =
-    engine?.healthScore.total ??
-    (profile?.health_score != null
-      ? profile.health_score * 10
-      : Math.round((60 * savingsRate + 40 * (incomeTotal > 0 ? 1 : 0)) * 10));
-
   const monthChange =
     prevMonthTotal > 0 ? ((totalSpent - prevMonthTotal) / prevMonthTotal) * 100 : 0;
 
@@ -138,31 +103,21 @@ function Dashboard() {
 
       {/* ── Hero card ── */}
       <div className="card-soft p-5 gradient-hero relative overflow-hidden">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground">{t("dashboard.available")}</p>
-            <div className="mt-1 balance-display text-[44px] font-semibold leading-tight">
-              {shortMoney(remaining, currency)}
-            </div>
-            <div className="mt-2 flex items-center gap-3 text-xs">
-              <span className="inline-flex items-center gap-1 text-positive font-medium">
-                <ArrowUpRight className="size-3" /> {money(incomeTotal, currency)}
-              </span>
-              <span className="text-border">|</span>
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <ArrowDownRight className="size-3" /> {money(totalSpent, currency)}
-              </span>
-              {prevMonthTotal > 0 && <TrendBadge value={monthChange} className="ml-1" />}
-            </div>
+        <div>
+          <p className="text-xs text-muted-foreground">{t("dashboard.available")}</p>
+          <div className="mt-1 balance-display text-[44px] font-semibold leading-tight">
+            {shortMoney(remaining, currency)}
           </div>
-          <ProgressRing
-            value={score / 10}
-            size={68}
-            stroke={5.5}
-            label={`${score}`}
-            sublabel="Score"
-            color={scoreColor(score)}
-          />
+          <div className="mt-2 flex items-center gap-3 text-xs">
+            <span className="inline-flex items-center gap-1 text-positive font-medium">
+              <ArrowUpRight className="size-3" /> {money(incomeTotal, currency)}
+            </span>
+            <span className="text-border">|</span>
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
+              <ArrowDownRight className="size-3" /> {money(totalSpent, currency)}
+            </span>
+            {prevMonthTotal > 0 && <TrendBadge value={monthChange} className="ml-1" />}
+          </div>
         </div>
 
         <div className="mt-4 h-20 -mx-1">
@@ -192,62 +147,6 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>
-
-      {/* ── Total savings strip (shown only when engine has data and totalSavings > 0) ── */}
-      {engine && (engine.totalSavings > 0 || engine.netWorth > 0) && (
-        <section className="animate-rise-delay-1">
-          <SectionHeader
-            title={t("dashboard.savings.title")}
-            subtitle={t("dashboard.savings.subtitle")}
-          />
-          <div className="grid grid-cols-3 gap-2.5">
-            <SavingsTile
-              label={t("dashboard.savings.total")}
-              value={shortMoney(engine.totalSavings, currency)}
-              sublabel={t("dashboard.savings.total.sub")}
-              icon={<PiggyBank className="size-3" />}
-              tone="positive"
-            />
-            <SavingsTile
-              label={t("dashboard.savings.emergency")}
-              value={shortMoney(
-                engine.healthScore.subScores.emergencyReadiness.rawValue > 0
-                  ? engine.healthScore.essentialMonthlyExpenses *
-                      engine.healthScore.subScores.emergencyReadiness.rawValue
-                  : 0,
-                currency,
-              )}
-              sublabel={`${engine.healthScore.subScores.emergencyReadiness.rawValue.toFixed(1)} ${t("dashboard.savings.months")}`}
-              icon={<ShieldCheck className="size-3" />}
-              tone={engine.healthScore.subScores.emergencyReadiness.rawValue >= 3 ? "positive" : engine.healthScore.subScores.emergencyReadiness.rawValue >= 1 ? "warn" : "negative"}
-            />
-            <SavingsTile
-              label={t("dashboard.savings.networth")}
-              value={shortMoney(engine.netWorth, currency)}
-              sublabel={t("dashboard.savings.networth.sub")}
-              icon={<Wallet2 className="size-3" />}
-              tone={engine.netWorth >= 0 ? "positive" : "negative"}
-            />
-          </div>
-        </section>
-      )}
-
-      {/* ── Forecast strip ── */}
-      <section className="animate-rise-delay-1">
-        <SectionHeader
-          title={t("dashboard.section.forecast")}
-          subtitle={t("dashboard.section.forecast.sub")}
-        />
-        {engineLoading || !engine ? (
-          <ForecastSkeleton />
-        ) : (
-          <ForecastWidget
-            forecast={engine.budgetForecast}
-            currency={currency}
-            savedSoFar={remaining}
-          />
-        )}
-      </section>
 
       {/* ── Where money goes ── */}
       {dist.length > 0 && (
@@ -304,51 +203,29 @@ function Dashboard() {
         </section>
       )}
 
-      {/* ── Financial health (simplified) ── */}
-      <section className="animate-rise-delay-1">
-        <SectionHeader
-          title={t("dashboard.section.health")}
-          subtitle={t("dashboard.section.health.sub")}
-        />
-        {engineLoading || !engine ? (
-          <HealthCardSimpleSkeleton />
-        ) : (
-          <HealthCardSimple healthScore={engine.healthScore} />
-        )}
-      </section>
-
-      {/* ── For you (recommendations) ── */}
+      {/* ── For you (AI recommendations) ── */}
       <section className="animate-rise-delay-2 pb-4">
         <SectionHeader
           title={t("dashboard.section.recommendations")}
           subtitle={
-            engine && engine.recommendations.length > 0
-              ? t("dashboard.section.recommendations.sub.engine")
-              : recommendations.length > 0
-                ? t("dashboard.section.recommendations.sub.ai")
-                : t("dashboard.section.recommendations.sub.empty")
+            recommendations.length > 0
+              ? t("dashboard.section.recommendations.sub.ai")
+              : t("dashboard.section.recommendations.sub.empty")
           }
           action={
-            !engine && (
-              <button
-                onClick={() => refreshInsights()}
-                disabled={refreshing}
-                className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 disabled:opacity-50"
-              >
-                <RefreshCw className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
-                {recommendations.length > 0
-                  ? t("dashboard.insights.refresh")
-                  : t("dashboard.insights.generate.short")}
-              </button>
-            )
+            <button
+              onClick={() => refreshInsights()}
+              disabled={refreshing}
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
+              {recommendations.length > 0
+                ? t("dashboard.insights.refresh")
+                : t("dashboard.insights.generate.short")}
+            </button>
           }
         />
-
-        {engineLoading ? (
-          <RecommendationsSkeleton />
-        ) : engine && engine.recommendations.length > 0 ? (
-          <RecommendationCards recommendations={engine.recommendations} currency={currency} />
-        ) : recommendations.length > 0 ? (
+        {recommendations.length > 0 ? (
           <div className="space-y-2">
             {recommendations.map((r) => {
               const tone =
@@ -416,45 +293,6 @@ function buildSeries(expenses: Expense[], range: ReturnType<typeof monthRange>) 
   return out;
 }
 
-function SavingsTile({
-  label,
-  value,
-  sublabel,
-  icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  sublabel: string;
-  icon: React.ReactNode;
-  tone: "positive" | "warn" | "negative" | "neutral";
-}) {
-  const toneClasses = {
-    positive: "text-positive",
-    warn: "text-warn",
-    negative: "text-negative",
-    neutral: "text-muted-foreground",
-  };
-  const toneIconBg = {
-    positive: "bg-positive-soft text-positive",
-    warn: "bg-warn-soft text-warn",
-    negative: "bg-negative-soft text-negative",
-    neutral: "bg-muted text-muted-foreground",
-  };
-  return (
-    <div className="card-flat p-3.5 flex flex-col gap-1.5">
-      <div className="flex items-center justify-between">
-        <span className="label-overline">{label}</span>
-        <span className={`size-5 rounded-lg grid place-items-center ${toneIconBg[tone]}`}>{icon}</span>
-      </div>
-      <div className={`num text-xl font-semibold tracking-tight leading-none ${toneClasses[tone]}`}>
-        {value}
-      </div>
-      <div className="text-[10px] text-muted-foreground leading-tight">{sublabel}</div>
-    </div>
-  );
-}
-
 function buildDistribution(expenses: Expense[], cats: Category[]) {
   const map = new Map<string, number>();
   for (const e of expenses) {
@@ -474,13 +312,7 @@ function DashboardSkeleton() {
     <div className="px-4 pt-6 space-y-5">
       <SkeletonBlock className="h-10 w-44" />
       <SkeletonBlock className="h-52" />
-      <div className="grid grid-cols-3 gap-2.5">
-        <SkeletonBlock className="h-20" />
-        <SkeletonBlock className="h-20" />
-        <SkeletonBlock className="h-20" />
-      </div>
-      <SkeletonBlock className="h-64" />
-      <SkeletonBlock className="h-32" />
+      <SkeletonBlock className="h-40" />
       <div className="space-y-2">
         <SkeletonBlock className="h-16" />
         <SkeletonBlock className="h-16" />
