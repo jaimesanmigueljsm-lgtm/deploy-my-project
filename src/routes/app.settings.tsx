@@ -20,8 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, useUpdateProfile } from "@/features/profile/use-profile";
-import { uploadAvatar, type Profile } from "@/features/profile/profile.service";
+import { uploadAvatar, regenerateUsername, type Profile } from "@/features/profile/profile.service";
 import { useExportData } from "@/features/settings/use-settings";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/app/settings")({
   component: Settings,
@@ -88,7 +90,7 @@ function Settings() {
         <div className="min-w-0 flex-1">
           <div className="text-base font-semibold truncate">{profile.full_name ?? t("settings.addName")}</div>
           <div className="text-xs text-muted-foreground truncate">{email}</div>
-          {profile.financial_username && (
+          {profile.financial_username?.trim() && (
             <div className="text-xs text-muted-foreground font-mono mt-0.5">@{profile.financial_username}</div>
           )}
         </div>
@@ -216,6 +218,7 @@ function ProfileEditDialog({
   t: (k: string) => string;
 }) {
   const updateProfile = useUpdateProfile();
+  const qc            = useQueryClient();
   const fileInputRef  = useRef<HTMLInputElement>(null);
 
   const [firstName,  setFirstName]  = useState("");
@@ -251,24 +254,37 @@ function ProfileEditDialog({
     }
   }
 
-  function save() {
+  async function save() {
     const trimFirst = firstName.trim();
     const trimLast1 = lastName1.trim();
     if (!trimFirst || !trimLast1) return;
 
     const avatarBase = localAvatar?.split("?")[0] ?? profile.avatar_url ?? undefined;
 
-    updateProfile.mutate(
-      {
+    try {
+      await updateProfile.mutateAsync({
         first_name:  trimFirst,
         last_name_1: trimLast1,
         last_name_2: lastName2.trim() || null,
         full_name:   [trimFirst, trimLast1, lastName2.trim()].filter(Boolean).join(" "),
         address:     address.trim() || null,
         ...(avatarBase ? { avatar_url: avatarBase } : {}),
-      },
-      { onSuccess: onClose },
-    );
+      });
+
+      // Auto-generate username if it was empty
+      if (!profile.financial_username?.trim()) {
+        try {
+          await regenerateUsername();
+          await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+        } catch {
+          // Non-critical — username can be regenerated later
+        }
+      }
+
+      onClose();
+    } catch {
+      // updateProfile already shows a toast via its onError handler
+    }
   }
 
   const initials = [firstName[0], lastName1[0]]
@@ -377,23 +393,33 @@ function ProfileEditDialog({
               <AtSign className="size-3 text-muted-foreground" />
               {t("settings.privacy.username")}
             </Label>
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted">
-              <span className="flex-1 text-sm font-mono text-muted-foreground">
-                @{profile.financial_username}
-              </span>
-              <button
-                onClick={copyUsername}
-                className="text-muted-foreground hover:text-foreground transition shrink-0"
-                aria-label="Copy username"
-              >
-                {copied
-                  ? <Check className="size-3.5 text-positive" />
-                  : <Copy className="size-3.5" />}
-              </button>
-            </div>
-            <p className="text-[11px] text-muted-foreground leading-snug">
-              {t("settings.privacy.username.note")}
-            </p>
+            {profile.financial_username?.trim() ? (
+              <>
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted">
+                  <span className="flex-1 text-sm font-mono text-muted-foreground">
+                    @{profile.financial_username}
+                  </span>
+                  <button
+                    onClick={copyUsername}
+                    className="text-muted-foreground hover:text-foreground transition shrink-0"
+                    aria-label="Copy username"
+                  >
+                    {copied
+                      ? <Check className="size-3.5 text-positive" />
+                      : <Copy className="size-3.5" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  {t("settings.privacy.username.note")}
+                </p>
+              </>
+            ) : (
+              <div className="px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
+                  {t("settings.privacy.username.pending")}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
