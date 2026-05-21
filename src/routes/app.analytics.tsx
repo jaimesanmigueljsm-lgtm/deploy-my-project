@@ -13,10 +13,6 @@ import { useAnalyticsData } from "@/features/analytics/use-analytics";
 import { buildTopCategories, buildIncomeExpenseSeries, buildFixedVariableSeries } from "@/features/analytics/analytics.utils";
 import { HealthCard, HealthCardSkeleton } from "@/features/dashboard/components/health-card";
 import { SmartInsightsFeed, SmartInsightsSkeleton } from "@/features/dashboard/components/smart-insights";
-import {
-  RecommendationCards,
-  RecommendationsSkeleton,
-} from "@/features/dashboard/components/recommendation-cards";
 import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -273,20 +269,6 @@ function Analytics() {
           {engineLoading || !engine
             ? <SmartInsightsSkeleton />
             : <SmartInsightsFeed intelligence={engine.spendingIntelligence} />
-          }
-        </section>
-      )}
-
-      {/* Recommendations */}
-      {(engineLoading || (engine && engine.recommendations.length > 0)) && (
-        <section>
-          <SectionHeader
-            title={t("dashboard.section.recommendations")}
-            subtitle={t("dashboard.section.recommendations.sub.engine")}
-          />
-          {engineLoading || !engine
-            ? <RecommendationsSkeleton />
-            : <RecommendationCards recommendations={engine.recommendations} currency={currency} />
           }
         </section>
       )}
