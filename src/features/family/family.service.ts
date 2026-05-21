@@ -75,6 +75,7 @@ export interface SharedGoal {
 export interface FamilyData {
   family: { id: string; name: string; owner_id: string };
   members: FamilyMember[];
+  memberProfiles: FamilyMemberProfile[];
   goals: SharedGoal[];
   isOwner: boolean;
 }
@@ -181,7 +182,7 @@ export async function loadFamilyData(
   familyId: string,
   currentUserId: string,
 ): Promise<FamilyData> {
-  const [familyRes, membersRes, goalsRes] = await Promise.all([
+  const [familyRes, membersRes, goalsRes, profilesRes] = await Promise.all([
     supabase.from("families").select("*").eq("id", familyId).single(),
     supabase
       .from("family_members")
@@ -193,12 +194,15 @@ export async function loadFamilyData(
       .select("*")
       .eq("family_id", familyId)
       .order("created_at", { ascending: false }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).rpc("get_family_members_profiles", { p_family_id: familyId }),
   ]);
 
   if (familyRes.error) throw new Error(familyRes.error.message);
 
   const family = familyRes.data as { id: string; name: string; owner_id: string };
   const members = (membersRes.data ?? []) as FamilyMember[];
+  const memberProfiles = (profilesRes.data ?? []) as FamilyMemberProfile[];
   const goals = ((goalsRes.data ?? []) as SharedGoal[]).map((g) => ({
     ...g,
     target_amount: Number(g.target_amount),
@@ -208,6 +212,7 @@ export async function loadFamilyData(
   return {
     family,
     members,
+    memberProfiles,
     goals,
     isOwner: family.owner_id === currentUserId,
   };

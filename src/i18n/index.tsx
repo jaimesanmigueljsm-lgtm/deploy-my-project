@@ -24,13 +24,12 @@ function detectInitial(): LocaleCode {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<LocaleCode>("en");
+  // Lazy initializer reads localStorage on the FIRST render — no post-mount flash
+  const [locale, setLocaleState] = useState<LocaleCode>(() => detectInitial());
 
   useEffect(() => {
-    const initial = detectInitial();
-    setLocaleState(initial);
-    document.documentElement.lang = initial;
-  }, []);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const value = useMemo<Ctx>(() => ({
     locale,

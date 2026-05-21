@@ -97,13 +97,6 @@ function FamilyPage() {
     staleTime: 30_000,
   });
 
-  const { data: memberProfiles = [] } = useQuery({
-    queryKey: FK.profiles(familyId ?? ""),
-    queryFn: () => getFamilyMembersProfiles(familyId!),
-    enabled: !!familyId,
-    staleTime: 60_000,
-  });
-
   const acceptMutation = useMutation({
     mutationFn: ({ id }: { id: string; invFamilyId: string }) => acceptFamilyInvite(id),
     onSuccess: async (_, { invFamilyId }) => {
@@ -152,7 +145,7 @@ function FamilyPage() {
   if (profileLoading || (!!familyId && familyLoading && !familyData)) return <FamilySkeleton />;
 
   const isOwner = familyData?.isOwner ?? false;
-  const { family, members, goals } = familyData ?? { family: null, members: [], goals: [], isOwner: false };
+  const { family, members, memberProfiles, goals } = familyData ?? { family: null, members: [], memberProfiles: [], goals: [], isOwner: false };
 
   // ── No family ──────────────────────────────────────────────────────────────
   if (!familyId || (!familyLoading && !family)) {
@@ -470,7 +463,6 @@ function FamilyPage() {
         isOwner={isOwner}
         onRenamed={() => {
           void qc.invalidateQueries({ queryKey: FK.data(family.id) });
-          void qc.invalidateQueries({ queryKey: FK.profiles(family.id) });
         }}
         t={t}
       />
