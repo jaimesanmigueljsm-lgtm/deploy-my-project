@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tansta
 import { toast } from "sonner";
 import {
   Plus, Users, Crown, Baby, Heart, Target, Clock, Search, Send,
-  Pencil, TrendingUp, Calendar, Info,
+  Pencil, TrendingUp, Calendar, Info, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,8 @@ import {
   updateSharedGoal,
   addGoalContribution,
   updateFamilyName,
+  removeFamilyMember,
+  leaveFamily,
   notifyFamilyMembers,
   type UserSearchResult,
   type ReceivedInvitation,
@@ -127,6 +129,28 @@ function FamilyPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const removeMemberMutation = useMutation({
+    mutationFn: ({ memberId }: { memberId: string; memberUserId: string }) =>
+      removeFamilyMember(memberId),
+    onSuccess: (_, { memberUserId }) => {
+      toast.success(t("family.toast.member.removed"));
+      void qc.invalidateQueries({ queryKey: FK.data(familyId ?? "") });
+      void qc.invalidateQueries({ queryKey: queryKeys.profile(memberUserId) });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Auto-repair: if this user has a family_id but is no longer in family_members
+  // (i.e. they were removed by the owner), clear their own profile.
+  useEffect(() => {
+    if (!familyData || !userId || !familyId || familyData.isOwner) return;
+    const inMembers = familyData.members.some((m) => m.user_id === userId);
+    if (inMembers) return;
+    void leaveFamily(userId).then(() => {
+      void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+    });
+  }, [familyData, userId, familyId, qc]);
+
   const [openCreate, setOpenCreate] = useState(false);
   const [openInvite, setOpenInvite] = useState(false);
   const [openGoal, setOpenGoal] = useState(false);
@@ -210,7 +234,18 @@ function FamilyPage() {
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
             {t("family.subtitle")}
           </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{family.name}</h1>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight flex items-center gap-2">
+            {family.name}
+            {isOwner && (
+              <button
+                onClick={() => setOpenWhoAreWe(true)}
+                className="size-6 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
+                aria-label={t("common.edit")}
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            )}
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -461,9 +496,13 @@ function FamilyPage() {
         family={family}
         members={memberProfiles}
         isOwner={isOwner}
+        currentUserId={userId}
         onRenamed={() => {
           void qc.invalidateQueries({ queryKey: FK.data(family.id) });
         }}
+        onRemoveMember={(memberId, memberUserId) =>
+          removeMemberMutation.mutate({ memberId, memberUserId })
+        }
         t={t}
       />
 
@@ -1067,21 +1106,24 @@ function GoalPickerDialog({
 // ─── WhoAreWeDialog ───────────────────────────────────────────────────────────
 
 function WhoAreWeDialog({
-  open, onClose, family, members, isOwner, onRenamed, t,
+  open, onClose, family, members, isOwner, currentUserId, onRenamed, onRemoveMember, t,
 }: {
   open: boolean;
   onClose: () => void;
   family: { id: string; name: string; owner_id: string };
   members: FamilyMemberProfile[];
   isOwner: boolean;
+  currentUserId: string;
   onRenamed: () => void;
+  onRemoveMember: (memberId: string, memberUserId: string) => void;
   t: (k: string) => string;
 }) {
   const [editName, setEditName] = useState(family.name);
   const [saving, setSaving] = useState(false);
+  const [pendingRemove, setPendingRemove] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) setEditName(family.name);
+    if (open) { setEditName(family.name); setPendingRemove(null); }
   }, [open, family.name]);
 
   async function rename() {
@@ -1138,6 +1180,7 @@ function WhoAreWeDialog({
                 const displayName = m.full_name
                   ?? `${m.first_name} ${m.last_name_1}`.trim()
                   ?? t("family.role.member");
+                const canRemove = isOwner && m.role !== "owner" && m.user_id !== currentUserId;
                 return (
                   <div key={m.member_id} className="flex items-center gap-3 px-4 py-3.5">
                     {m.avatar_url ? (
@@ -1160,6 +1203,32 @@ function WhoAreWeDialog({
                         {t(`family.role.${m.role}`) ?? m.role}
                       </div>
                     </div>
+                    {canRemove && (
+                      pendingRemove === m.member_id ? (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => { onRemoveMember(m.member_id, m.user_id); setPendingRemove(null); }}
+                            className="text-[11px] text-negative font-medium px-2 py-1 rounded-lg bg-negative/10 hover:bg-negative/20 transition"
+                          >
+                            {t("family.member.remove.cta")}
+                          </button>
+                          <button
+                            onClick={() => setPendingRemove(null)}
+                            className="text-[11px] text-muted-foreground px-2 py-1"
+                          >
+                            {t("common.cancel")}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setPendingRemove(m.member_id)}
+                          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative/10 transition shrink-0"
+                          aria-label={t("family.member.remove")}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )
+                    )}
                   </div>
                 );
               })}

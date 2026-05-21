@@ -455,6 +455,9 @@ const en: Dict = {
   "family.notif.goal.updated.body": "{name} updated the goal \"{goal}\"",
   "family.notif.contribution.title": "Contribution to {goal}",
   "family.notif.contribution.body": "{name} added {amount} to \"{goal}\"",
+  "family.member.remove": "Remove member",
+  "family.member.remove.cta": "Remove",
+  "family.toast.member.removed": "Member removed",
 
   // ── Settings ──────────────────────────────────────────────────────────────
   "settings.account": "Account",
@@ -1063,6 +1066,9 @@ const es: Dict = {
   "family.notif.goal.updated.body": "{name} actualizó el objetivo \"{goal}\"",
   "family.notif.contribution.title": "Aportación a {goal}",
   "family.notif.contribution.body": "{name} añadió {amount} a \"{goal}\"",
+  "family.member.remove": "Eliminar miembro",
+  "family.member.remove.cta": "Eliminar",
+  "family.toast.member.removed": "Miembro eliminado",
 
   // ── Settings ──────────────────────────────────────────────────────────────
   "settings.account": "Cuenta",

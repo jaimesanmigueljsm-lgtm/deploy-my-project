@@ -272,6 +272,22 @@ export async function updateFamilyName(
   if (error) throw new Error(error.message);
 }
 
+export async function removeFamilyMember(memberId: string): Promise<void> {
+  const { error } = await supabase
+    .from("family_members")
+    .delete()
+    .eq("id", memberId);
+  if (error) throw new Error(error.message);
+}
+
+export async function leaveFamily(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ family_id: null })
+    .eq("id", userId);
+  if (error) throw new Error(error.message);
+}
+
 // ─── Family creation ──────────────────────────────────────────────────────────
 
 export async function createFamily(
