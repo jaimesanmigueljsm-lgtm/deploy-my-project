@@ -1,4 +1,5 @@
 import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Home, Wallet, Target, BarChart3, Users, User } from "lucide-react";
@@ -40,10 +41,16 @@ export const Route = createFileRoute("/app")({
     });
     if (!prof?.onboarded) throw redirect({ to: "/onboarding" });
     // Apply theme synchronously before the shell renders to avoid flash.
-    // Also mirror to localStorage so the inline script in index.html can
-    // apply it on subsequent page loads before React hydrates.
+    // localStorage is the authoritative source after the first visit — it's updated
+    // synchronously on every toggle, so it's always ahead of the 5-min-cached DB value.
     if (typeof document !== "undefined") {
-      const isDark = prof?.theme === "dark";
+      let isDark: boolean;
+      try {
+        const stored = localStorage.getItem("nest.theme");
+        isDark = stored !== null ? stored === "dark" : prof?.theme === "dark";
+      } catch {
+        isDark = prof?.theme === "dark";
+      }
       document.documentElement.classList.toggle("dark", isDark);
       try {
         localStorage.setItem("nest.theme", isDark ? "dark" : "light");
@@ -82,6 +89,17 @@ const tabs: TabDef[] = [
 function AppShell() {
   const loc = useLocation();
   const { t } = useT();
+
+  // Sync dark mode across browser tabs when the user changes the theme in another tab
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === "nest.theme") {
+        document.documentElement.classList.toggle("dark", e.newValue === "dark");
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

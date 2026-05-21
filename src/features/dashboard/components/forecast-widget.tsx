@@ -87,12 +87,11 @@ export function ForecastWidget({
   const savedTone: "positive" | "warn" | "neutral" =
     saved > 0 ? "positive" : saved < 0 ? "warn" : "neutral";
 
-  // Tile 3 — Month outlook
-  const overrun = forecast.projectedOverrun;
-  const projectionTone: "positive" | "warn" | "negative" =
-    overrun ? "negative" : forecast.overrunProbability > 0.4 ? "warn" : "positive";
-  const projectionDelta = forecast.projectedTotalWithFixed - forecast.expectedMonthlyIncome;
-  const TrajectoryIcon = overrun ? TrendingDown : forecast.overrunProbability > 0.4 ? Minus : TrendingUp;
+  // Tile 3 — Projected closing balance (income − projected total spend)
+  const closing = forecast.projectedSavings; // expectedMonthlyIncome - projectedTotalWithFixed
+  const closingTone: "positive" | "warn" | "negative" =
+    closing > 0 ? "positive" : closing > -50 ? "warn" : "negative";
+  const ClosingIcon = closing > 0 ? TrendingUp : closing > -50 ? Minus : TrendingDown;
 
   return (
     <div className="grid grid-cols-3 gap-2.5">
@@ -111,15 +110,19 @@ export function ForecastWidget({
         icon={<PiggyBank className="size-3" />}
       />
       <Tile
-        label={t("dashboard.forecast.outlook")}
-        value={shortMoney(forecast.projectedTotalWithFixed, currency)}
-        sublabel={
-          overrun
-            ? `+${shortMoney(Math.abs(projectionDelta), currency)} ${t("dashboard.forecast.outlook.over")}`
-            : `${shortMoney(Math.abs(projectionDelta), currency)} ${t("dashboard.forecast.outlook.under")}`
+        label={t("dashboard.forecast.closing")}
+        value={
+          closing < 0
+            ? `-${shortMoney(Math.abs(closing), currency)}`
+            : shortMoney(closing, currency)
         }
-        tone={projectionTone}
-        icon={<TrajectoryIcon className="size-3" />}
+        sublabel={
+          closing < 0
+            ? `${shortMoney(Math.abs(closing), currency)} ${t("dashboard.forecast.outlook.over")}`
+            : `${shortMoney(closing, currency)} ${t("dashboard.forecast.closing.saves")}`
+        }
+        tone={closingTone}
+        icon={<ClosingIcon className="size-3" />}
       />
     </div>
   );

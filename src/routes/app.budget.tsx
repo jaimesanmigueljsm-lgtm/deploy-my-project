@@ -12,6 +12,8 @@ import {
   Pencil,
   Calendar,
   CheckCircle2,
+  Info,
+  RepeatIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,11 +22,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { SectionHeader, EmptyState, CategoryDot } from "@/components/nest";
 import {
   useBudgetData,
+  useAddBill,
   useAddIncome,
   useUpdateIncome,
   useDeleteIncome,
   useToggleBill,
-  useAddBill,
   useDeleteBill,
 } from "@/features/budget/use-budget";
 import {
@@ -526,10 +528,12 @@ function ExpenseDialog({
   const [categoryId, setCategoryId] = useState<string>("");
   const [kind, setKind] = useState<"variable" | "fixed">("variable");
   const [date, setDate] = useState("");
+  const [dueDay, setDueDay] = useState("1");
 
   const addExpense = useAddExpense();
+  const addBill = useAddBill();
   const updateExpense = useUpdateExpense();
-  const isPending = addExpense.isPending || updateExpense.isPending;
+  const isPending = addExpense.isPending || addBill.isPending || updateExpense.isPending;
   const submittingRef = useRef(false);
 
   useEffect(() => {
@@ -545,6 +549,7 @@ function ExpenseDialog({
       setCategoryId("");
       setKind("variable");
       setDate("");
+      setDueDay("1");
     }
     submittingRef.current = false;
   }, [editing, open]);
@@ -554,14 +559,17 @@ function ExpenseDialog({
     if (!amount || Number(amount) <= 0) return;
     submittingRef.current = true;
 
+    const resolvedName =
+      description || (categories.find((c) => c.id === categoryId)?.name ?? "Expense");
+
     if (editing) {
+      // Editing an existing expense — always updates the expense record
       updateExpense.mutate(
         {
           id: editing.id,
           payload: {
             amount: Number(amount),
-            description:
-              description || (categories.find((c) => c.id === categoryId)?.name ?? "Expense"),
+            description: resolvedName,
             kind,
             category_id: categoryId || null,
             spent_at: date || undefined,
@@ -569,33 +577,36 @@ function ExpenseDialog({
         },
         {
           onSuccess: onClose,
-          onSettled: () => {
-            submittingRef.current = false;
+          onSettled: () => { submittingRef.current = false; },
+        },
+      );
+    } else if (kind === "fixed") {
+      // New fixed expense → create a recurring bill instead
+      addBill.mutate(
+        { name: resolvedName, amount: Number(amount), due_day: Number(dueDay) || 1 },
+        {
+          onSuccess: () => {
+            setAmount(""); setDescription(""); setCategoryId(""); setKind("variable");
+            setDueDay("1"); onClose();
           },
+          onSettled: () => { submittingRef.current = false; },
         },
       );
     } else {
+      // New variable expense
       addExpense.mutate(
         {
           amount: Number(amount),
-          description:
-            description || (categories.find((c) => c.id === categoryId)?.name ?? "Expense"),
+          description: resolvedName,
           kind,
           category_id: categoryId || null,
-          recurring: kind === "fixed",
+          recurring: false,
         },
         {
           onSuccess: () => {
-            setAmount("");
-            setDescription("");
-            setCategoryId("");
-            setKind("variable");
-            setDate("");
-            onClose();
+            setAmount(""); setDescription(""); setCategoryId(""); setKind("variable"); onClose();
           },
-          onSettled: () => {
-            submittingRef.current = false;
-          },
+          onSettled: () => { submittingRef.current = false; },
         },
       );
     }
@@ -669,6 +680,39 @@ function ExpenseDialog({
               </button>
             ))}
           </div>
+
+          {/* Fixed expense → bill setup (new entries only) */}
+          {kind === "fixed" && !editing && (
+            <div className="space-y-2.5 animate-rise">
+              <div className="rounded-xl bg-positive-soft/30 border border-positive/20 px-4 py-3 flex gap-3 items-start">
+                <RepeatIcon className="size-4 text-positive shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-positive">{t("budget.dialog.expense.fixed.info.title")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                    {t("budget.dialog.expense.fixed.info.body")}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Info className="size-3" />
+                  {t("budget.dialog.bill.dueday")}
+                </Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={31}
+                  value={dueDay}
+                  onChange={(e) => setDueDay(e.target.value)}
+                  placeholder="1"
+                  className="text-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Date field — editing mode only */}
           {editing && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">
@@ -682,12 +726,19 @@ function ExpenseDialog({
               />
             </div>
           )}
+
           <div className="flex gap-2 pt-1">
             <Button variant="outline" onClick={onClose} className="flex-1">
               <X className="size-4 mr-1" /> {t("common.cancel")}
             </Button>
             <Button onClick={save} disabled={isPending} className="flex-1">
-              {isPending ? t("common.loading") : editing ? t("common.save") : t("common.add")}
+              {isPending
+                ? t("common.loading")
+                : editing
+                  ? t("common.save")
+                  : kind === "fixed"
+                    ? t("budget.dialog.expense.fixed.cta")
+                    : t("common.add")}
             </Button>
           </div>
         </div>
