@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async ({ context: { queryClient } }) => {
@@ -8,12 +9,13 @@ export const Route = createFileRoute("/")({
     if (!data.session) throw redirect({ to: "/auth" });
 
     const uid = data.session.user.id;
-    // Share the same cache key as /app's beforeLoad so the second check is instant.
+    // Use the same cache key as useProfile() so /app's beforeLoad gets a cache
+    // hit and child routes have the full profile ready immediately on mount.
     const prof = await queryClient.fetchQuery({
-      queryKey: ["profiles-auth-check", uid],
+      queryKey: queryKeys.profile(uid),
       queryFn: async () => {
         const { data: p } = await supabase
-          .from("profiles").select("onboarded, theme").eq("id", uid).maybeSingle();
+          .from("profiles").select("*").eq("id", uid).maybeSingle();
         return p ?? null;
       },
       staleTime: 5 * 60_000,

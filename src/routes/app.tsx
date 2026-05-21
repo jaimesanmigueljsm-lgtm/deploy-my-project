@@ -1,10 +1,10 @@
 import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthProvider } from "@/hooks/use-auth";
 import { Home, Wallet, Target, BarChart3, Users, User } from "lucide-react";
 import { useT } from "@/i18n";
 import { OfflineBanner } from "@/components/offline-banner";
+import { queryKeys } from "@/lib/query-keys";
 
 // ─── Route ────────────────────────────────────────────────────────────────────
 //
@@ -25,14 +25,15 @@ export const Route = createFileRoute("/app")({
     const { data } = await supabase.auth.getSession();
     if (!data.session) throw redirect({ to: "/auth" });
     const uid = data.session.user.id;
-    // Cache the onboarded+theme check so subsequent tab navigations don't re-hit the DB.
-    // Uses a dedicated key to avoid type collisions with the full profile cache.
+    // Pre-seed the full profile into the React Query cache using the same key
+    // that useProfile() reads. This ensures child routes see profile data
+    // immediately on mount with no loading state or extra network request.
     const prof = await queryClient.fetchQuery({
-      queryKey: ["profiles-auth-check", uid],
+      queryKey: queryKeys.profile(uid),
       queryFn: async () => {
         const { data: p } = await supabase
           .from("profiles")
-          .select("onboarded, theme")
+          .select("*")
           .eq("id", uid)
           .maybeSingle();
         return p ?? null;
@@ -59,11 +60,7 @@ export const Route = createFileRoute("/app")({
       }
     }
   },
-  component: () => (
-    <AuthProvider>
-      <AppShell />
-    </AuthProvider>
-  ),
+  component: AppShell,
 });
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────

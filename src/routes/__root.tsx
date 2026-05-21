@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -10,8 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/i18n";
-import { supabase } from "@/integrations/supabase/client";
-
+import { AuthProvider } from "@/hooks/use-auth";
 
 import appCss from "../styles.css?url";
 
@@ -166,31 +164,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
-
-  // Reset query cache and revalidate routes whenever the auth session changes
-  // (sign in / sign out / token refresh on a different user). Without this,
-  // after logging back in the UI keeps showing stale/empty data from the
-  // previous session until each query's staleTime expires.
-  useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "INITIAL_SESSION") return;
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
-        queryClient.clear();
-        router.invalidate();
-      }
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [queryClient, router]);
 
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
-        <Outlet />
-        <Toaster position="top-center" />
+        <AuthProvider>
+          <Outlet />
+          <Toaster position="top-center" />
+        </AuthProvider>
       </I18nProvider>
       {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   );
 }
-

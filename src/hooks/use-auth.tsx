@@ -15,16 +15,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession()
-      .then(({ data }) => {
-        setSession(data.session);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      if (event === "INITIAL_SESSION") return;
+    // Use onAuthStateChange exclusively — INITIAL_SESSION fires immediately
+    // with the persisted session from localStorage, eliminating a separate
+    // getSession() call and the race condition it causes.
+    // The first event (always INITIAL_SESSION) resolves the loading state.
+    let resolved = false;
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
+      if (!resolved) {
+        resolved = true;
+        setLoading(false);
+      }
     });
+
     return () => sub.subscription.unsubscribe();
   }, []);
 
