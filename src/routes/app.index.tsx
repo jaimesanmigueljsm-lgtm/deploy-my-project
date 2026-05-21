@@ -30,6 +30,8 @@ import {
 } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
 import { useDashboard, useGenerateInsights } from "@/features/dashboard/use-dashboard";
+import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
+import { ForecastWidget, ForecastSkeleton } from "@/features/dashboard/components/forecast-widget";
 import { useT } from "@/i18n";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import type { Tables } from "@/integrations/supabase/types";
@@ -61,6 +63,7 @@ function Dashboard() {
     range,
   } = useDashboard();
 
+  const { output: engine, isLoading: engineLoading } = useFinancialEngine();
   const { mutate: refreshInsights, isPending: refreshing } = useGenerateInsights();
 
   // ── Derived values (before any early return — Rules of Hooks) ────────────
@@ -147,6 +150,20 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* ── Budget forecast ── */}
+      {(engineLoading || engine) && (
+        <section className="animate-rise-delay-1">
+          <SectionHeader
+            title={t("dashboard.section.forecast")}
+            subtitle={t("dashboard.section.forecast.sub")}
+          />
+          {engineLoading || !engine
+            ? <ForecastSkeleton />
+            : <ForecastWidget forecast={engine.budgetForecast} currency={currency} savedSoFar={remaining} />
+          }
+        </section>
+      )}
 
       {/* ── Where money goes ── */}
       {dist.length > 0 && (

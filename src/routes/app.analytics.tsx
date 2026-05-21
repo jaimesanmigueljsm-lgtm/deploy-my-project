@@ -13,7 +13,6 @@ import { useAnalyticsData } from "@/features/analytics/use-analytics";
 import { buildTopCategories, buildIncomeExpenseSeries, buildFixedVariableSeries } from "@/features/analytics/analytics.utils";
 import { HealthCard, HealthCardSkeleton } from "@/features/dashboard/components/health-card";
 import { SmartInsightsFeed, SmartInsightsSkeleton } from "@/features/dashboard/components/smart-insights";
-import { ForecastWidget, ForecastSkeleton } from "@/features/dashboard/components/forecast-widget";
 import {
   RecommendationCards,
   RecommendationsSkeleton,
@@ -311,20 +310,6 @@ function Analytics() {
           </div>
         )}
       </section>
-
-      {/* Monthly forecast */}
-      {(engineLoading || engine) && (
-        <section>
-          <SectionHeader
-            title={t("dashboard.section.forecast")}
-            subtitle={t("dashboard.section.forecast.sub")}
-          />
-          {engineLoading || !engine
-            ? <ForecastSkeleton />
-            : <ForecastWidget forecast={engine.budgetForecast} currency={currency} savedSoFar={monthRemaining} />
-          }
-        </section>
-      )}
 
       {/* Financial health */}
       <section>
