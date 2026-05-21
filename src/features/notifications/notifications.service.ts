@@ -8,7 +8,19 @@ const db = _supabase as any;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type NotificationType = "invite_accepted" | "contribution_added" | "goal_updated";
+export type NotificationType = "family_invite" | "invite_accepted" | "contribution_added" | "goal_updated";
+
+export function notificationRoute(type: NotificationType): string {
+  switch (type) {
+    case "family_invite":
+    case "invite_accepted":
+    case "contribution_added":
+    case "goal_updated":
+      return "/app/family";
+    default:
+      return "/app/home";
+  }
+}
 
 export interface Notification {
   id: string;

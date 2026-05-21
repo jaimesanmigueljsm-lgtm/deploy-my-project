@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Bell, CheckCheck, Users, Target, TrendingUp } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { relativeDate } from "@/lib/format";
 import { useNotifications, useMarkAllRead, useMarkNotificationRead } from "./use-notifications";
 import { useT } from "@/i18n";
-import type { NotificationType } from "./notifications.service";
+import { type NotificationType, notificationRoute } from "./notifications.service";
 
 // ─── Icon per notification type ───────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ function NotifIcon({ type }: { type: NotificationType }) {
 
 export function NotificationBell() {
   const { t } = useT();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const { data: notifications = [], isError } = useNotifications();
   const markRead = useMarkNotificationRead();
@@ -78,6 +80,8 @@ export function NotificationBell() {
                     key={n.id}
                     onClick={() => {
                       if (!n.read) markRead.mutate(n.id);
+                      setOpen(false);
+                      void navigate({ to: notificationRoute(n.type) });
                     }}
                     className={`w-full flex items-start gap-3 px-4 py-3 text-left transition hover:bg-muted/40 ${
                       !n.read ? "bg-positive-soft/10" : ""

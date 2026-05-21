@@ -38,6 +38,17 @@ import {
 } from "@/features/family/family.service";
 import { queryKeys } from "@/lib/query-keys";
 
+function monthlyNeeded(goal: SharedGoal): number | null {
+  if (!goal.deadline) return null;
+  const msLeft = new Date(goal.deadline).getTime() - Date.now();
+  if (msLeft <= 0) return null;
+  const monthsLeft = msLeft / (1000 * 60 * 60 * 24 * 30.44);
+  if (monthsLeft < 0.5) return null;
+  const remaining = Math.max(0, goal.target_amount - goal.current_amount);
+  if (remaining <= 0) return null;
+  return remaining / monthsLeft;
+}
+
 const FK = {
   data:     (familyId: string) => ["family", "data",     familyId] as const,
   received: (userId:   string) => ["family", "received", userId]   as const,
@@ -127,8 +138,15 @@ function FamilyPage() {
   const [openInvite, setOpenInvite] = useState(false);
   const [openGoal, setOpenGoal] = useState(false);
   const [openWhoAreWe, setOpenWhoAreWe] = useState(false);
+  const [openGoalPicker, setOpenGoalPicker] = useState(false);
   const [editingGoal, setEditingGoal] = useState<SharedGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<SharedGoal | null>(null);
+
+  function quickContribute() {
+    if (goals.length === 0) return;
+    if (goals.length === 1) { setContributingGoal(goals[0]); return; }
+    setOpenGoalPicker(true);
+  }
 
   if (profileLoading || (!!familyId && familyLoading && !familyData)) return <FamilySkeleton />;
 
@@ -226,14 +244,27 @@ function FamilyPage() {
           {members.length}{" "}
           {members.length === 1 ? t("family.hero.member") : t("family.hero.members")}
         </div>
-        <div className="mt-1 text-[22px] font-semibold tracking-tight">
-          {t("family.hero.title")}
+        <div className="flex items-end justify-between mt-1">
+          <div>
+            <div className="text-[22px] font-semibold tracking-tight">
+              {t("family.hero.title")}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {goals.length > 0
+                ? `${goals.length} ${goals.length === 1 ? t("family.hero.goals.some") : t("family.hero.goals.many")}`
+                : t("family.hero.goals.none")}
+            </p>
+          </div>
+          {goals.length > 0 && (
+            <button
+              onClick={quickContribute}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-positive text-white text-xs font-semibold shrink-0"
+            >
+              <TrendingUp className="size-3.5" />
+              {t("family.hero.contribute")}
+            </button>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {goals.length > 0
-            ? `${goals.length} ${goals.length === 1 ? t("family.hero.goals.some") : t("family.hero.goals.many")}`
-            : t("family.hero.goals.none")}
-        </p>
       </div>
 
       {/* Received invitations */}
@@ -335,6 +366,7 @@ function FamilyPage() {
                 ? Math.min(100, (g.current_amount / g.target_amount) * 100)
                 : 0;
               const remaining = Math.max(0, g.target_amount - g.current_amount);
+              const monthly = monthlyNeeded(g);
               return (
                 <div key={g.id} className="card-flat p-4">
                   <div className="flex items-start justify-between mb-2 gap-2">
@@ -383,9 +415,16 @@ function FamilyPage() {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  {remaining > 0 && (
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      {money(remaining, currency)} {t("family.goal.remaining")}
+                  {(remaining > 0 || monthly !== null) && (
+                    <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
+                      {remaining > 0 && (
+                        <span>{money(remaining, currency)} {t("family.goal.remaining")}</span>
+                      )}
+                      {monthly !== null && (
+                        <span className="text-positive font-medium">
+                          {t("family.goal.monthly").replace("{amount}", money(Math.ceil(monthly), currency))}
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>
@@ -394,6 +433,14 @@ function FamilyPage() {
           </div>
         )}
       </section>
+
+      <GoalPickerDialog
+        open={openGoalPicker}
+        onClose={() => setOpenGoalPicker(false)}
+        goals={goals}
+        onPick={(g) => { setOpenGoalPicker(false); setContributingGoal(g); }}
+        t={t}
+      />
 
       <WhoAreWeDialog
         open={openWhoAreWe}
@@ -850,6 +897,7 @@ function ContributionDialog({
   }
 
   const remaining = Math.max(0, goal.target_amount - goal.current_amount);
+  const monthly = monthlyNeeded(goal);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { setAmount(""); setNote(""); onClose(); } }}>
@@ -887,6 +935,11 @@ function ContributionDialog({
               className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
             />
           </div>
+          {monthly !== null && (
+            <p className="text-xs text-positive font-medium text-center -mt-1">
+              {t("family.dialog.contribute.monthly").replace("{amount}", money(Math.ceil(monthly), currency))}
+            </p>
+          )}
 
           {/* Optional note */}
           <div className="space-y-1.5">
@@ -910,6 +963,47 @@ function ContributionDialog({
               {saving ? t("common.loading") : t("family.dialog.contribute.cta")}
             </Button>
           </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── GoalPickerDialog ─────────────────────────────────────────────────────────
+
+function GoalPickerDialog({
+  open, onClose, goals, onPick, t,
+}: {
+  open: boolean;
+  onClose: () => void;
+  goals: SharedGoal[];
+  onPick: (g: SharedGoal) => void;
+  t: (k: string) => string;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>{t("family.dialog.pick.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          {goals.map((g) => (
+            <button
+              key={g.id}
+              onClick={() => onPick(g)}
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition text-left"
+            >
+              <div className="size-9 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
+                <Target className="size-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{g.name}</div>
+                <div className="text-xs text-muted-foreground num">
+                  {Math.round(g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0)}%
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       </DialogContent>
     </Dialog>

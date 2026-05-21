@@ -21,7 +21,8 @@ export function useProfile() {
     queryKey: queryKeys.profile(user?.id ?? ""),
     queryFn: () => fetchProfile(user!.id),
     enabled: !!user?.id,
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 }
 
