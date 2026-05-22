@@ -597,6 +597,7 @@ function FamilyPage() {
         member={viewingMember}
         onClose={() => setViewingMember(null)}
         isOwnProfile={viewingMember?.user_id === userId}
+        isOwner={isOwner}
         onUpdateRelationship={(memberId, relationship) =>
           updateRelationshipMutation.mutate({ memberId, relationship })
         }
@@ -824,11 +825,12 @@ const RELATIONSHIP_OPTIONS = [
 ] as const;
 
 function MemberProfileSheet({
-  member, onClose, isOwnProfile, onUpdateRelationship, t,
+  member, onClose, isOwnProfile, isOwner, onUpdateRelationship, t,
 }: {
   member: FamilyMemberProfile | null;
   onClose: () => void;
   isOwnProfile: boolean;
+  isOwner: boolean;
   onUpdateRelationship: (memberId: string, relationship: string | null) => void;
   t: (k: string) => string;
 }) {
@@ -872,7 +874,7 @@ function MemberProfileSheet({
               <span className="text-xs capitalize px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                 {t(`family.role.${member.role}`) ?? member.role}
               </span>
-              {member.relationship_type && !isOwnProfile && (
+              {member.relationship_type && (
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-accent/10 text-accent">
                   {t(`family.member.relationship.${member.relationship_type}`) ?? member.relationship_type}
                 </span>
@@ -887,7 +889,7 @@ function MemberProfileSheet({
           </p>
         )}
 
-        {isOwnProfile && (
+        {(isOwnProfile || isOwner) && (
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">{t("family.member.relationship.label")}</Label>
             <select
