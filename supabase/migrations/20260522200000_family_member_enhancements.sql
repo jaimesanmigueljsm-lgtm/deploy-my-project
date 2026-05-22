@@ -42,6 +42,8 @@ GRANT EXECUTE ON FUNCTION update_member_relationship TO authenticated;
 
 -- ─── 3. Updated get_family_members_profiles returning new fields ──────────────
 
+DROP FUNCTION IF EXISTS public.get_family_members_profiles(uuid);
+
 CREATE OR REPLACE FUNCTION public.get_family_members_profiles(p_family_id uuid)
 RETURNS TABLE (
   member_id          uuid,
