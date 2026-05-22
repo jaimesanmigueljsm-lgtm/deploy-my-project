@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   Plus, Users, Crown, Baby, Heart, Target, Clock, Search, Send,
   Pencil, TrendingUp, Calendar, Trash2, UserPlus, UserMinus,
-  Sparkles, Zap,
+  Sparkles, Zap, CircleDollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -546,7 +546,7 @@ function FamilyPage() {
                         aria-label={t("family.goal.contribute")}
                         className="size-10 grid place-items-center rounded-xl text-positive bg-positive-soft/40 hover:bg-positive-soft/70 transition active:scale-95"
                       >
-                        <TrendingUp className="size-5" />
+                        <CircleDollarSign className="size-5" />
                       </button>
                       <button
                         onClick={() => { setEditingGoal(g); setOpenGoal(true); }}
