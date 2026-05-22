@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tansta
 import { toast } from "sonner";
 import {
   Plus, Users, Crown, Baby, Heart, Target, Clock, Search, Send,
-  Pencil, TrendingUp, Calendar, Info, Trash2,
+  Pencil, TrendingUp, Calendar, Trash2, UserPlus, UserMinus,
+  Sparkles, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +15,12 @@ import { SectionHeader, EmptyState } from "@/components/nest";
 import { useT } from "@/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/features/profile/use-profile";
-import { money } from "@/lib/format";
+import { money, shortMoney } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
 import {
   loadFamilyData,
   getMyInvitations,
   getFamilySentInvitations,
-  getFamilyMembersProfiles,
   searchUserByUsername,
   sendFamilyInvite,
   acceptFamilyInvite,
@@ -32,13 +33,18 @@ import {
   removeFamilyMember,
   leaveFamily,
   notifyFamilyMembers,
+  getFamilyActivity,
+  logFamilyActivity,
+  updateMemberRelationship,
   type UserSearchResult,
   type ReceivedInvitation,
   type SentInvitation,
   type SharedGoal,
   type FamilyMemberProfile,
+  type FamilyActivity,
 } from "@/features/family/family.service";
 import { queryKeys } from "@/lib/query-keys";
+import { cn } from "@/lib/utils";
 
 function monthlyNeeded(goal: SharedGoal): number | null {
   if (!goal.deadline) return null;
@@ -51,11 +57,57 @@ function monthlyNeeded(goal: SharedGoal): number | null {
   return remaining / monthsLeft;
 }
 
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  return new Date(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatActivity(
+  item: FamilyActivity,
+  t: (k: string) => string,
+  currency: string,
+): string {
+  const meta = item.meta as Record<string, string | number>;
+  const name = item.actor_name ?? t("family.role.member");
+  switch (item.type) {
+    case "member_joined":
+      return t("family.activity.member_joined").replace("{name}", name);
+    case "member_removed":
+      return t("family.activity.member_removed").replace("{name}", name);
+    case "goal_created":
+      return t("family.activity.goal_created")
+        .replace("{name}", name)
+        .replace("{goal}", String(meta.goalName ?? ""));
+    case "goal_updated":
+      return t("family.activity.goal_updated")
+        .replace("{name}", name)
+        .replace("{goal}", String(meta.goalName ?? ""));
+    case "goal_contribution":
+      return t("family.activity.goal_contribution")
+        .replace("{name}", name)
+        .replace("{amount}", money(Number(meta.amount ?? 0), currency))
+        .replace("{goal}", String(meta.goalName ?? ""));
+    case "family_renamed":
+      return t("family.activity.family_renamed")
+        .replace("{name}", name)
+        .replace("{newName}", String(meta.newName ?? ""));
+    default:
+      return name;
+  }
+}
+
 const FK = {
   data:     (familyId: string) => ["family", "data",     familyId] as const,
   received: (userId:   string) => ["family", "received", userId]   as const,
   sent:     (familyId: string) => ["family", "sent",     familyId] as const,
-  profiles: (familyId: string) => ["family", "profiles", familyId] as const,
+  activity: (familyId: string) => ["family", "activity", familyId] as const,
 };
 
 export const Route = createFileRoute("/app/family")({
@@ -70,52 +122,109 @@ function FamilyPage() {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const qc = useQueryClient();
 
-  const userId = user?.id ?? "";
+  const userId   = user?.id ?? "";
   const familyId = profile?.family_id ?? null;
   const currency = profile?.currency ?? "EUR";
   const myDisplayName = profile?.full_name ?? profile?.first_name ?? t("family.role.member");
 
   const { data: receivedInvitations = [] } = useQuery({
     queryKey: FK.received(userId),
-    queryFn: getMyInvitations,
-    enabled: !!userId,
-    staleTime: 30_000,
-    refetchInterval: 30_000,
+    queryFn:  getMyInvitations,
+    enabled:  !!userId,
+    staleTime: 20_000,
+    refetchInterval: 20_000,
   });
 
   const { data: familyData, isLoading: familyLoading } = useQuery({
     queryKey: FK.data(familyId ?? ""),
-    queryFn: () => loadFamilyData(familyId!, userId),
-    enabled: !!familyId && !!userId,
-    staleTime: 30_000,
+    queryFn:  () => loadFamilyData(familyId!, userId),
+    enabled:  !!familyId && !!userId,
+    staleTime: 20_000,
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: true,
   });
 
   const { data: sentInvitations = [] } = useQuery({
     queryKey: FK.sent(familyId ?? ""),
-    queryFn: () => getFamilySentInvitations(familyId!),
-    enabled: !!familyId && familyData?.isOwner === true,
-    staleTime: 30_000,
+    queryFn:  () => getFamilySentInvitations(familyId!),
+    enabled:  !!familyId && familyData?.isOwner === true,
+    staleTime: 20_000,
   });
+
+  const { data: activityLog = [] } = useQuery({
+    queryKey: FK.activity(familyId ?? ""),
+    queryFn:  () => getFamilyActivity(familyId!),
+    enabled:  !!familyId,
+    staleTime: 15_000,
+  });
+
+  // ── Realtime: invitation channel (always active when logged in) ───────────
+  useEffect(() => {
+    if (!userId) return;
+    const ch = supabase
+      .channel(`nest-inv-${userId}`)
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public",
+        table: "family_invitations",
+        filter: `invited_user_id=eq.${userId}`,
+      }, () => void qc.invalidateQueries({ queryKey: FK.received(userId) }))
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [userId, qc]);
+
+  // ── Realtime: family channel (active when in a family) ────────────────────
+  useEffect(() => {
+    if (!familyId) return;
+    const ch = supabase
+      .channel(`nest-fam-${familyId}`)
+      .on("postgres_changes", {
+        event: "*", schema: "public",
+        table: "family_members",
+        filter: `family_id=eq.${familyId}`,
+      }, () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }))
+      .on("postgres_changes", {
+        event: "*", schema: "public",
+        table: "shared_goals",
+        filter: `family_id=eq.${familyId}`,
+      }, () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }))
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public",
+        table: "family_activity",
+        filter: `family_id=eq.${familyId}`,
+      }, () => void qc.invalidateQueries({ queryKey: FK.activity(familyId) }))
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [familyId, qc]);
+
+  // ── Auto-repair: if removed from family, clear own profile ───────────────
+  useEffect(() => {
+    if (!familyData || !userId || !familyId || familyData.isOwner) return;
+    const inMembers = familyData.members.some((m) => m.user_id === userId);
+    if (inMembers) return;
+    void leaveFamily(userId).then(() =>
+      void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }),
+    );
+  }, [familyData, userId, familyId, qc]);
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
 
   const acceptMutation = useMutation({
     mutationFn: ({ id }: { id: string; invFamilyId: string }) => acceptFamilyInvite(id),
     onSuccess: async (_, { invFamilyId }) => {
       toast.success(t("family.invite.accepted.toast"));
+      // Pre-seed family data cache so the transition feels instant
+      void qc.invalidateQueries({ queryKey: FK.data(invFamilyId) });
+      // Update profile (sets familyId, triggers component transition)
       await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+      // Clear invitation inbox after profile is fresh
       void qc.invalidateQueries({ queryKey: FK.received(userId) });
-      // Notify existing family members that someone joined
       try {
         await notifyFamilyMembers(
-          invFamilyId,
-          "invite_accepted",
+          invFamilyId, "invite_accepted",
           t("family.notif.joined.title"),
           t("family.notif.joined.body").replace("{name}", myDisplayName),
         );
-      } catch {
-        // Notification failure is non-critical
-      }
+      } catch { /* non-critical */ }
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -140,24 +249,21 @@ function FamilyPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  // Auto-repair: if this user has a family_id but is no longer in family_members
-  // (i.e. they were removed by the owner), clear their own profile.
-  useEffect(() => {
-    if (!familyData || !userId || !familyId || familyData.isOwner) return;
-    const inMembers = familyData.members.some((m) => m.user_id === userId);
-    if (inMembers) return;
-    void leaveFamily(userId).then(() => {
-      void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
-    });
-  }, [familyData, userId, familyId, qc]);
+  const updateRelationshipMutation = useMutation({
+    mutationFn: ({ memberId, relationship }: { memberId: string; relationship: string | null }) =>
+      updateMemberRelationship(memberId, relationship),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.data(familyId ?? "") }),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
-  const [openCreate, setOpenCreate] = useState(false);
-  const [openInvite, setOpenInvite] = useState(false);
-  const [openGoal, setOpenGoal] = useState(false);
-  const [openWhoAreWe, setOpenWhoAreWe] = useState(false);
+  // ── Dialog state ──────────────────────────────────────────────────────────
+  const [openCreate, setOpenCreate]       = useState(false);
+  const [openInvite, setOpenInvite]       = useState(false);
+  const [openGoal, setOpenGoal]           = useState(false);
+  const [openWhoAreWe, setOpenWhoAreWe]   = useState(false);
   const [openGoalPicker, setOpenGoalPicker] = useState(false);
   const [viewingMember, setViewingMember] = useState<FamilyMemberProfile | null>(null);
-  const [editingGoal, setEditingGoal] = useState<SharedGoal | null>(null);
+  const [editingGoal, setEditingGoal]     = useState<SharedGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<SharedGoal | null>(null);
 
   function quickContribute() {
@@ -166,10 +272,17 @@ function FamilyPage() {
     setOpenGoalPicker(true);
   }
 
+  // ── Loading guard ─────────────────────────────────────────────────────────
   if (profileLoading || (!!familyId && familyLoading && !familyData)) return <FamilySkeleton />;
 
   const isOwner = familyData?.isOwner ?? false;
-  const { family, members, memberProfiles, goals } = familyData ?? { family: null, members: [], memberProfiles: [], goals: [], isOwner: false };
+  const { family, members, memberProfiles, goals } = familyData ?? {
+    family: null, members: [], memberProfiles: [], goals: [],
+  };
+
+  // ── Stats (derived, no extra query) ───────────────────────────────────────
+  const activeGoals  = goals.filter((g) => g.current_amount < g.target_amount).length;
+  const totalSaved   = goals.reduce((s, g) => s + g.current_amount, 0);
 
   // ── No family ──────────────────────────────────────────────────────────────
   if (!familyId || (!familyLoading && !family)) {
@@ -223,12 +336,13 @@ function FamilyPage() {
     );
   }
 
-  // Guard: familyId set but data still loading
   if (!family) return <FamilySkeleton />;
 
-  // ── Has family ─────────────────────────────────────────────────────────────
+  // ── Has family ──────────────────────────────────────────────────────────────
   return (
-    <div className="px-4 pt-5 space-y-5 animate-rise">
+    <div className="px-4 pt-5 space-y-5 animate-rise pb-6">
+
+      {/* Header */}
       <header className="flex items-center justify-between pt-2">
         <div>
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
@@ -251,7 +365,7 @@ function FamilyPage() {
           {isOwner && (
             <button
               onClick={() => setOpenInvite(true)}
-              className="size-10 rounded-full bg-foreground text-background grid place-items-center"
+              className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition active:scale-95"
             >
               <Plus className="size-4" />
             </button>
@@ -259,35 +373,14 @@ function FamilyPage() {
         </div>
       </header>
 
-      {/* Hero */}
-      <div className="card-soft p-5 gradient-hero">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Users className="size-3.5" />
-          {members.length}{" "}
-          {members.length === 1 ? t("family.hero.member") : t("family.hero.members")}
-        </div>
-        <div className="flex items-end justify-between mt-1">
-          <div>
-            <div className="text-[22px] font-semibold tracking-tight">
-              {t("family.hero.title")}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {goals.length > 0
-                ? `${goals.length} ${goals.length === 1 ? t("family.hero.goals.some") : t("family.hero.goals.many")}`
-                : t("family.hero.goals.none")}
-            </p>
-          </div>
-          {goals.length > 0 && (
-            <button
-              onClick={quickContribute}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-positive text-white text-xs font-semibold shrink-0"
-            >
-              <TrendingUp className="size-3.5" />
-              {t("family.hero.contribute")}
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Stats strip */}
+      <FamilyStatsStrip
+        memberCount={members.length}
+        activeGoals={activeGoals}
+        totalSaved={totalSaved}
+        currency={currency}
+        t={t}
+      />
 
       {/* Received invitations */}
       {receivedInvitations.length > 0 && (
@@ -322,10 +415,24 @@ function FamilyPage() {
 
       {/* Members */}
       <section>
-        <SectionHeader title={t("family.section.members")} />
+        <SectionHeader
+          title={t("family.section.members")}
+          action={
+            isOwner ? (
+              <button
+                onClick={() => setOpenWhoAreWe(true)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                {t("common.manage")}
+              </button>
+            ) : undefined
+          }
+        />
         <div className="card-flat divide-y divide-border-subtle">
           {(memberProfiles.length > 0 ? memberProfiles : members.map((m) => ({
             member_id: m.id, user_id: m.user_id, role: m.role,
+            relationship_type: m.relationship_type ?? null,
+            joined_at: m.created_at ?? null,
             first_name: m.first_name ?? "", last_name_1: m.last_name_1 ?? "",
             financial_username: m.financial_username ?? "",
             full_name: m.full_name ?? null, avatar_url: m.avatar_url ?? null,
@@ -350,10 +457,10 @@ function FamilyPage() {
                     </div>
                   )}
                   <div>
-                    <div className="text-sm font-semibold">
+                    <div className="text-sm font-semibold flex items-center gap-1.5">
                       {displayName}
                       {isMe && (
-                        <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">
+                        <span className="text-[10px] text-muted-foreground font-normal">
                           {t("family.you.label")}
                         </span>
                       )}
@@ -363,12 +470,18 @@ function FamilyPage() {
                         @{m.financial_username}
                       </div>
                     )}
-                    <div className="text-[11px] text-muted-foreground capitalize">
-                      {t(`family.role.${m.role}`) ?? m.role}
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                      <span className="capitalize">{t(`family.role.${m.role}`) ?? m.role}</span>
+                      {m.relationship_type && (
+                        <>
+                          <span className="opacity-40">·</span>
+                          <span>{t(`family.member.relationship.${m.relationship_type}`) ?? m.relationship_type}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
-                <Info className="size-3.5 text-muted-foreground shrink-0" />
+                <svg className="size-3.5 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </button>
             );
           })}
@@ -401,7 +514,7 @@ function FamilyPage() {
                 ? Math.min(100, (g.current_amount / g.target_amount) * 100)
                 : 0;
               const remaining = Math.max(0, g.target_amount - g.current_amount);
-              const monthly = monthlyNeeded(g);
+              const monthly   = monthlyNeeded(g);
               return (
                 <div key={g.id} className="card-flat p-4">
                   <div className="flex items-start justify-between mb-2 gap-2">
@@ -469,9 +582,24 @@ function FamilyPage() {
         )}
       </section>
 
-      <MemberProfileDialog
+      {/* Activity feed */}
+      <section>
+        <SectionHeader title={t("family.section.activity")} />
+        <ActivityFeed
+          items={activityLog}
+          currency={currency}
+          t={t}
+        />
+      </section>
+
+      {/* Dialogs */}
+      <MemberProfileSheet
         member={viewingMember}
         onClose={() => setViewingMember(null)}
+        isOwnProfile={viewingMember?.user_id === userId}
+        onUpdateRelationship={(memberId, relationship) =>
+          updateRelationshipMutation.mutate({ memberId, relationship })
+        }
         t={t}
       />
 
@@ -490,8 +618,10 @@ function FamilyPage() {
         members={memberProfiles}
         isOwner={isOwner}
         currentUserId={userId}
-        onRenamed={() => {
+        onRenamed={(newName) => {
           void qc.invalidateQueries({ queryKey: FK.data(family.id) });
+          void logFamilyActivity(family.id, "family_renamed", myDisplayName, { newName }).catch(() => {});
+          void qc.invalidateQueries({ queryKey: FK.activity(family.id) });
         }}
         onRemoveMember={(memberId, memberUserId) =>
           removeMemberMutation.mutate({ memberId, memberUserId })
@@ -515,7 +645,11 @@ function FamilyPage() {
         familyId={family.id}
         editing={editingGoal}
         myName={myDisplayName}
-        onSaved={() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })}
+        currency={currency}
+        onSaved={() => {
+          void qc.invalidateQueries({ queryKey: FK.data(family.id) });
+          void qc.invalidateQueries({ queryKey: FK.activity(family.id) });
+        }}
         t={t}
       />
 
@@ -530,10 +664,97 @@ function FamilyPage() {
           onSaved={() => {
             setContributingGoal(null);
             void qc.invalidateQueries({ queryKey: FK.data(family.id) });
+            void qc.invalidateQueries({ queryKey: FK.activity(family.id) });
           }}
           t={t}
         />
       )}
+    </div>
+  );
+}
+
+// ─── FamilyStatsStrip ─────────────────────────────────────────────────────────
+
+function FamilyStatsStrip({
+  memberCount, activeGoals, totalSaved, currency, t,
+}: {
+  memberCount: number;
+  activeGoals: number;
+  totalSaved: number;
+  currency: string;
+  t: (k: string) => string;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <div className="card-flat p-3.5 space-y-0.5 text-center">
+        <p className="text-xl font-semibold num">{memberCount}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("family.stats.members")}</p>
+      </div>
+      <div className="card-flat p-3.5 space-y-0.5 text-center">
+        <p className="text-xl font-semibold num">{activeGoals}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("family.stats.goals")}</p>
+      </div>
+      <div className="card-flat p-3.5 space-y-0.5 text-center">
+        <p className="text-base font-semibold num text-positive">{shortMoney(totalSaved, currency)}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("family.stats.saved")}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── ActivityFeed ─────────────────────────────────────────────────────────────
+
+function ActivityFeed({
+  items, currency, t,
+}: {
+  items: FamilyActivity[];
+  currency: string;
+  t: (k: string) => string;
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="card-flat px-4 py-6 flex flex-col items-center gap-2 text-muted-foreground">
+        <Sparkles className="size-5 opacity-40" />
+        <p className="text-sm">{t("family.activity.empty")}</p>
+      </div>
+    );
+  }
+
+  function getIcon(type: string) {
+    switch (type) {
+      case "member_joined":     return <UserPlus  className="size-3.5" />;
+      case "member_removed":    return <UserMinus className="size-3.5" />;
+      case "goal_contribution": return <TrendingUp className="size-3.5" />;
+      case "goal_created":      return <Target    className="size-3.5" />;
+      case "goal_updated":      return <Pencil    className="size-3.5" />;
+      case "family_renamed":    return <Pencil    className="size-3.5" />;
+      default:                  return <Zap       className="size-3.5" />;
+    }
+  }
+
+  function getIconColor(type: string): string {
+    if (type === "member_joined" || type === "goal_contribution") return "bg-positive-soft text-positive";
+    if (type === "member_removed") return "bg-muted text-muted-foreground";
+    return "bg-accent/10 text-accent";
+  }
+
+  return (
+    <div className="card-flat divide-y divide-border-subtle">
+      {items.map((item) => (
+        <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+          <div className={cn("size-7 rounded-full grid place-items-center shrink-0 mt-0.5", getIconColor(item.type))}>
+            {getIcon(item.type)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm leading-snug">
+              {formatActivity(item, t, currency)}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {relativeTime(item.created_at)}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -596,6 +817,102 @@ function SentInvitationRow({ inv }: { inv: SentInvitation }) {
   );
 }
 
+// ─── MemberProfileSheet ───────────────────────────────────────────────────────
+
+const RELATIONSHIP_OPTIONS = [
+  "partner", "spouse", "child", "parent", "sibling", "roommate", "other",
+] as const;
+
+function MemberProfileSheet({
+  member, onClose, isOwnProfile, onUpdateRelationship, t,
+}: {
+  member: FamilyMemberProfile | null;
+  onClose: () => void;
+  isOwnProfile: boolean;
+  onUpdateRelationship: (memberId: string, relationship: string | null) => void;
+  t: (k: string) => string;
+}) {
+  const [relationship, setRelationship] = useState<string>("");
+
+  useEffect(() => {
+    if (member) setRelationship(member.relationship_type ?? "");
+  }, [member]);
+
+  if (!member) return null;
+
+  const displayName = member.full_name
+    ?? (member.first_name ? `${member.first_name} ${member.last_name_1}`.trim() : null)
+    ?? t("family.role.member");
+  const RoleIcon = member.role === "owner" ? Crown : member.role === "child" ? Baby : Heart;
+
+  function handleRelationshipChange(val: string) {
+    setRelationship(val);
+    onUpdateRelationship(member!.member_id, val || null);
+  }
+
+  return (
+    <Dialog open={!!member} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="rounded-2xl max-w-xs">
+        <div className="flex flex-col items-center gap-3 pt-2">
+          {member.avatar_url ? (
+            <img src={member.avatar_url} alt={displayName} className="size-24 rounded-full object-cover" />
+          ) : (
+            <div className="size-24 rounded-full bg-muted grid place-items-center text-foreground">
+              <RoleIcon className="size-8" />
+            </div>
+          )}
+          <div className="text-center">
+            <div className="text-base font-semibold">{displayName}</div>
+            {member.financial_username && (
+              <div className="text-sm text-muted-foreground font-mono mt-0.5">
+                @{member.financial_username}
+              </div>
+            )}
+            <div className="flex items-center justify-center gap-1.5 mt-2">
+              <span className="text-xs capitalize px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                {t(`family.role.${member.role}`) ?? member.role}
+              </span>
+              {member.relationship_type && !isOwnProfile && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-accent/10 text-accent">
+                  {t(`family.member.relationship.${member.relationship_type}`) ?? member.relationship_type}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {member.joined_at && (
+          <p className="text-center text-[11px] text-muted-foreground -mt-1">
+            {t("family.member.joined")} {new Date(member.joined_at).toLocaleDateString(undefined, { year: "numeric", month: "long" })}
+          </p>
+        )}
+
+        {isOwnProfile && (
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("family.member.relationship.label")}</Label>
+            <select
+              value={relationship}
+              onChange={(e) => handleRelationshipChange(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">—</option>
+              {RELATIONSHIP_OPTIONS.map((r) => (
+                <option key={r} value={r}>
+                  {t(`family.member.relationship.${r}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <Button variant="outline" onClick={onClose} className="w-full">{t("common.close")}</Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── CreateFamilyDialog ───────────────────────────────────────────────────────
+
 function CreateFamilyDialog({
   open, onClose, userId, onCreated, t,
 }: {
@@ -655,6 +972,8 @@ function CreateFamilyDialog({
   );
 }
 
+// ─── InviteDialog ─────────────────────────────────────────────────────────────
+
 function InviteDialog({
   open, onClose, familyId, onSent, t,
 }: {
@@ -664,14 +983,12 @@ function InviteDialog({
   onSent: () => void;
   t: (k: string) => string;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery]       = useState("");
   const [searching, setSearching] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<UserSearchResult | null | "not-found">(null);
+  const [sending, setSending]   = useState(false);
+  const [result, setResult]     = useState<UserSearchResult | null | "not-found">(null);
 
-  function reset() {
-    setQuery(""); setResult(null); setSearching(false); setSending(false);
-  }
+  function reset() { setQuery(""); setResult(null); setSearching(false); setSending(false); }
 
   async function doSearch() {
     if (!query.trim()) return;
@@ -753,24 +1070,25 @@ function InviteDialog({
   );
 }
 
-// ─── GoalDialog — handles both create and edit ────────────────────────────────
+// ─── GoalDialog ───────────────────────────────────────────────────────────────
 
 function GoalDialog({
-  open, onClose, familyId, editing, myName, onSaved, t,
+  open, onClose, familyId, editing, myName, currency, onSaved, t,
 }: {
   open: boolean;
   onClose: () => void;
   familyId: string;
   editing: SharedGoal | null;
   myName: string;
+  currency: string;
   onSaved: () => void;
   t: (k: string) => string;
 }) {
-  const [name, setName] = useState("");
-  const [target, setTarget] = useState("");
-  const [current, setCurrent] = useState("");
+  const [name, setName]         = useState("");
+  const [target, setTarget]     = useState("");
+  const [current, setCurrent]   = useState("");
   const [deadline, setDeadline] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]     = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -796,35 +1114,21 @@ function GoalDialog({
           deadline: deadline || null,
         });
         toast.success(t("family.toast.goal.updated"));
-        // Notify family of the edit
         try {
-          await notifyFamilyMembers(
-            familyId,
-            "goal_updated",
+          await notifyFamilyMembers(familyId, "goal_updated",
             t("family.notif.goal.updated.title"),
-            t("family.notif.goal.updated.body")
-              .replace("{name}", myName)
-              .replace("{goal}", name.trim()),
-          );
-        } catch {
-          // Non-critical
-        }
+            t("family.notif.goal.updated.body").replace("{name}", myName).replace("{goal}", name.trim()));
+          await logFamilyActivity(familyId, "goal_updated", myName, { goalName: name.trim() });
+        } catch { /* non-critical */ }
       } else {
         await createSharedGoal(familyId, name.trim(), Number(target), Number(current || 0), deadline || null);
         toast.success(t("family.toast.goal.added"));
-        // Notify family of new goal
         try {
-          await notifyFamilyMembers(
-            familyId,
-            "goal_updated",
+          await notifyFamilyMembers(familyId, "goal_updated",
             t("family.notif.goal.created.title"),
-            t("family.notif.goal.created.body")
-              .replace("{name}", myName)
-              .replace("{goal}", name.trim()),
-          );
-        } catch {
-          // Non-critical
-        }
+            t("family.notif.goal.created.body").replace("{name}", myName).replace("{goal}", name.trim()));
+          await logFamilyActivity(familyId, "goal_created", myName, { goalName: name.trim() });
+        } catch { /* non-critical */ }
       }
       onSaved();
       onClose();
@@ -846,12 +1150,7 @@ function GoalDialog({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>{t("family.dialog.goal.name.label")}</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("family.dialog.goal.name.placeholder")}
-              autoFocus
-            />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("family.dialog.goal.name.placeholder")} autoFocus />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -878,9 +1177,7 @@ function GoalDialog({
             </div>
           )}
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              {t("common.cancel")}
-            </Button>
+            <Button variant="outline" onClick={onClose} className="flex-1">{t("common.cancel")}</Button>
             <Button onClick={() => void save()} disabled={saving || !name.trim() || !target} className="flex-1">
               {saving ? t("common.loading") : editing ? t("common.save") : t("family.dialog.goal.cta")}
             </Button>
@@ -906,7 +1203,7 @@ function ContributionDialog({
   t: (k: string) => string;
 }) {
   const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
+  const [note, setNote]     = useState("");
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -915,21 +1212,20 @@ function ContributionDialog({
     setSaving(true);
     try {
       await addGoalContribution(goal.id, goal.current_amount, n);
-      // Notify all other family members
       try {
         const bodyTpl = t("family.notif.contribution.body")
           .replace("{name}", myName)
           .replace("{amount}", money(n, currency))
           .replace("{goal}", goal.name);
         await notifyFamilyMembers(
-          familyId,
-          "contribution_added",
+          familyId, "contribution_added",
           t("family.notif.contribution.title").replace("{goal}", goal.name),
           note ? `${bodyTpl} — ${note}` : bodyTpl,
         );
-      } catch {
-        // Non-critical
-      }
+        await logFamilyActivity(familyId, "goal_contribution", myName, {
+          goalName: goal.name, amount: n,
+        });
+      } catch { /* non-critical */ }
       toast.success(t("family.toast.contribution.added"));
       setAmount(""); setNote("");
       onSaved();
@@ -941,7 +1237,7 @@ function ContributionDialog({
   }
 
   const remaining = Math.max(0, goal.target_amount - goal.current_amount);
-  const monthly = monthlyNeeded(goal);
+  const monthly   = monthlyNeeded(goal);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { setAmount(""); setNote(""); onClose(); } }}>
@@ -950,7 +1246,6 @@ function ContributionDialog({
           <DialogTitle>{t("family.dialog.contribute.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          {/* Goal summary */}
           <div className="card-sunken p-3 flex items-center gap-3">
             <div className="size-8 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
               <Target className="size-4" />
@@ -966,15 +1261,11 @@ function ContributionDialog({
             </div>
           </div>
 
-          {/* Amount */}
           <div className="card-sunken p-5 flex items-baseline gap-2">
             <span className="text-xl text-muted-foreground">€</span>
             <Input
-              type="number"
-              inputMode="decimal"
-              autoFocus
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              type="number" inputMode="decimal" autoFocus
+              value={amount} onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
               className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
             />
@@ -985,71 +1276,21 @@ function ContributionDialog({
             </p>
           )}
 
-          {/* Optional note */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">{t("family.dialog.contribute.note")}</Label>
             <Input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
+              value={note} onChange={(e) => setNote(e.target.value)}
               placeholder={t("family.dialog.contribute.note.placeholder")}
             />
           </div>
 
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              {t("common.cancel")}
-            </Button>
-            <Button
-              onClick={() => void save()}
-              disabled={saving || !amount || Number(amount) <= 0}
-              className="flex-1"
-            >
+            <Button variant="outline" onClick={onClose} className="flex-1">{t("common.cancel")}</Button>
+            <Button onClick={() => void save()} disabled={saving || !amount || Number(amount) <= 0} className="flex-1">
               {saving ? t("common.loading") : t("family.dialog.contribute.cta")}
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── MemberProfileDialog ─────────────────────────────────────────────────────
-
-function MemberProfileDialog({
-  member, onClose, t,
-}: {
-  member: FamilyMemberProfile | null;
-  onClose: () => void;
-  t: (k: string) => string;
-}) {
-  if (!member) return null;
-  const displayName = member.full_name
-    ?? (member.first_name ? `${member.first_name} ${member.last_name_1}`.trim() : null)
-    ?? t("family.role.member");
-  const RoleIcon = member.role === "owner" ? Crown : member.role === "child" ? Baby : Heart;
-
-  return (
-    <Dialog open={!!member} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="rounded-2xl max-w-xs">
-        <div className="flex flex-col items-center gap-3 pt-2 pb-1">
-          {member.avatar_url ? (
-            <img src={member.avatar_url} alt={displayName} className="size-20 rounded-full object-cover" />
-          ) : (
-            <div className="size-20 rounded-full bg-muted grid place-items-center text-foreground">
-              <RoleIcon className="size-7" />
-            </div>
-          )}
-          <div className="text-center">
-            <div className="text-base font-semibold">{displayName}</div>
-            {member.financial_username && (
-              <div className="text-sm text-muted-foreground font-mono mt-0.5">@{member.financial_username}</div>
-            )}
-            <div className="text-xs text-muted-foreground capitalize mt-1 px-2.5 py-0.5 rounded-full bg-muted inline-block">
-              {t(`family.role.${member.role}`) ?? member.role}
-            </div>
-          </div>
-        </div>
-        <Button variant="outline" onClick={onClose} className="w-full mt-2">{t("common.close")}</Button>
       </DialogContent>
     </Dialog>
   );
@@ -1107,12 +1348,12 @@ function WhoAreWeDialog({
   members: FamilyMemberProfile[];
   isOwner: boolean;
   currentUserId: string;
-  onRenamed: () => void;
+  onRenamed: (newName: string) => void;
   onRemoveMember: (memberId: string, memberUserId: string) => void;
   t: (k: string) => string;
 }) {
-  const [editName, setEditName] = useState(family.name);
-  const [saving, setSaving] = useState(false);
+  const [editName, setEditName]       = useState(family.name);
+  const [saving, setSaving]           = useState(false);
   const [pendingRemove, setPendingRemove] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1125,7 +1366,7 @@ function WhoAreWeDialog({
     try {
       await updateFamilyName(family.id, editName.trim());
       toast.success(t("family.toast.renamed"));
-      onRenamed();
+      onRenamed(editName.trim());
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -1151,8 +1392,7 @@ function WhoAreWeDialog({
                   onKeyDown={(e) => e.key === "Enter" && void rename()}
                 />
                 <Button
-                  size="sm"
-                  variant="outline"
+                  size="sm" variant="outline"
                   disabled={saving || !editName.trim() || editName.trim() === family.name}
                   onClick={() => void rename()}
                 >
@@ -1170,18 +1410,12 @@ function WhoAreWeDialog({
             <div className="card-flat divide-y divide-border-subtle">
               {members.map((m) => {
                 const RoleIcon = m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
-                const displayName = m.full_name
-                  ?? `${m.first_name} ${m.last_name_1}`.trim()
-                  ?? t("family.role.member");
+                const displayName = m.full_name ?? `${m.first_name} ${m.last_name_1}`.trim() ?? t("family.role.member");
                 const canRemove = isOwner && m.role !== "owner" && m.user_id !== currentUserId;
                 return (
                   <div key={m.member_id} className="flex items-center gap-3 px-4 py-3.5">
                     {m.avatar_url ? (
-                      <img
-                        src={m.avatar_url}
-                        alt={displayName}
-                        className="size-10 rounded-full object-cover shrink-0"
-                      />
+                      <img src={m.avatar_url} alt={displayName} className="size-10 rounded-full object-cover shrink-0" />
                     ) : (
                       <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
                         <RoleIcon className="size-4" />
@@ -1205,10 +1439,7 @@ function WhoAreWeDialog({
                           >
                             {t("family.member.remove.cta")}
                           </button>
-                          <button
-                            onClick={() => setPendingRemove(null)}
-                            className="text-[11px] text-muted-foreground px-2 py-1"
-                          >
+                          <button onClick={() => setPendingRemove(null)} className="text-[11px] text-muted-foreground px-2 py-1">
                             {t("common.cancel")}
                           </button>
                         </div>
@@ -1228,21 +1459,26 @@ function WhoAreWeDialog({
             </div>
           </div>
 
-          <Button variant="outline" onClick={onClose} className="w-full">
-            {t("common.close")}
-          </Button>
+          <Button variant="outline" onClick={onClose} className="w-full">{t("common.close")}</Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
 function FamilySkeleton() {
   return (
     <div className="px-4 pt-6 space-y-4">
       <div className="h-10 w-32 rounded-xl bg-muted animate-pulse" />
-      <div className="h-32 rounded-3xl bg-muted animate-pulse" />
+      <div className="grid grid-cols-3 gap-2">
+        <div className="h-16 rounded-2xl bg-muted animate-pulse" />
+        <div className="h-16 rounded-2xl bg-muted animate-pulse" />
+        <div className="h-16 rounded-2xl bg-muted animate-pulse" />
+      </div>
       <div className="h-40 rounded-3xl bg-muted animate-pulse" />
+      <div className="h-32 rounded-3xl bg-muted animate-pulse" />
     </div>
   );
 }

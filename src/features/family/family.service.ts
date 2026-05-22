@@ -45,6 +45,8 @@ export interface FamilyMember {
   user_id: string;
   display_name: string | null;
   role: string;
+  relationship_type?: string | null;
+  created_at?: string;
   first_name?: string;
   last_name_1?: string;
   financial_username?: string;
@@ -56,11 +58,23 @@ export interface FamilyMemberProfile {
   member_id: string;
   user_id: string;
   role: string;
+  relationship_type?: string | null;
+  joined_at?: string | null;
   first_name: string;
   last_name_1: string;
   financial_username: string;
   full_name: string | null;
   avatar_url: string | null;
+}
+
+export interface FamilyActivity {
+  id: string;
+  family_id: string;
+  user_id: string | null;
+  type: string;
+  actor_name: string | null;
+  meta: Record<string, unknown>;
+  created_at: string;
 }
 
 export interface SharedGoal {
@@ -228,6 +242,8 @@ export async function loadFamilyData(
           member_id: m.id,
           user_id: m.user_id,
           role: m.role,
+          relationship_type: m.relationship_type ?? null,
+          joined_at: m.created_at ?? null,
           first_name: p.first_name ?? "",
           last_name_1: p.last_name_1 ?? "",
           financial_username: p.financial_username ?? "",
@@ -377,6 +393,50 @@ export async function notifyFamilyMembers(
     p_type: type,
     p_title: title,
     p_body: body,
+  });
+  if (error) throw new Error(error.message);
+}
+
+// ─── Activity feed ────────────────────────────────────────────────────────────
+
+export async function getFamilyActivity(familyId: string): Promise<FamilyActivity[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("family_activity")
+    .select("*")
+    .eq("family_id", familyId)
+    .order("created_at", { ascending: false })
+    .limit(25);
+  if (error) return []; // graceful — table may not exist yet
+  return (data ?? []) as FamilyActivity[];
+}
+
+export async function logFamilyActivity(
+  familyId: string,
+  type: string,
+  actorName: string,
+  meta: Record<string, unknown> = {},
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("log_family_activity", {
+    p_family_id: familyId,
+    p_type: type,
+    p_actor_name: actorName,
+    p_meta: meta,
+  });
+  if (error) throw new Error(error.message);
+}
+
+// ─── Member relationship ──────────────────────────────────────────────────────
+
+export async function updateMemberRelationship(
+  memberId: string,
+  relationship: string | null,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("update_member_relationship", {
+    p_member_id: memberId,
+    p_relationship: relationship ?? null,
   });
   if (error) throw new Error(error.message);
 }
