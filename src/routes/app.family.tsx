@@ -89,11 +89,13 @@ function formatActivity(
       return t("family.activity.goal_updated")
         .replace("{name}", name)
         .replace("{goal}", String(meta.goalName ?? ""));
-    case "goal_contribution":
-      return t("family.activity.goal_contribution")
+    case "goal_contribution": {
+      const text = t("family.activity.goal_contribution")
         .replace("{name}", name)
         .replace("{amount}", money(Number(meta.amount ?? 0), currency))
         .replace("{goal}", String(meta.goalName ?? ""));
+      return meta.note ? `${text} — "${meta.note}"` : text;
+    }
     case "family_renamed":
       return t("family.activity.family_renamed")
         .replace("{name}", name)
@@ -1225,7 +1227,7 @@ function ContributionDialog({
           note ? `${bodyTpl} — ${note}` : bodyTpl,
         );
         await logFamilyActivity(familyId, "goal_contribution", myName, {
-          goalName: goal.name, amount: n,
+          goalName: goal.name, amount: n, ...(note.trim() ? { note: note.trim() } : {}),
         });
       } catch { /* non-critical */ }
       toast.success(t("family.toast.contribution.added"));
