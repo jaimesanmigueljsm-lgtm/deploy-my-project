@@ -544,9 +544,9 @@ function FamilyPage() {
                       <button
                         onClick={() => setContributingGoal(g)}
                         aria-label={t("family.goal.contribute")}
-                        className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-positive hover:bg-positive-soft/40 transition"
+                        className="size-10 grid place-items-center rounded-xl text-positive bg-positive-soft/40 hover:bg-positive-soft/70 transition active:scale-95"
                       >
-                        <TrendingUp className="size-3.5" />
+                        <TrendingUp className="size-5" />
                       </button>
                       <button
                         onClick={() => { setEditingGoal(g); setOpenGoal(true); }}
