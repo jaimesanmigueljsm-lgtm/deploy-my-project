@@ -191,10 +191,9 @@ function Settings() {
                 <DropdownMenuItem
                   key={c.code}
                   onClick={() => {
-                    if (user?.id && !readUserBaseCurrencyOrNull(user.id)) {
-                      writeUserBaseCurrency(user.id, profile.currency ?? "EUR");
-                    }
-                    updateProfile.mutate({ currency: c.code });
+                    const base = readUserBaseCurrencyOrNull(user?.id) ?? profile.currency ?? "EUR";
+                    if (user?.id) writeUserBaseCurrency(user.id, base);
+                    updateProfile.mutate({ currency: c.code, base_currency: base });
                   }}
                   className="gap-3"
                 >
