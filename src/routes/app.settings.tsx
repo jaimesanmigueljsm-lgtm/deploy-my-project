@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Bell, Shield, CreditCard, Database, Moon, Sun, LogOut, ChevronRight,
-  Sparkles, Globe, Download, Languages, Check, TrendingUp,
-  Camera, AtSign, Copy, MapPin, User, Loader2, XCircle, CheckCircle2,
+  Sparkles, Globe, Languages, Check, TrendingUp,
+  Camera, AtSign, Copy, MapPin, User, Loader2, XCircle, CheckCircle2, CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,6 @@ import { useProfile, useUpdateProfile } from "@/features/profile/use-profile";
 import { uploadAvatar, regenerateUsername, type Profile } from "@/features/profile/profile.service";
 import { searchUserByUsername } from "@/features/family/family.service";
 import { financialUsernameSchema } from "@/schemas/profile.schema";
-import { useExportData } from "@/features/settings/use-settings";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -31,13 +30,40 @@ export const Route = createFileRoute("/app/settings")({
   component: Settings,
 });
 
+const CURRENCIES = [
+  { code: "EUR", symbol: "€",  name: "Euro" },
+  { code: "USD", symbol: "$",  name: "US Dollar" },
+  { code: "GBP", symbol: "£",  name: "British Pound" },
+  { code: "CHF", symbol: "Fr", name: "Swiss Franc" },
+  { code: "JPY", symbol: "¥",  name: "Japanese Yen" },
+  { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
+  { code: "AUD", symbol: "A$", name: "Australian Dollar" },
+  { code: "NZD", symbol: "NZ$",name: "New Zealand Dollar" },
+  { code: "SEK", symbol: "kr", name: "Swedish Krona" },
+  { code: "NOK", symbol: "kr", name: "Norwegian Krone" },
+  { code: "DKK", symbol: "kr", name: "Danish Krone" },
+  { code: "PLN", symbol: "zł", name: "Polish Złoty" },
+  { code: "CZK", symbol: "Kč", name: "Czech Koruna" },
+  { code: "HUF", symbol: "Ft", name: "Hungarian Forint" },
+  { code: "RON", symbol: "lei",name: "Romanian Leu" },
+  { code: "TRY", symbol: "₺",  name: "Turkish Lira" },
+  { code: "INR", symbol: "₹",  name: "Indian Rupee" },
+  { code: "CNY", symbol: "¥",  name: "Chinese Yuan" },
+  { code: "HKD", symbol: "HK$",name: "Hong Kong Dollar" },
+  { code: "SGD", symbol: "S$", name: "Singapore Dollar" },
+  { code: "BRL", symbol: "R$", name: "Brazilian Real" },
+  { code: "MXN", symbol: "$",  name: "Mexican Peso" },
+  { code: "ARS", symbol: "$",  name: "Argentine Peso" },
+  { code: "ZAR", symbol: "R",  name: "South African Rand" },
+  { code: "AED", symbol: "د.إ",name: "UAE Dirham" },
+] as const;
+
 function Settings() {
   const nav = useNavigate();
   const { t, locale, setLocale, locales } = useT();
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
-  const exportData    = useExportData();
   const [openPrivacy, setOpenPrivacy] = useState(false);
 
   function toggleTheme() {
@@ -142,15 +168,38 @@ function Settings() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Row
-            icon={<Globe className="size-4" />}
-            label={t("settings.currency")}
-            value={profile.currency}
-            onClick={() => {
-              const c = prompt("Currency code (EUR, USD, GBP)…", profile.currency);
-              if (c) updateProfile.mutate({ currency: c.toUpperCase() });
-            }}
-          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition text-left">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-lg bg-muted grid place-items-center text-foreground">
+                    <Globe className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">{t("settings.currency")}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {CURRENCIES.find(c => c.code === profile.currency)?.symbol ?? ""} {profile.currency}
+                  </span>
+                  <ChevronRight className="size-4 text-muted-foreground" />
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[220px] max-h-72 overflow-y-auto">
+              {CURRENCIES.map((c) => (
+                <DropdownMenuItem
+                  key={c.code}
+                  onClick={() => updateProfile.mutate({ currency: c.code })}
+                  className="gap-3"
+                >
+                  <span className="w-6 text-right text-sm font-mono shrink-0">{c.symbol}</span>
+                  <span className="flex-1 text-sm">{c.name}</span>
+                  <span className="text-xs text-muted-foreground font-mono">{c.code}</span>
+                  {c.code === profile.currency && <Check className="size-4 opacity-70 shrink-0" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <RowToggle
             icon={profile.theme === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />}
             label={t("settings.darkMode")}
@@ -173,8 +222,9 @@ function Settings() {
         <div className="card-flat divide-y divide-border-subtle">
           <RowToggle icon={<Bell className="size-4" />} label={t("settings.alerts")}
             value={notifPrefs.alerts ?? true} onChange={() => togglePref("alerts")} />
-          <RowToggle icon={<Sparkles className="size-4" />} label={t("settings.weekly")}
-            value={notifPrefs.weekly ?? true} onChange={() => togglePref("weekly")} />
+          <RowToggle icon={<CalendarDays className="size-4" />} label={t("settings.monthly")}
+            desc={t("settings.monthly.desc")}
+            value={notifPrefs.monthly ?? true} onChange={() => togglePref("monthly")} />
           <RowToggle icon={<Sparkles className="size-4" />} label={t("settings.aiInsights")}
             value={notifPrefs.insights ?? true} onChange={() => togglePref("insights")} />
         </div>
@@ -186,7 +236,6 @@ function Settings() {
         <div className="card-flat divide-y divide-border-subtle">
           <Row icon={<Shield className="size-4" />} label={t("settings.security.label")} value="Email & password" onClick={() => toast("Coming soon")} />
           <Row icon={<CreditCard className="size-4" />} label={t("settings.bankConnections")} value="None" onClick={() => toast("Coming soon")} />
-          <Row icon={<Download className="size-4" />} label={t("settings.export")} onClick={() => exportData.mutate()} />
           <Row icon={<Database className="size-4" />} label={t("settings.privacy")} value={t("settings.privacy.value")} onClick={() => setOpenPrivacy(true)} />
         </div>
       </section>
