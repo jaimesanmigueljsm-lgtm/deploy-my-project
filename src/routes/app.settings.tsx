@@ -288,17 +288,19 @@ function SecurityDialog({
   const [resetSent, setResetSent]       = useState(false);
 
   // Password change
-  const [newPwd, setNewPwd]           = useState("");
-  const [confirmPwd, setConfirmPwd]   = useState("");
-  const [showPwd, setShowPwd]         = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pwdLoading, setPwdLoading]   = useState(false);
-  const [pwdDone, setPwdDone]         = useState(false);
+  const [currentPwd, setCurrentPwd]       = useState("");
+  const [newPwd, setNewPwd]               = useState("");
+  const [confirmPwd, setConfirmPwd]       = useState("");
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false);
+  const [showPwd, setShowPwd]             = useState(false);
+  const [showConfirm, setShowConfirm]     = useState(false);
+  const [pwdLoading, setPwdLoading]       = useState(false);
+  const [pwdDone, setPwdDone]             = useState(false);
 
   useEffect(() => {
     if (open) {
       setResetSent(false);
-      setNewPwd(""); setConfirmPwd(""); setPwdDone(false);
+      setCurrentPwd(""); setNewPwd(""); setConfirmPwd(""); setPwdDone(false);
     }
   }, [open]);
 
@@ -318,14 +320,23 @@ function SecurityDialog({
   }
 
   async function changePassword() {
-    if (newPwd.length < 8) return toast.error(t("settings.security.password.noMatch"));
-    if (newPwd !== confirmPwd) return toast.error(t("settings.security.password.noMatch"));
+    if (!currentPwd) return;
+    if (newPwd.length < 8 || newPwd !== confirmPwd) return;
     setPwdLoading(true);
     try {
+      // Re-authenticate with current password before allowing the change
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: currentEmail,
+        password: currentPwd,
+      });
+      if (authError) {
+        toast.error(t("settings.security.password.wrongCurrent"));
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password: newPwd });
       if (error) throw error;
       setPwdDone(true);
-      setNewPwd(""); setConfirmPwd("");
+      setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -425,6 +436,31 @@ function SecurityDialog({
               </div>
             ) : (
               <div className="space-y-4">
+                {/* Current password — required to confirm identity */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("settings.security.password.current")}</Label>
+                  <div className="relative">
+                    <Input
+                      type={showCurrentPwd ? "text" : "password"}
+                      value={currentPwd}
+                      onChange={(e) => setCurrentPwd(e.target.value)}
+                      placeholder={t("settings.security.password.current.placeholder")}
+                      autoComplete="current-password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowCurrentPwd((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                    >
+                      {showCurrentPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-border-subtle" />
+
                 <div className="space-y-1.5">
                   <Label className="text-xs">{t("settings.security.password.label")}</Label>
                   <div className="relative">
@@ -497,7 +533,7 @@ function SecurityDialog({
 
                 <Button
                   onClick={() => void changePassword()}
-                  disabled={pwdLoading || !newPwd || !confirmPwd || newPwd !== confirmPwd || newPwd.length < 8}
+                  disabled={pwdLoading || !currentPwd || !newPwd || !confirmPwd || newPwd !== confirmPwd || newPwd.length < 8}
                   className="w-full"
                 >
                   {pwdLoading ? (
