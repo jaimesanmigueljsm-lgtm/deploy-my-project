@@ -152,7 +152,7 @@
   --duration-fast:    150ms;
   --duration-base:    220ms;
   --duration-slow:    350ms;
-  --duration-page:    500ms;
+  --duration-page:    300ms;
 }
 
 /* ─── Dark mode overrides ───────────────────────────────────────────────────── */
@@ -284,7 +284,6 @@
     cursor: pointer;
     transition:
       transform var(--duration-fast) var(--ease-smooth),
-      box-shadow var(--duration-fast) var(--ease-smooth),
       border-color var(--duration-fast) var(--ease-smooth);
     -webkit-user-select: none;
     user-select: none;
@@ -423,9 +422,7 @@
 
   /* Hover lift for standalone interactive elements */
   .hover-lift {
-    transition:
-      transform var(--duration-fast) var(--ease-smooth),
-      box-shadow var(--duration-fast) var(--ease-smooth);
+    transition: transform var(--duration-fast) var(--ease-smooth);
   }
   .hover-lift:hover {
     transform: translateY(-1px);

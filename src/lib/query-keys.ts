@@ -49,6 +49,10 @@ export const queryKeys = {
   analytics: (userId: string, windowStart: string) =>
     ["analytics", userId, windowStart] as const,
 
+  // ─── Analytics incomes (same 6-month window) ──────────────────────────────────
+  analyticsIncomes: (userId: string, windowStart: string) =>
+    ["analytics-incomes", userId, windowStart] as const,
+
   // ─── Recommendations ────────────────────────────────────────────────────────
   recommendations: (userId: string) => ["recommendations", userId] as const,
 

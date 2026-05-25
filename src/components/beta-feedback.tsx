@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Analytics } from "@/lib/analytics";
 
 type FeedbackType = "bug" | "suggestion" | "general";
 
@@ -41,7 +40,6 @@ export function BetaFeedbackModal({ open, onClose }: Props) {
 
   function submit() {
     if (!text.trim()) return;
-    Analytics.feedbackSubmitted(type);
     // TODO: persist to Supabase feedback table or webhook
     setSubmitted(true);
     setTimeout(handleClose, 1600);

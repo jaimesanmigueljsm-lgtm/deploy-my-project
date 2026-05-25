@@ -1,4 +1,4 @@
-import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { queryKeys } from "@/lib/query-keys";
@@ -25,6 +25,7 @@ export function useFinancesData() {
         queryFn:  () => fetchInvestments(uid),
         enabled:  !!uid,
         staleTime: 60_000,
+        placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.profile(uid),
@@ -32,6 +33,7 @@ export function useFinancesData() {
         enabled:  !!uid,
         staleTime: 5 * 60_000,
         select: (p: Awaited<ReturnType<typeof fetchProfile>>) => p?.currency ?? "EUR",
+        placeholderData: keepPreviousData,
       },
     ],
   });

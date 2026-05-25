@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo } from "react";
 import { money, shortMoney, pct } from "@/lib/format";
 import { Plus, TrendingUp, Coins, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -73,25 +73,7 @@ function Finances() {
           <span className="opacity-50">all-time</span>
         </div>
 
-        <div className="mt-4 h-24 -mx-1">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={historySeries} margin={{ top: 5, right: 4, left: 4, bottom: 0 }}>
-              <defs>
-                <linearGradient id="np" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={CHART_COLORS[0]} stopOpacity={0.45} />
-                  <stop offset="100%" stopColor={CHART_COLORS[0]} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="d" hide />
-              <Tooltip
-                cursor={chartCursor}
-                contentStyle={{ borderRadius: 12, border: "none", background: "oklch(0.18 0.02 255)", color: "white", fontSize: 11, padding: "6px 10px" }}
-                formatter={((v: unknown) => money(convert(Number(v)), currency)) as never}
-              />
-              <Area type="monotone" dataKey="v" stroke={CHART_COLORS[0]} strokeWidth={2} fill="url(#np)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <PortfolioAreaChart historySeries={historySeries} currency={currency} convert={convert} />
       </div>
 
       {/* KPIs */}
@@ -110,37 +92,13 @@ function Finances() {
       {allocation.length > 0 && (
         <section>
           <SectionHeader title="Asset allocation" />
-          <div className="card-flat p-5 flex items-center gap-5">
-            <div className="relative shrink-0">
-              <ResponsiveContainer width={108} height={108}>
-                <PieChart>
-                  <Pie data={allocation} dataKey="value" innerRadius={38} outerRadius={52} paddingAngle={2} stroke="none">
-                    {allocation.map((d, i) => (
-                      <Cell key={i} fill={INVESTMENT_TYPE_META[d.type as InvestmentType]?.color ?? "#888"} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Assets</div>
-                <div className="text-sm font-semibold">{investments.length}</div>
-              </div>
-            </div>
-            <div className="flex-1 space-y-2">
-              {allocation.map((a) => (
-                <div key={a.type} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full" style={{ background: INVESTMENT_TYPE_META[a.type as InvestmentType]?.color }} />
-                    <span>{a.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="num font-medium">{shortMoney(convert(a.value), currency)}</span>
-                    <span className="text-muted-foreground tabular-nums w-9 text-right">{Math.round((a.value / stats.value) * 100)}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <AllocationPieChart
+            allocation={allocation}
+            totalValue={stats.value}
+            assetCount={investments.length}
+            currency={currency}
+            convert={convert}
+          />
         </section>
       )}
 
@@ -323,6 +281,76 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
     </Dialog>
   );
 }
+
+// ─── Memoized chart components ────────────────────────────────────────────────
+
+type ConvertFn = (n: number) => number;
+
+const PortfolioAreaChart = memo(function PortfolioAreaChart({
+  historySeries, currency, convert,
+}: { historySeries: { d: number; v: number }[]; currency: string; convert: ConvertFn }) {
+  return (
+    <div className="mt-4 h-24 -mx-1">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={historySeries} margin={{ top: 5, right: 4, left: 4, bottom: 0 }}>
+          <defs>
+            <linearGradient id="np" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={CHART_COLORS[0]} stopOpacity={0.45} />
+              <stop offset="100%" stopColor={CHART_COLORS[0]} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis dataKey="d" hide />
+          <Tooltip
+            cursor={chartCursor}
+            contentStyle={{ borderRadius: 12, border: "none", background: "oklch(0.18 0.02 255)", color: "white", fontSize: 11, padding: "6px 10px" }}
+            formatter={((v: unknown) => money(convert(Number(v)), currency)) as never}
+          />
+          <Area type="monotone" dataKey="v" stroke={CHART_COLORS[0]} strokeWidth={2} fill="url(#np)" />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+});
+
+type AllocSlice = { type: string; name: string; value: number };
+
+const AllocationPieChart = memo(function AllocationPieChart({
+  allocation, totalValue, assetCount, currency, convert,
+}: { allocation: AllocSlice[]; totalValue: number; assetCount: number; currency: string; convert: ConvertFn }) {
+  return (
+    <div className="card-flat p-5 flex items-center gap-5">
+      <div className="relative shrink-0">
+        <ResponsiveContainer width={108} height={108}>
+          <PieChart>
+            <Pie data={allocation} dataKey="value" innerRadius={38} outerRadius={52} paddingAngle={2} stroke="none">
+              {allocation.map((d, i) => (
+                <Cell key={i} fill={INVESTMENT_TYPE_META[d.type as InvestmentType]?.color ?? "#888"} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Assets</div>
+          <div className="text-sm font-semibold">{assetCount}</div>
+        </div>
+      </div>
+      <div className="flex-1 space-y-2">
+        {allocation.map((a) => (
+          <div key={a.type} className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full" style={{ background: INVESTMENT_TYPE_META[a.type as InvestmentType]?.color }} />
+              <span>{a.name}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="num font-medium">{shortMoney(convert(a.value), currency)}</span>
+              <span className="text-muted-foreground tabular-nums w-9 text-right">{Math.round((a.value / totalValue) * 100)}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
 
 function FinancesSkeleton() {
   return (

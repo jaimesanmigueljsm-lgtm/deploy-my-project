@@ -1,4 +1,4 @@
-import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { monthRange } from "@/lib/format";
@@ -40,24 +40,28 @@ export function useBudgetData(start: string, end: string) {
         queryFn: () => fetchExpenses(uid, start, end),
         enabled: !!uid,
         staleTime: 60_000,
+        placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.categories(uid),
         queryFn: () => fetchCategories(uid),
         enabled: !!uid,
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.bills(uid),
         queryFn: () => fetchBills(uid),
         enabled: !!uid,
         staleTime: 60_000,
+        placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.incomes(uid).all,
         queryFn: () => fetchIncomes(uid),
         enabled: !!uid,
         staleTime: 60_000,
+        placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.profile(uid),
@@ -65,6 +69,7 @@ export function useBudgetData(start: string, end: string) {
         enabled: !!uid,
         staleTime: 5 * 60_000,
         select: (profile: Awaited<ReturnType<typeof fetchProfile>>) => profile?.currency ?? "EUR",
+        placeholderData: keepPreviousData,
       },
     ],
   });

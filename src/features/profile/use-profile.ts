@@ -44,7 +44,6 @@ export function useProfile() {
     },
     enabled: !!id,
     staleTime: 30_000,
-    refetchOnWindowFocus: true,
     // Show cached data instantly; React Query refetches in background because
     // initialDataUpdatedAt: 0 marks it as always stale.
     initialData: cached ?? undefined,

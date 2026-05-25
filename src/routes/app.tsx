@@ -107,8 +107,12 @@ function AppShell() {
         <Outlet />
       </main>
 
-      {/* Bottom navigation — glass card, safe-area aware */}
-      <nav className="fixed bottom-0 inset-x-0 z-50 pb-[env(safe-area-inset-bottom)]">
+      {/* Bottom navigation — glass card, safe-area + keyboard aware */}
+      {/* bottom: max(0, 100lvh - 100dvh) lifts the nav above the iOS virtual keyboard */}
+      <nav
+        className="fixed bottom-0 inset-x-0 z-50 pb-[env(safe-area-inset-bottom)]"
+        style={{ bottom: "max(0px, calc(100lvh - 100dvh))" }}
+      >
         <div className="mx-auto max-w-2xl px-2 pb-2">
           <div className="glass border border-border-subtle rounded-2xl shadow-float flex justify-between items-center p-1 gap-0.5">
             {tabs.map((tab) => {

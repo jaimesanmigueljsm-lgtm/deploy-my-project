@@ -1,4 +1,4 @@
-import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { monthRange, previousMonthRange } from "@/lib/format";
@@ -42,6 +42,7 @@ export function useDashboard() {
         queryFn: () => fetchDashboardProfile(uid),
         enabled: !!uid,
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
       },
       // 1 — Current month expenses
       {
@@ -49,6 +50,7 @@ export function useDashboard() {
         queryFn: () => fetchExpenses(uid, range.start, range.end),
         enabled: !!uid,
         staleTime: 60_000,
+        placeholderData: keepPreviousData,
       },
       // 2 — Previous month total (for trend badge)
       {
@@ -56,6 +58,7 @@ export function useDashboard() {
         queryFn: () => fetchPrevMonthTotal(uid, prevRange.start, prevRange.end),
         enabled: !!uid,
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
       },
       // 3 — Current month income total
       {
@@ -63,6 +66,7 @@ export function useDashboard() {
         queryFn: () => fetchMonthIncomeTotal(uid, range.start, range.end),
         enabled: !!uid,
         staleTime: 60_000,
+        placeholderData: keepPreviousData,
       },
       // 4 — Categories (for spending distribution)
       {
@@ -70,6 +74,7 @@ export function useDashboard() {
         queryFn: () => fetchCategories(uid),
         enabled: !!uid,
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
       },
       // 5 — Active bills (for upcoming bills section)
       {
@@ -77,6 +82,7 @@ export function useDashboard() {
         queryFn: () => fetchBills(uid),
         enabled: !!uid,
         staleTime: 60_000,
+        placeholderData: keepPreviousData,
       },
       // 6 — Savings goals
       {
@@ -84,6 +90,7 @@ export function useDashboard() {
         queryFn: () => fetchDashboardGoals(uid),
         enabled: !!uid,
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
       },
       // 7 — AI recommendations
       {
@@ -91,6 +98,7 @@ export function useDashboard() {
         queryFn: () => fetchRecommendations(uid),
         enabled: !!uid,
         staleTime: 60_000,
+        placeholderData: keepPreviousData,
       },
     ],
   });

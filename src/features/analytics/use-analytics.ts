@@ -1,4 +1,4 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { queryKeys } from "@/lib/query-keys";
 import { fetchProfile } from "@/features/profile/profile.service";
@@ -26,12 +26,14 @@ export function useAnalyticsData() {
         queryFn:  () => fetchSixMonthExpenses(uid, windowStart),
         enabled:  !!uid,
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.categories(uid),
         queryFn:  () => fetchAnalyticsCategories(uid),
         enabled:  !!uid,
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.profile(uid),
@@ -39,12 +41,14 @@ export function useAnalyticsData() {
         enabled:  !!uid,
         staleTime: 5 * 60_000,
         select: (p: Awaited<ReturnType<typeof fetchProfile>>) => p?.currency ?? "EUR",
+        placeholderData: keepPreviousData,
       },
       {
-        queryKey: ["analytics-incomes", uid, windowStart] as const,
+        queryKey: queryKeys.analyticsIncomes(uid, windowStart),
         queryFn:  () => fetchSixMonthIncomes(uid, windowStart),
         enabled:  !!uid,
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
       },
     ],
   });

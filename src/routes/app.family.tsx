@@ -137,7 +137,7 @@ function FamilyPage() {
     queryFn:  getMyInvitations,
     enabled:  !!userId,
     staleTime: 20_000,
-    refetchInterval: 20_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: familyData, isLoading: familyLoading } = useQuery({
@@ -146,7 +146,6 @@ function FamilyPage() {
     enabled:  !!familyId && !!userId,
     staleTime: 20_000,
     placeholderData: keepPreviousData,
-    refetchOnWindowFocus: true,
   });
 
   const { data: sentInvitations = [] } = useQuery({
@@ -161,6 +160,7 @@ function FamilyPage() {
     queryFn:  () => getFamilyActivity(familyId!),
     enabled:  !!familyId,
     staleTime: 15_000,
+    placeholderData: keepPreviousData,
   });
 
   // ── Realtime: invitation channel (always active when logged in) ───────────
@@ -174,7 +174,11 @@ function FamilyPage() {
         filter: `invited_user_id=eq.${userId}`,
       }, () => void qc.invalidateQueries({ queryKey: FK.received(userId) }))
       .subscribe();
-    return () => { void supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch).then((status) => {
+        if (status !== "ok") console.warn("[Nest] inv channel cleanup:", status);
+      });
+    };
   }, [userId, qc]);
 
   // ── Realtime: family channel (active when in a family) ────────────────────
@@ -198,7 +202,11 @@ function FamilyPage() {
         filter: `family_id=eq.${familyId}`,
       }, () => void qc.invalidateQueries({ queryKey: FK.activity(familyId) }))
       .subscribe();
-    return () => { void supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch).then((status) => {
+        if (status !== "ok") console.warn("[Nest] fam channel cleanup:", status);
+      });
+    };
   }, [familyId, qc]);
 
   // ── Auto-repair: if removed from family, clear own profile ───────────────

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo } from "react";
 import { money, monthRange, shortMoney } from "@/lib/format";
 import { Sparkles, TrendingUp as TUp, PiggyBank, Wallet2 } from "lucide-react";
 import {
@@ -186,30 +186,13 @@ function Analytics() {
       {/* Income vs Expenses chart */}
       <section>
         <SectionHeader title={t("analytics.section.incomeVsExpenses")} />
-        <div className="card-flat p-4">
-          <div className="h-48 -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartSeries} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={14} barGap={3}>
-                <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(convert(Number(v)), currency)} width={44} />
-                <Tooltip
-                  cursor={{ fill: "oklch(0.96 0.006 250)" }}
-                  contentStyle={getChartTooltipStyle()}
-                  formatter={((v: unknown, name: unknown) => [money(convert(Number(v)), currency), name]) as never}
-                />
-                <Legend
-                  iconType="circle"
-                  iconSize={7}
-                  wrapperStyle={{ fontSize: 10, paddingTop: 8 }}
-                />
-                <ReferenceLine y={0} stroke="oklch(0.85 0.005 250)" />
-                <Bar dataKey="income"   name={t("analytics.chart.income")}   fill={CHART_COLORS[2]} radius={[4, 4, 2, 2]} />
-                <Bar dataKey="expenses" name={t("analytics.chart.expenses")} fill={CHART_COLORS[0]} radius={[4, 4, 2, 2]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <IncomeExpenseBarChart
+          data={chartSeries}
+          currency={currency}
+          convert={convert}
+          incomeLabel={t("analytics.chart.income")}
+          expensesLabel={t("analytics.chart.expenses")}
+        />
       </section>
 
       {/* Top categories */}
@@ -238,25 +221,13 @@ function Analytics() {
       {/* Fixed vs Variable expenses chart */}
       <section>
         <SectionHeader title={t("analytics.section.fixedVsVariable")} subtitle={t("analytics.section.fixedVsVariable.sub")} />
-        <div className="card-flat p-4">
-          <div className="h-48 -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={fixedVariableSeries} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={14} barGap={3}>
-                <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(convert(Number(v)), currency)} width={44} />
-                <Tooltip
-                  cursor={{ fill: "oklch(0.96 0.006 250)" }}
-                  contentStyle={getChartTooltipStyle()}
-                  formatter={((v: unknown, name: unknown) => [money(convert(Number(v)), currency), name]) as never}
-                />
-                <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                <Bar dataKey="fixed"    name={t("analytics.chart.fixed")}    fill={CHART_COLORS[3]} radius={[4, 4, 2, 2]} />
-                <Bar dataKey="variable" name={t("analytics.chart.variable")} fill={CHART_COLORS[0]} radius={[4, 4, 2, 2]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <FixedVariableBarChart
+          data={fixedVariableSeries}
+          currency={currency}
+          convert={convert}
+          fixedLabel={t("analytics.chart.fixed")}
+          variableLabel={t("analytics.chart.variable")}
+        />
       </section>
 
       {/* Tu ahorro */}
@@ -350,6 +321,65 @@ function Analytics() {
     </div>
   );
 }
+
+// ─── Memoized chart components ────────────────────────────────────────────────
+
+type ConvertFn = (n: number) => number;
+type MonthSeries = { label: string; income: number; expenses: number; net: number };
+type FVSeries = { label: string; fixed: number; variable: number };
+
+const IncomeExpenseBarChart = memo(function IncomeExpenseBarChart({
+  data, currency, convert, incomeLabel, expensesLabel,
+}: { data: MonthSeries[]; currency: string; convert: ConvertFn; incomeLabel: string; expensesLabel: string }) {
+  return (
+    <div className="card-flat p-4">
+      <div className="h-48 -ml-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={14} barGap={3}>
+            <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(convert(Number(v)), currency)} width={44} />
+            <Tooltip
+              cursor={{ fill: "oklch(0.96 0.006 250)" }}
+              contentStyle={getChartTooltipStyle()}
+              formatter={((v: unknown, name: unknown) => [money(convert(Number(v)), currency), name]) as never}
+            />
+            <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+            <ReferenceLine y={0} stroke="oklch(0.85 0.005 250)" />
+            <Bar dataKey="income"   name={incomeLabel}   fill={CHART_COLORS[2]} radius={[4, 4, 2, 2]} />
+            <Bar dataKey="expenses" name={expensesLabel} fill={CHART_COLORS[0]} radius={[4, 4, 2, 2]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+});
+
+const FixedVariableBarChart = memo(function FixedVariableBarChart({
+  data, currency, convert, fixedLabel, variableLabel,
+}: { data: FVSeries[]; currency: string; convert: ConvertFn; fixedLabel: string; variableLabel: string }) {
+  return (
+    <div className="card-flat p-4">
+      <div className="h-48 -ml-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={14} barGap={3}>
+            <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(convert(Number(v)), currency)} width={44} />
+            <Tooltip
+              cursor={{ fill: "oklch(0.96 0.006 250)" }}
+              contentStyle={getChartTooltipStyle()}
+              formatter={((v: unknown, name: unknown) => [money(convert(Number(v)), currency), name]) as never}
+            />
+            <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+            <Bar dataKey="fixed"    name={fixedLabel}    fill={CHART_COLORS[3]} radius={[4, 4, 2, 2]} />
+            <Bar dataKey="variable" name={variableLabel} fill={CHART_COLORS[0]} radius={[4, 4, 2, 2]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+});
 
 function AnalyticsSkeleton() {
   return (

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { monthRange } from "@/lib/format";
@@ -33,6 +33,7 @@ export function useGoals() {
     queryFn:  () => fetchGoals(user!.id),
     enabled:  !!user?.id,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -44,6 +45,7 @@ export function useGoalContributions() {
     queryFn:  () => fetchGoalContributions(user!.id),
     enabled:  !!user?.id,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 }
 

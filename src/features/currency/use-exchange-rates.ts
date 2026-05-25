@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchExchangeRates, applyRate, readUserBaseCurrencyOrNull } from "@/lib/exchange-rates";
 import { useProfile } from "@/features/profile/use-profile";
@@ -33,8 +34,8 @@ export function useCurrencyConvert(): (amount: number) => number {
   const base = useBaseCurrency();
   const display = profile?.currency ?? "EUR";
 
-  return (amount: number) => {
+  return useCallback((amount: number) => {
     if (base === display || !rates) return amount;
     return applyRate(amount, display, rates);
-  };
+  }, [base, display, rates]);
 }
