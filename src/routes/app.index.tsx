@@ -33,6 +33,7 @@ import { useDashboard, useGenerateInsights } from "@/features/dashboard/use-dash
 import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
 import { ForecastWidget, ForecastSkeleton } from "@/features/dashboard/components/forecast-widget";
 import { useT } from "@/i18n";
+import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -70,6 +71,8 @@ function Dashboard() {
   const totalSpent = useMemo(() => expenses.reduce((s, x) => s + x.amount, 0), [expenses]);
   const series = useMemo(() => buildSeries(expenses, range), [expenses, range]);
   const dist = useMemo(() => buildDistribution(expenses, categories), [expenses, categories]);
+
+  const convert = useCurrencyConvert();
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -109,15 +112,15 @@ function Dashboard() {
         <div>
           <p className="text-xs text-muted-foreground">{t("dashboard.available")}</p>
           <div className="mt-1 balance-display text-[44px] font-semibold leading-tight">
-            {shortMoney(remaining, currency)}
+            {shortMoney(convert(remaining), currency)}
           </div>
           <div className="mt-2 flex items-center gap-3 text-xs">
             <span className="inline-flex items-center gap-1 text-positive font-medium">
-              <ArrowUpRight className="size-3" /> {money(incomeTotal, currency)}
+              <ArrowUpRight className="size-3" /> {money(convert(incomeTotal), currency)}
             </span>
             <span className="text-border">|</span>
             <span className="inline-flex items-center gap-1 text-muted-foreground">
-              <ArrowDownRight className="size-3" /> {money(totalSpent, currency)}
+              <ArrowDownRight className="size-3" /> {money(convert(totalSpent), currency)}
             </span>
             {prevMonthTotal > 0 && <TrendBadge value={monthChange} className="ml-1" />}
           </div>
@@ -136,7 +139,7 @@ function Dashboard() {
               <Tooltip
                 cursor={chartCursor}
                 contentStyle={getChartTooltipStyle()}
-                formatter={((v: unknown) => money(Number(v), currency)) as never}
+                formatter={((v: unknown) => money(convert(Number(v)), currency)) as never}
                 labelFormatter={(l) => `Day ${l}`}
               />
               <Area
@@ -194,7 +197,7 @@ function Dashboard() {
                 <div className="text-[9px] text-muted-foreground uppercase tracking-wider">
                   {t("dashboard.section.spending.total")}
                 </div>
-                <div className="text-sm font-semibold num">{shortMoney(totalSpent, currency)}</div>
+                <div className="text-sm font-semibold num">{shortMoney(convert(totalSpent), currency)}</div>
               </div>
             </div>
             <div className="flex-1 space-y-2 min-w-0">
@@ -208,7 +211,7 @@ function Dashboard() {
                     <span className="truncate">{d.name}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="num font-medium">{money(d.value, currency)}</span>
+                    <span className="num font-medium">{money(convert(d.value), currency)}</span>
                     <span className="text-muted-foreground tabular-nums w-9 text-right">
                       {Math.round((d.value / totalSpent) * 100)}%
                     </span>

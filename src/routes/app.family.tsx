@@ -16,6 +16,7 @@ import { useT } from "@/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/features/profile/use-profile";
 import { money, shortMoney } from "@/lib/format";
+import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { supabase } from "@/integrations/supabase/client";
 import {
   loadFamilyData,
@@ -73,6 +74,7 @@ function formatActivity(
   item: FamilyActivity,
   t: (k: string) => string,
   currency: string,
+  convert: (n: number) => number = (n) => n,
 ): string {
   const meta = item.meta as Record<string, string | number>;
   const name = item.actor_name ?? t("family.role.member");
@@ -92,7 +94,7 @@ function formatActivity(
     case "goal_contribution": {
       const text = t("family.activity.goal_contribution")
         .replace("{name}", name)
-        .replace("{amount}", money(Number(meta.amount ?? 0), currency))
+        .replace("{amount}", money(convert(Number(meta.amount ?? 0)), currency))
         .replace("{goal}", String(meta.goalName ?? ""));
       return meta.note ? `${text} — "${meta.note}"` : text;
     }
@@ -127,6 +129,7 @@ function FamilyPage() {
   const userId   = user?.id ?? "";
   const familyId = profile?.family_id ?? null;
   const currency = profile?.currency ?? "EUR";
+  const convert  = useCurrencyConvert();
   const myDisplayName = profile?.full_name ?? profile?.first_name ?? t("family.role.member");
 
   const { data: receivedInvitations = [] } = useQuery({
@@ -527,9 +530,9 @@ function FamilyPage() {
                       <div className="min-w-0">
                         <div className="text-sm font-semibold truncate">{g.name}</div>
                         <div className="text-[11px] text-muted-foreground num">
-                          {money(g.current_amount, currency)}{" "}
+                          {money(convert(g.current_amount), currency)}{" "}
                           <span className="opacity-60">{t("common.of")}</span>{" "}
-                          {money(g.target_amount, currency)}
+                          {money(convert(g.target_amount), currency)}
                         </div>
                         {g.deadline && (
                           <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
@@ -568,11 +571,11 @@ function FamilyPage() {
                   {(remaining > 0 || monthly !== null) && (
                     <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
                       {remaining > 0 && (
-                        <span>{money(remaining, currency)} {t("family.goal.remaining")}</span>
+                        <span>{money(convert(remaining), currency)} {t("family.goal.remaining")}</span>
                       )}
                       {monthly !== null && (
                         <span className="text-positive font-medium">
-                          {t("family.goal.monthly").replace("{amount}", money(Math.ceil(monthly), currency))}
+                          {t("family.goal.monthly").replace("{amount}", money(convert(Math.ceil(monthly)), currency))}
                         </span>
                       )}
                     </p>
@@ -687,6 +690,7 @@ function FamilyStatsStrip({
   currency: string;
   t: (k: string) => string;
 }) {
+  const convert = useCurrencyConvert();
   return (
     <div className="grid grid-cols-3 gap-2">
       <div className="card-flat p-3.5 space-y-0.5 text-center">
@@ -698,7 +702,7 @@ function FamilyStatsStrip({
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("family.stats.goals")}</p>
       </div>
       <div className="card-flat p-3.5 space-y-0.5 text-center">
-        <p className="text-base font-semibold num text-positive">{shortMoney(totalSaved, currency)}</p>
+        <p className="text-base font-semibold num text-positive">{shortMoney(convert(totalSaved), currency)}</p>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("family.stats.saved")}</p>
       </div>
     </div>
@@ -714,6 +718,7 @@ function ActivityFeed({
   currency: string;
   t: (k: string) => string;
 }) {
+  const convert = useCurrencyConvert();
   if (items.length === 0) {
     return (
       <div className="card-flat px-4 py-6 flex flex-col items-center gap-2 text-muted-foreground">
@@ -750,7 +755,7 @@ function ActivityFeed({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm leading-snug">
-              {formatActivity(item, t, currency)}
+              {formatActivity(item, t, currency, convert)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {relativeTime(item.created_at)}
@@ -1209,6 +1214,7 @@ function ContributionDialog({
   const [amount, setAmount] = useState("");
   const [note, setNote]     = useState("");
   const [saving, setSaving] = useState(false);
+  const convert = useCurrencyConvert();
 
   async function save() {
     const n = Number(amount);
@@ -1219,7 +1225,7 @@ function ContributionDialog({
       try {
         const bodyTpl = t("family.notif.contribution.body")
           .replace("{name}", myName)
-          .replace("{amount}", money(n, currency))
+          .replace("{amount}", money(convert(n), currency))
           .replace("{goal}", goal.name);
         await notifyFamilyMembers(
           familyId, "contribution_added",
@@ -1257,9 +1263,9 @@ function ContributionDialog({
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold truncate">{goal.name}</div>
               <div className="text-xs text-muted-foreground num">
-                {money(goal.current_amount, currency)} / {money(goal.target_amount, currency)}
+                {money(convert(goal.current_amount), currency)} / {money(convert(goal.target_amount), currency)}
                 {remaining > 0 && (
-                  <span className="ml-1 opacity-70">· {money(remaining, currency)} {t("family.goal.remaining")}</span>
+                  <span className="ml-1 opacity-70">· {money(convert(remaining), currency)} {t("family.goal.remaining")}</span>
                 )}
               </div>
             </div>
@@ -1276,7 +1282,7 @@ function ContributionDialog({
           </div>
           {monthly !== null && (
             <p className="text-xs text-positive font-medium text-center -mt-1">
-              {t("family.dialog.contribute.monthly").replace("{amount}", money(Math.ceil(monthly), currency))}
+              {t("family.dialog.contribute.monthly").replace("{amount}", money(convert(Math.ceil(monthly)), currency))}
             </p>
           )}
 

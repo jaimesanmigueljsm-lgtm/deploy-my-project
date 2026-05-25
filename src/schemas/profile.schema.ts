@@ -58,6 +58,7 @@ export const UpdateProfileSchema = z.object({
     .optional(),
 
   currency: currencyCodeSchema.optional(),
+  base_currency: currencyCodeSchema.optional(),
 
   theme: ThemeSchema.optional(),
 
@@ -99,6 +100,7 @@ export const ProfileRowSchema = z.object({
   avatar_url: z.string().nullable().optional(),
   address: z.string().nullable().optional(),
   currency: z.string().default("EUR"),
+  base_currency: z.string().nullable().optional(),
   onboarded: z.boolean().default(false),
   monthly_savings_target: nonNegativeAmountSchema,
   health_score: z.coerce.number().int().min(0).max(1000).default(700),

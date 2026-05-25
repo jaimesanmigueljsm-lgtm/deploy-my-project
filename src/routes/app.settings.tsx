@@ -189,7 +189,11 @@ function Settings() {
               {CURRENCIES.map((c) => (
                 <DropdownMenuItem
                   key={c.code}
-                  onClick={() => updateProfile.mutate({ currency: c.code })}
+                  onClick={() => {
+                    const updates: { currency: string; base_currency?: string } = { currency: c.code };
+                    if (!profile.base_currency) updates.base_currency = profile.currency ?? "EUR";
+                    updateProfile.mutate(updates);
+                  }}
                   className="gap-3"
                 >
                   <span className="w-6 text-right text-sm font-mono shrink-0">{c.symbol}</span>

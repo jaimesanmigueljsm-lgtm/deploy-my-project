@@ -11,6 +11,7 @@ import { CHART_COLORS, getChartTooltipStyle } from "@/lib/chart";
 import type { AnalyticsExpense } from "@/types/finance";
 import { useAnalyticsData } from "@/features/analytics/use-analytics";
 import { buildTopCategories, buildIncomeExpenseSeries, buildFixedVariableSeries } from "@/features/analytics/analytics.utils";
+import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { HealthCard, HealthCardSkeleton } from "@/features/dashboard/components/health-card";
 import { SmartInsightsFeed, SmartInsightsSkeleton } from "@/features/dashboard/components/smart-insights";
 import {
@@ -46,6 +47,7 @@ function Analytics() {
   const { t } = useT();
   const { expenses, incomes, categories, currency, isLoading } = useAnalyticsData();
   const { output: engine, isLoading: engineLoading } = useFinancialEngine();
+  const convert = useCurrencyConvert();
   const range = useMemo(() => monthRange(), []);
 
   const [period, setPeriod] = useState<Period>("month");
@@ -167,16 +169,16 @@ function Analytics() {
       <div className="grid grid-cols-3 gap-2.5">
         <div className="card-flat p-3.5 space-y-1">
           <p className="label-overline">{t("analytics.income.label")}</p>
-          <p className="text-base font-semibold num text-positive">{shortMoney(incomeTotal, currency)}</p>
+          <p className="text-base font-semibold num text-positive">{shortMoney(convert(incomeTotal), currency)}</p>
         </div>
         <div className="card-flat p-3.5 space-y-1">
           <p className="label-overline">{t("analytics.expenses.label")}</p>
-          <p className="text-base font-semibold num">{shortMoney(expenseTotal, currency)}</p>
+          <p className="text-base font-semibold num">{shortMoney(convert(expenseTotal), currency)}</p>
         </div>
         <div className="card-flat p-3.5 space-y-1">
           <p className="label-overline">{t("analytics.net.label")}</p>
           <p className={cn("text-base font-semibold num", net >= 0 ? "text-positive" : "text-negative")}>
-            {shortMoney(net, currency)}
+            {shortMoney(convert(net), currency)}
           </p>
         </div>
       </div>
@@ -190,11 +192,11 @@ function Analytics() {
               <BarChart data={chartSeries} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={14} barGap={3}>
                 <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(v, currency)} width={44} />
+                <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(convert(Number(v)), currency)} width={44} />
                 <Tooltip
                   cursor={{ fill: "oklch(0.96 0.006 250)" }}
                   contentStyle={getChartTooltipStyle()}
-                  formatter={((v: unknown, name: unknown) => [money(Number(v), currency), name]) as never}
+                  formatter={((v: unknown, name: unknown) => [money(convert(Number(v)), currency), name]) as never}
                 />
                 <Legend
                   iconType="circle"
@@ -225,7 +227,7 @@ function Analytics() {
                   <span className="text-[11px] text-muted-foreground">
                     {expenseTotal > 0 ? `${Math.round((total / expenseTotal) * 100)}%` : "—"}
                   </span>
-                  <span className="text-sm font-semibold num">{money(total, currency)}</span>
+                  <span className="text-sm font-semibold num">{money(convert(total), currency)}</span>
                 </div>
               </div>
             ))}
@@ -242,11 +244,11 @@ function Analytics() {
               <BarChart data={fixedVariableSeries} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={14} barGap={3}>
                 <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(v, currency)} width={44} />
+                <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(convert(Number(v)), currency)} width={44} />
                 <Tooltip
                   cursor={{ fill: "oklch(0.96 0.006 250)" }}
                   contentStyle={getChartTooltipStyle()}
-                  formatter={((v: unknown, name: unknown) => [money(Number(v), currency), name]) as never}
+                  formatter={((v: unknown, name: unknown) => [money(convert(Number(v)), currency), name]) as never}
                 />
                 <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
                 <Bar dataKey="fixed"    name={t("analytics.chart.fixed")}    fill={CHART_COLORS[3]} radius={[4, 4, 2, 2]} />
@@ -277,7 +279,7 @@ function Analytics() {
                 <PiggyBank className="size-3.5 text-positive" />
               </div>
               <p className="text-base font-semibold num text-positive">
-                {shortMoney(engine.totalSavings + Math.max(0, monthRemaining), currency)}
+                {shortMoney(convert(engine.totalSavings + Math.max(0, monthRemaining)), currency)}
               </p>
               <p className="text-[10px] text-muted-foreground">{t("analytics.yoursavings.total.sub")}</p>
             </div>
@@ -303,7 +305,7 @@ function Analytics() {
                 "text-base font-semibold num",
                 avgMonthlySavings >= 0 ? "text-positive" : "text-negative",
               )}>
-                {shortMoney(avgMonthlySavings, currency)}
+                {shortMoney(convert(avgMonthlySavings), currency)}
               </p>
               <p className="text-[10px] text-muted-foreground">{t("analytics.yoursavings.avg.sub")}</p>
             </div>

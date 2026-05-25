@@ -33,6 +33,7 @@ import {
   useSeedDemoGoals,
 } from "@/features/goals/use-goals";
 import { useT } from "@/i18n";
+import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 
 export const Route = createFileRoute("/app/goals")({
   component: Goals,
@@ -59,6 +60,7 @@ function Goals() {
   const contribs = contribsQ.data ?? [];
   const income   = incomeQ.data   ?? 0;
   const currency = profileQ.data?.currency ?? "EUR";
+  const convert  = useCurrencyConvert();
   const isLoading = goalsQ.isLoading || contribsQ.isLoading;
 
   const stats = useMemo(() => {
@@ -91,10 +93,10 @@ function Goals() {
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">{t("goals.stat.saved")}</p>
             <div className="num-display text-[36px] font-semibold mt-0.5 leading-tight">
-              {shortMoney(stats.saved, currency)}
+              {shortMoney(convert(stats.saved), currency)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {t("common.of")} {shortMoney(stats.total, currency)} — {goals.length} {t("goals.title").toLowerCase()}
+              {t("common.of")} {shortMoney(convert(stats.total), currency)} — {goals.length} {t("goals.title").toLowerCase()}
             </p>
           </div>
           <ProgressRing
@@ -117,7 +119,7 @@ function Goals() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           label={t("goals.stat.monthly")}
-          value={shortMoney(stats.monthly, currency)}
+          value={shortMoney(convert(stats.monthly), currency)}
           suffix={income > 0
             ? t("goals.kpi.pct_income").replace("{pct}", String(Math.round((stats.monthly / income) * 100)))
             : t("goals.kpi.set_plan")}
@@ -126,7 +128,7 @@ function Goals() {
         />
         <StatCard
           label={t("goals.stat.total")}
-          value={shortMoney(Math.max(0, stats.total - stats.saved), currency)}
+          value={shortMoney(convert(Math.max(0, stats.total - stats.saved)), currency)}
           suffix={stats.monthly > 0
             ? t("goals.kpi.months_left").replace("{n}", String(Math.ceil((stats.total - stats.saved) / stats.monthly)))
             : t("goals.kpi.no_plan")}
@@ -205,6 +207,7 @@ function GoalCard({
   onDelete: () => void;
 }) {
   const { t } = useT();
+  const convert   = useCurrencyConvert();
   const iconMeta  = goalIconsMap[goal.icon];
   const colorMeta = goalColorsMap[goal.color] ?? GOAL_COLORS.mint;
   const Icon      = iconMeta?.icon ?? GOAL_ICONS.target.icon;
@@ -213,7 +216,7 @@ function GoalCard({
     ? Math.min(100, (Number(goal.current_amount) / Number(goal.target_amount)) * 100)
     : 0;
 
-  const deadlineStatus = getDeadlineStatus(goal, currency);
+  const deadlineStatus = getDeadlineStatus(goal, currency, convert);
   const projected      = getProjectedCompletion(goal);
   const nextMs         = getNextMilestone(pct);
 
@@ -232,8 +235,8 @@ function GoalCard({
               )}
             </div>
             <p className="text-[11px] text-muted-foreground num truncate">
-              {money(Number(goal.current_amount), currency)} {t("common.of")} {money(Number(goal.target_amount), currency)}
-              {Number(goal.monthly_contribution) > 0 && ` · ${money(Number(goal.monthly_contribution), currency)}/${t("goals.per_month")}`}
+              {money(convert(Number(goal.current_amount)), currency)} {t("common.of")} {money(convert(Number(goal.target_amount)), currency)}
+              {Number(goal.monthly_contribution) > 0 && ` · ${money(convert(Number(goal.monthly_contribution)), currency)}/${t("goals.per_month")}`}
             </p>
           </div>
         </div>
@@ -282,7 +285,7 @@ function GoalCard({
           <span className="text-muted-foreground num">
             {t("goals.card.next")
               .replace("{pct}", String(nextMs))
-              .replace("{amount}", money((Number(goal.target_amount) * nextMs / 100) - Number(goal.current_amount), currency))}
+              .replace("{amount}", money(convert((Number(goal.target_amount) * nextMs / 100) - Number(goal.current_amount)), currency))}
           </span>
         )}
       </div>
@@ -290,7 +293,7 @@ function GoalCard({
       {lastContrib && (
         <p className="text-[10px] text-muted-foreground border-t border-border-subtle pt-2">
           {t("goals.card.last_deposit")
-            .replace("{amount}", money(lastContrib.amount, currency))
+            .replace("{amount}", money(convert(lastContrib.amount), currency))
             .replace("{date}", new Date(lastContrib.contributed_at).toLocaleDateString())}
           {lastContrib.note && ` · ${lastContrib.note}`}
         </p>
@@ -463,6 +466,7 @@ function ContributionDialog({
   t: (k: string) => string;
 }) {
   const addContribution = useAddContribution();
+  const convert = useCurrencyConvert();
   const [amount, setAmount] = useState("");
   const [note, setNote]     = useState("");
 
@@ -498,7 +502,7 @@ function ContributionDialog({
                 onClick={() => setAmount(String(goal!.monthly_contribution))}
                 className="text-[11px] text-muted-foreground hover:text-foreground mt-1"
               >
-                {t("goals.contrib.use_planned").replace("{amount}", money(Number(goal!.monthly_contribution), currency))}
+                {t("goals.contrib.use_planned").replace("{amount}", money(convert(Number(goal!.monthly_contribution)), currency))}
               </button>
             ) : null}
           </div>

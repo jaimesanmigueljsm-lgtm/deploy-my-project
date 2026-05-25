@@ -41,6 +41,7 @@ import {
   useUpdateExpense,
 } from "@/features/expenses/use-expenses";
 import { useT } from "@/i18n";
+import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/app/budget")({
@@ -71,6 +72,7 @@ function Budget() {
     range.start,
     range.end,
   );
+  const convert = useCurrencyConvert();
 
   const deleteExpense = useDeleteExpense();
   const deleteIncome = useDeleteIncome();
@@ -191,11 +193,11 @@ function Budget() {
       <div className="card-soft p-5 gradient-hero">
         <p className="text-xs text-muted-foreground">{t("budget.summary.spent")}</p>
         <div className="num-display text-[40px] font-semibold mt-0.5">
-          {money(totalSpent, currency)}
+          {money(convert(totalSpent), currency)}
         </div>
         <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border-subtle">
-          <Stat label={t("budget.summary.fixed")} value={money(totalFixed, currency)} />
-          <Stat label={t("budget.summary.variable")} value={money(totalVariable, currency)} />
+          <Stat label={t("budget.summary.fixed")} value={money(convert(totalFixed), currency)} />
+          <Stat label={t("budget.summary.variable")} value={money(convert(totalVariable), currency)} />
         </div>
       </div>
 
@@ -222,10 +224,10 @@ function Budget() {
           <div className="card-soft p-5 gradient-mint">
             <p className="text-xs text-muted-foreground">{t("savings.summary.total")}</p>
             <div className="num-display text-[40px] font-semibold mt-0.5">
-              {money(totalSavingsBalance, currency)}
+              {money(convert(totalSavingsBalance), currency)}
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border-subtle">
-              <Stat label={t("savings.summary.emergency")} value={money(emergencyBalance, currency)} />
+              <Stat label={t("savings.summary.emergency")} value={money(convert(emergencyBalance), currency)} />
               <Stat label={t("savings.summary.accounts")} value={`${savingsAccounts.length}`} />
             </div>
           </div>
@@ -275,7 +277,7 @@ function Budget() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-sm font-semibold num text-positive">
-                        {money(acc.balance, currency)}
+                        {money(convert(acc.balance), currency)}
                       </div>
                       <button
                         onClick={(e) => {
@@ -301,10 +303,10 @@ function Budget() {
           <div className="card-soft p-5 gradient-mint">
             <p className="text-xs text-muted-foreground">{t("budget.income.total")}</p>
             <div className="num-display text-[40px] font-semibold mt-0.5">
-              {money(totalIncome, currency)}
+              {money(convert(totalIncome), currency)}
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border-subtle">
-              <Stat label={t("budget.income.recurring")} value={money(recurringIncome, currency)} />
+              <Stat label={t("budget.income.recurring")} value={money(convert(recurringIncome), currency)} />
               <Stat label={t("budget.income.sources")} value={`${incomes.length}`} />
             </div>
           </div>
@@ -366,7 +368,7 @@ function Budget() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-sm font-semibold num text-positive">
-                        +{money(i.amount, currency)}
+                        +{money(convert(i.amount), currency)}
                       </div>
                       <button
                         onClick={(e) => {
@@ -401,7 +403,7 @@ function Budget() {
                         <span className="text-sm font-medium">{c.name}</span>
                         <span className="text-[11px] text-muted-foreground">· {c.count}</span>
                       </div>
-                      <div className="text-sm font-semibold num">{money(c.total, currency)}</div>
+                      <div className="text-sm font-semibold num">{money(convert(c.total), currency)}</div>
                     </div>
                     <div className="h-1 bg-muted rounded-full overflow-hidden">
                       <div
@@ -455,7 +457,7 @@ function Budget() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="text-sm font-semibold num">
-                          −{money(e.amount, currency)}
+                          −{money(convert(e.amount), currency)}
                         </div>
                         <button
                           onClick={() => {

@@ -4,6 +4,7 @@ import type { BudgetForecast } from "@/core/finance";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/nest";
 import { useT } from "@/i18n";
+import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -76,6 +77,7 @@ export function ForecastWidget({
   savedSoFar?: number;
 }) {
   const { t } = useT();
+  const convert = useCurrencyConvert();
 
   // Tile 1 — Today's budget
   const spendTone: "positive" | "warn" | "negative" =
@@ -97,14 +99,14 @@ export function ForecastWidget({
     <div className="grid grid-cols-3 gap-2.5">
       <Tile
         label={t("dashboard.forecast.daily")}
-        value={shortMoney(Math.max(0, forecast.safeToSpendPerDay), currency)}
+        value={shortMoney(convert(Math.max(0, forecast.safeToSpendPerDay)), currency)}
         sublabel={t("dashboard.forecast.daily.tip")}
         tone={spendTone}
         icon={<Wallet className="size-3" />}
       />
       <Tile
         label={t("dashboard.forecast.saved")}
-        value={shortMoney(Math.max(0, saved), currency)}
+        value={shortMoney(convert(Math.max(0, saved)), currency)}
         sublabel={t("dashboard.forecast.saved.sub")}
         tone={savedTone}
         icon={<PiggyBank className="size-3" />}
@@ -113,13 +115,13 @@ export function ForecastWidget({
         label={t("dashboard.forecast.closing")}
         value={
           closing < 0
-            ? `-${shortMoney(Math.abs(closing), currency)}`
-            : shortMoney(closing, currency)
+            ? `-${shortMoney(convert(Math.abs(closing)), currency)}`
+            : shortMoney(convert(closing), currency)
         }
         sublabel={
           closing < 0
-            ? `${shortMoney(Math.abs(closing), currency)} ${t("dashboard.forecast.outlook.over")}`
-            : `${shortMoney(closing, currency)} ${t("dashboard.forecast.closing.saves")}`
+            ? `${shortMoney(convert(Math.abs(closing)), currency)} ${t("dashboard.forecast.outlook.over")}`
+            : `${shortMoney(convert(closing), currency)} ${t("dashboard.forecast.closing.saves")}`
         }
         tone={closingTone}
         icon={<ClosingIcon className="size-3" />}

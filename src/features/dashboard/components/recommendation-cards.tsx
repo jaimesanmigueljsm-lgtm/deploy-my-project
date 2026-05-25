@@ -15,6 +15,7 @@
 import { AlertTriangle, Info, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { shortMoney } from "@/lib/format";
+import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { ImpactChip, Skeleton } from "@/components/nest";
 import type { Recommendation, RecommendationSeverity, RecommendationParams } from "@/core/finance";
 import { cn } from "@/lib/utils";
@@ -60,11 +61,12 @@ function formatParams(
   moneyParams: string[] | undefined,
   percentParams: string[] | undefined,
   currency: string,
+  convert: (n: number) => number = (n) => n,
 ): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(raw)) {
     if (moneyParams?.includes(k)) {
-      out[k] = shortMoney(Number(v), currency);
+      out[k] = shortMoney(convert(Number(v)), currency);
     } else if (percentParams?.includes(k)) {
       out[k] = `${v}%`;
     } else {
@@ -78,13 +80,14 @@ function formatParams(
 
 function RecommendationCard({ rec, currency }: { rec: Recommendation; currency: string }) {
   const { t } = useT();
+  const convert = useCurrencyConvert();
   const [expanded, setExpanded] = useState(rec.severity === "critical");
   const cfg = SEVERITY_CONFIG[rec.severity];
   const Icon = cfg.icon;
 
   const entry = getCatalogEntry(rec.id);
   const fmtParams = entry
-    ? formatParams(rec.params, entry.moneyParams, entry.percentParams, currency)
+    ? formatParams(rec.params, entry.moneyParams, entry.percentParams, currency, convert)
     : {};
 
   const title       = entry ? t(entry.titleKey as never, fmtParams)       : rec.id;
@@ -95,7 +98,7 @@ function RecommendationCard({ rec, currency }: { rec: Recommendation; currency: 
 
   const { estimatedAmount, impactKey } = rec.financialImpact;
   const impactLabel = estimatedAmount != null
-    ? t(impactKey as never, { amount: shortMoney(estimatedAmount, currency) })
+    ? t(impactKey as never, { amount: shortMoney(convert(estimatedAmount), currency) })
     : t(impactKey as never);
 
   return (

@@ -20,6 +20,7 @@ import { INVESTMENT_TYPE_META } from "@/features/finances/finances.constants";
 import { computePortfolioStats, buildSyntheticHistory } from "@/features/finances/finances.utils";
 import type { AddInvestmentPayload } from "@/features/finances/finances.service";
 import type { InvestmentType } from "@/types/finance";
+import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 
 export const Route = createFileRoute("/app/finances")({
   component: Finances,
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/app/finances")({
 
 function Finances() {
   const { investments, currency, isLoading } = useFinancesData();
+  const convert = useCurrencyConvert();
   const deleteInvestment  = useDeleteInvestment();
   const seedDemo          = useSeedDemoInvestments();
   const [open, setOpen]   = useState(false);
@@ -62,10 +64,10 @@ function Finances() {
       {/* HERO net worth */}
       <div className="card-soft p-5 gradient-net text-background relative overflow-hidden">
         <p className="text-xs opacity-60">Total value</p>
-        <div className="num-display text-[44px] font-semibold mt-0.5 leading-tight">{shortMoney(stats.value, currency)}</div>
+        <div className="num-display text-[44px] font-semibold mt-0.5 leading-tight">{shortMoney(convert(stats.value), currency)}</div>
         <div className="mt-2 flex items-center gap-3 text-xs">
           <span className={`num font-medium ${stats.pl >= 0 ? "text-positive" : "text-negative"}`}>
-            {stats.pl >= 0 ? "+" : ""}{money(stats.pl, currency)}
+            {stats.pl >= 0 ? "+" : ""}{money(convert(stats.pl), currency)}
           </span>
           <TrendBadge value={stats.plPct} className="!bg-white/10 !text-white" />
           <span className="opacity-50">all-time</span>
@@ -84,7 +86,7 @@ function Finances() {
               <Tooltip
                 cursor={chartCursor}
                 contentStyle={{ borderRadius: 12, border: "none", background: "oklch(0.18 0.02 255)", color: "white", fontSize: 11, padding: "6px 10px" }}
-                formatter={((v: unknown) => money(Number(v), currency)) as never}
+                formatter={((v: unknown) => money(convert(Number(v)), currency)) as never}
               />
               <Area type="monotone" dataKey="v" stroke={CHART_COLORS[0]} strokeWidth={2} fill="url(#np)" />
             </AreaChart>
@@ -94,11 +96,11 @@ function Finances() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Invested" value={shortMoney(stats.invested, currency)} suffix="cost basis" tone="neutral" icon={<Coins className="size-3.5" />} />
+        <StatCard label="Invested" value={shortMoney(convert(stats.invested), currency)} suffix="cost basis" tone="neutral" icon={<Coins className="size-3.5" />} />
         <StatCard
           label="Today"
           value={`${stats.plPct >= 0 ? "+" : ""}${stats.plPct.toFixed(2)}%`}
-          suffix={`${money(stats.pl, currency)}`}
+          suffix={`${money(convert(stats.pl), currency)}`}
           tone={stats.pl >= 0 ? "mint" : "warn"}
           icon={<TrendingUp className="size-3.5" />}
         />
@@ -132,7 +134,7 @@ function Finances() {
                     <span>{a.name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="num font-medium">{shortMoney(a.value, currency)}</span>
+                    <span className="num font-medium">{shortMoney(convert(a.value), currency)}</span>
                     <span className="text-muted-foreground tabular-nums w-9 text-right">{Math.round((a.value / stats.value) * 100)}%</span>
                   </div>
                 </div>
@@ -189,13 +191,13 @@ function Finances() {
                         {inv.name}
                       </div>
                       <div className="text-[11px] text-muted-foreground num">
-                        {Number(inv.quantity)} × {money(Number(inv.current_price), currency)}
+                        {Number(inv.quantity)} × {money(convert(Number(inv.current_price)), currency)}
                       </div>
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-3 flex items-center gap-2">
                     <div>
-                      <div className="text-sm font-semibold num">{money(value, currency)}</div>
+                      <div className="text-sm font-semibold num">{money(convert(value), currency)}</div>
                       <div className={`text-[11px] num ${pl >= 0 ? "text-positive" : "text-negative"}`}>
                         {pl >= 0 ? "+" : ""}{pct(plPct, 2)}
                       </div>

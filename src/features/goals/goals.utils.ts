@@ -12,7 +12,11 @@ export type DeadlineStatus = {
  * Returns a human-readable deadline assessment for a goal.
  * Pure function — no React, fully unit-testable.
  */
-export function getDeadlineStatus(goal: Goal, currency: string): DeadlineStatus | null {
+export function getDeadlineStatus(
+  goal: Goal,
+  currency: string,
+  convert: (n: number) => number = (n) => n,
+): DeadlineStatus | null {
   if (!goal.deadline) return null;
 
   const dl = new Date(goal.deadline);
@@ -29,11 +33,11 @@ export function getDeadlineStatus(goal: Goal, currency: string): DeadlineStatus 
   if (monthsLeft === 0)
     return { tone: "bad", label: "Deadline reached" };
   if (Number(goal.monthly_contribution) >= required)
-    return { tone: "good", label: `On track · ${money(required, currency)}/mo needed` };
+    return { tone: "good", label: `On track · ${money(convert(required), currency)}/mo needed` };
 
   return {
     tone: "warn",
-    label: `Behind · need ${money(required, currency)}/mo (you have ${money(Number(goal.monthly_contribution), currency)})`,
+    label: `Behind · need ${money(convert(required), currency)}/mo (you have ${money(convert(Number(goal.monthly_contribution)), currency)})`,
   };
 }
 
@@ -57,7 +61,12 @@ export function getNextMilestone(progress: number): number | null {
 
 // ─── Savings coach message ────────────────────────────────────────────────────
 
-export function getCoachMessage(goals: Goal[], income: number, currency: string): string {
+export function getCoachMessage(
+  goals: Goal[],
+  income: number,
+  currency: string,
+  convert: (n: number) => number = (n) => n,
+): string {
   const totalMonthly = goals.reduce((s, g) => s + Number(g.monthly_contribution), 0);
   const completed    = goals.filter((g) => Number(g.current_amount) >= Number(g.target_amount)).length;
   const behind       = goals.filter((g) => {
@@ -80,14 +89,19 @@ export function getCoachMessage(goals: Goal[], income: number, currency: string)
     return `You're allocating ${Math.round((totalMonthly / income) * 100)}% of income to savings — ambitious! Make sure it's sustainable.`;
   if (income > 0 && totalMonthly / income < 0.1)
     return `You're saving only ${Math.round((totalMonthly / income) * 100)}% of income. The 50/30/20 rule suggests aiming for 20%.`;
-  return `You're contributing ${money(totalMonthly, currency)}/month across all goals. Steady progress beats sporadic effort.`;
+  return `You're contributing ${money(convert(totalMonthly), currency)}/month across all goals. Steady progress beats sporadic effort.`;
 }
 
 // ─── Contribution toast message ───────────────────────────────────────────────
 
-export function getContributionToast(newPct: number, amount: number, currency: string): string {
+export function getContributionToast(
+  newPct: number,
+  amount: number,
+  currency: string,
+  convert: (n: number) => number = (n) => n,
+): string {
   if (newPct >= 100) return "🎉 Goal completed! Congratulations!";
   if (newPct >= 75)  return "Great! 75%+ of your goal!";
   if (newPct >= 50)  return "Halfway there 💪";
-  return `+${money(amount, currency)} added`;
+  return `+${money(convert(amount), currency)} added`;
 }
