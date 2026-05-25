@@ -6,6 +6,7 @@ import {
   Bell, Shield, CreditCard, Database, Moon, Sun, LogOut, ChevronRight,
   Sparkles, Globe, Languages, Check, TrendingUp,
   Camera, AtSign, Copy, MapPin, User, Loader2, XCircle, CheckCircle2, CalendarDays,
+  Eye, EyeOff, KeyRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +66,8 @@ function Settings() {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
-  const [openPrivacy, setOpenPrivacy] = useState(false);
+  const [openPrivacy, setOpenPrivacy]   = useState(false);
+  const [openSecurity, setOpenSecurity] = useState(false);
 
   function toggleTheme() {
     const next = profile?.theme === "dark" ? "light" : "dark";
@@ -216,7 +218,8 @@ function Settings() {
             label={t("settings.investmentMode")}
             desc={t("settings.investmentMode.desc")}
             value={!!(notifPrefs as Record<string, boolean>).investment_mode}
-            onChange={() => togglePref("investment_mode")}
+            onChange={() => {}}
+            badge="Coming soon"
           />
         </div>
       </section>
@@ -239,7 +242,7 @@ function Settings() {
       <section>
         <SectionHeader title={t("settings.security")} />
         <div className="card-flat divide-y divide-border-subtle">
-          <Row icon={<Shield className="size-4" />} label={t("settings.security.label")} value="Email & password" onClick={() => toast("Coming soon")} />
+          <Row icon={<Shield className="size-4" />} label={t("settings.security.label")} value="Email & password" onClick={() => setOpenSecurity(true)} />
           <Row icon={<CreditCard className="size-4" />} label={t("settings.bankConnections")} value="None" onClick={() => toast("Coming soon")} />
           <Row icon={<Database className="size-4" />} label={t("settings.privacy")} value={t("settings.privacy.value")} onClick={() => setOpenPrivacy(true)} />
         </div>
@@ -258,7 +261,266 @@ function Settings() {
         userId={user?.id ?? ""}
         t={t}
       />
+      <SecurityDialog
+        open={openSecurity}
+        onClose={() => setOpenSecurity(false)}
+        currentEmail={user?.email ?? ""}
+      />
     </div>
+  );
+}
+
+// ─── SecurityDialog ───────────────────────────────────────────────────────────
+
+function SecurityDialog({
+  open, onClose, currentEmail,
+}: {
+  open: boolean;
+  onClose: () => void;
+  currentEmail: string;
+}) {
+  const [tab, setTab]                   = useState<"email" | "password">("email");
+
+  // Email change
+  const [newEmail, setNewEmail]         = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailSent, setEmailSent]       = useState(false);
+
+  // Password change
+  const [newPwd, setNewPwd]             = useState("");
+  const [confirmPwd, setConfirmPwd]     = useState("");
+  const [showPwd, setShowPwd]           = useState(false);
+  const [showConfirm, setShowConfirm]   = useState(false);
+  const [pwdLoading, setPwdLoading]     = useState(false);
+  const [pwdDone, setPwdDone]           = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setNewEmail(""); setEmailSent(false);
+      setNewPwd(""); setConfirmPwd(""); setPwdDone(false);
+    }
+  }, [open]);
+
+  async function changeEmail() {
+    const trimmed = newEmail.trim();
+    if (!trimmed.includes("@")) return toast.error("Enter a valid email address");
+    setEmailLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: trimmed });
+      if (error) throw error;
+      setEmailSent(true);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setEmailLoading(false);
+    }
+  }
+
+  async function changePassword() {
+    if (newPwd.length < 8) return toast.error("Password must be at least 8 characters");
+    if (newPwd !== confirmPwd) return toast.error("Passwords don't match");
+    setPwdLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPwd });
+      if (error) throw error;
+      setPwdDone(true);
+      setNewPwd(""); setConfirmPwd("");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setPwdLoading(false);
+    }
+  }
+
+  const strength = newPwd.length === 0 ? null : newPwd.length < 8 ? "weak" : newPwd.length < 12 ? "good" : "strong";
+  const strengthColor = strength === "weak" ? "bg-negative" : strength === "good" ? "bg-warn" : "bg-positive";
+  const strengthBars  = strength === "weak" ? 1 : strength === "good" ? 2 : 3;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="rounded-2xl max-h-[92dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <KeyRound className="size-4" /> Security
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          {/* Current account */}
+          <div className="p-4 rounded-2xl bg-muted/50 flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-foreground/10 grid place-items-center shrink-0">
+              <Shield className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] text-muted-foreground">Signed in as</p>
+              <p className="text-sm font-medium truncate">{currentEmail}</p>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-muted">
+            {(["email", "password"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`py-2 text-sm font-medium rounded-lg transition capitalize ${
+                  tab === t ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t === "email" ? "Email" : "Password"}
+              </button>
+            ))}
+          </div>
+
+          {/* Email tab */}
+          {tab === "email" && (
+            emailSent ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="size-14 rounded-full bg-positive/10 grid place-items-center mx-auto">
+                  <CheckCircle2 className="size-7 text-positive" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Confirmation sent</p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Check <span className="font-medium">{newEmail}</span> to confirm the change. Your email won't update until you click the link.
+                  </p>
+                </div>
+                <button onClick={() => setEmailSent(false)} className="text-xs text-muted-foreground underline underline-offset-2">
+                  Use a different email
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">New email address</Label>
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") void changeEmail(); }}
+                    placeholder="new@example.com"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                  />
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  A confirmation link will be sent to both your current and new email address.
+                </p>
+                <Button
+                  onClick={() => void changeEmail()}
+                  disabled={emailLoading || !newEmail.trim()}
+                  className="w-full"
+                >
+                  {emailLoading ? (
+                    <><Loader2 className="size-4 mr-2 animate-spin" /> Sending…</>
+                  ) : "Send confirmation link"}
+                </Button>
+              </div>
+            )
+          )}
+
+          {/* Password tab */}
+          {tab === "password" && (
+            pwdDone ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="size-14 rounded-full bg-positive/10 grid place-items-center mx-auto">
+                  <CheckCircle2 className="size-7 text-positive" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Password updated</p>
+                  <p className="text-xs text-muted-foreground mt-1">Your password has been changed successfully.</p>
+                </div>
+                <button onClick={() => setPwdDone(false)} className="text-xs text-muted-foreground underline underline-offset-2">
+                  Change again
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">New password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showPwd ? "text" : "password"}
+                      value={newPwd}
+                      onChange={(e) => setNewPwd(e.target.value)}
+                      placeholder="Min. 8 characters"
+                      autoComplete="new-password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowPwd((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                    >
+                      {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  {strength && (
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex gap-1 flex-1">
+                        {[1, 2, 3].map((n) => (
+                          <div
+                            key={n}
+                            className={`h-1 flex-1 rounded-full transition-colors ${n <= strengthBars ? strengthColor : "bg-muted"}`}
+                          />
+                        ))}
+                      </div>
+                      <span className={`text-[10px] font-medium capitalize ${
+                        strength === "weak" ? "text-negative" : strength === "good" ? "text-warn" : "text-positive"
+                      }`}>{strength}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Confirm new password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showConfirm ? "text" : "password"}
+                      value={confirmPwd}
+                      onChange={(e) => setConfirmPwd(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") void changePassword(); }}
+                      placeholder="Repeat password"
+                      autoComplete="new-password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowConfirm((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                    >
+                      {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  {confirmPwd && newPwd !== confirmPwd && (
+                    <p className="text-[11px] text-negative flex items-center gap-1">
+                      <XCircle className="size-3" /> Passwords don't match
+                    </p>
+                  )}
+                  {confirmPwd && newPwd === confirmPwd && newPwd.length >= 8 && (
+                    <p className="text-[11px] text-positive flex items-center gap-1">
+                      <CheckCircle2 className="size-3" /> Looks good
+                    </p>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => void changePassword()}
+                  disabled={pwdLoading || !newPwd || !confirmPwd || newPwd !== confirmPwd || newPwd.length < 8}
+                  className="w-full"
+                >
+                  {pwdLoading ? (
+                    <><Loader2 className="size-4 mr-2 animate-spin" /> Updating…</>
+                  ) : "Update password"}
+                </Button>
+              </div>
+            )
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -560,24 +822,32 @@ function Row({
 }
 
 function RowToggle({
-  icon, label, desc, value, onChange,
+  icon, label, desc, value, onChange, badge,
 }: {
   icon: ReactNode;
   label: string;
   desc?: string;
   value: boolean;
   onChange: () => void;
+  badge?: string;
 }) {
   return (
     <div className="w-full flex items-center justify-between px-4 py-3 gap-3">
       <div className="flex items-center gap-3 min-w-0">
         <div className="size-8 rounded-lg bg-muted grid place-items-center text-foreground shrink-0">{icon}</div>
         <div className="min-w-0">
-          <span className="text-sm font-medium">{label}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium">{label}</span>
+            {badge && (
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-warn/10 text-warn border border-warn/30">
+                {badge}
+              </span>
+            )}
+          </div>
           {desc && <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{desc}</p>}
         </div>
       </div>
-      <Switch checked={value} onCheckedChange={onChange} />
+      <Switch checked={value} onCheckedChange={onChange} disabled={!!badge} className={badge ? "opacity-40" : ""} />
     </div>
   );
 }
