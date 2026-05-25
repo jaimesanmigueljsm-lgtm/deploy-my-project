@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, memo } from "react";
+import { useMemo, useState, memo, useRef, useEffect } from "react";
 import { money, monthRange, shortMoney } from "@/lib/format";
 import { Sparkles, TrendingUp as TUp, PiggyBank, Wallet2 } from "lucide-react";
 import {
@@ -26,6 +26,26 @@ export const Route = createFileRoute("/app/analytics")({
   component: Analytics,
 });
 
+// ─── Intersection Observer hook ───────────────────────────────────────────────
+// Renders expensive sections only when they scroll into view (200px pre-load).
+// Once visible, stays rendered — no pop-in during scroll-back.
+
+function useInView() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return { ref, visible };
+}
+
 // ─── Period helpers ───────────────────────────────────────────────────────────
 
 type Period = "month" | "quarter" | "semester";
@@ -51,6 +71,10 @@ function Analytics() {
   const range = useMemo(() => monthRange(), []);
 
   const [period, setPeriod] = useState<Period>("month");
+
+  const fixedVarInView   = useInView();
+  const savingsInView    = useInView();
+  const healthInView     = useInView();
 
   const months = periodMonths(period);
   const start  = useMemo(() => periodStart(period), [period]);
@@ -218,20 +242,23 @@ function Analytics() {
         </section>
       )}
 
-      {/* Fixed vs Variable expenses chart */}
-      <section>
+      {/* Fixed vs Variable expenses chart — lazy render until in view */}
+      <section ref={fixedVarInView.ref}>
         <SectionHeader title={t("analytics.section.fixedVsVariable")} subtitle={t("analytics.section.fixedVsVariable.sub")} />
-        <FixedVariableBarChart
-          data={fixedVariableSeries}
-          currency={currency}
-          convert={convert}
-          fixedLabel={t("analytics.chart.fixed")}
-          variableLabel={t("analytics.chart.variable")}
-        />
+        {fixedVarInView.visible
+          ? <FixedVariableBarChart
+              data={fixedVariableSeries}
+              currency={currency}
+              convert={convert}
+              fixedLabel={t("analytics.chart.fixed")}
+              variableLabel={t("analytics.chart.variable")}
+            />
+          : <SkeletonBlock className="h-48" />
+        }
       </section>
 
-      {/* Tu ahorro */}
-      <section>
+      {/* Tu ahorro — lazy render until in view */}
+      <section ref={savingsInView.ref}>
         <SectionHeader
           title={t("analytics.section.yoursavings")}
           subtitle={t("analytics.section.yoursavings.sub")}
@@ -284,39 +311,43 @@ function Analytics() {
         )}
       </section>
 
-      {/* Financial health */}
-      <section>
-        <SectionHeader title={t("analytics.section.healthDetail")} />
-        {engineLoading || !engine
-          ? <HealthCardSkeleton />
-          : <HealthCard healthScore={engine.healthScore} currency={currency} />
-        }
-      </section>
+      {/* Financial health + signals + recommendations — lazy render until in view */}
+      <div ref={healthInView.ref}>
+        {healthInView.visible && (
+          <>
+            <section>
+              <SectionHeader title={t("analytics.section.healthDetail")} />
+              {engineLoading || !engine
+                ? <HealthCardSkeleton />
+                : <HealthCard healthScore={engine.healthScore} currency={currency} />
+              }
+            </section>
 
-      {/* Spending signals */}
-      {(engineLoading || (engine && engine.spendingIntelligence)) && (
-        <section>
-          <SectionHeader title={t("analytics.section.signals")} />
-          {engineLoading || !engine
-            ? <SmartInsightsSkeleton />
-            : <SmartInsightsFeed intelligence={engine.spendingIntelligence} />
-          }
-        </section>
-      )}
+            {(engineLoading || (engine && engine.spendingIntelligence)) && (
+              <section>
+                <SectionHeader title={t("analytics.section.signals")} />
+                {engineLoading || !engine
+                  ? <SmartInsightsSkeleton />
+                  : <SmartInsightsFeed intelligence={engine.spendingIntelligence} />
+                }
+              </section>
+            )}
 
-      {/* Recommendations */}
-      {(engineLoading || (engine && engine.recommendations.length > 0)) && (
-        <section>
-          <SectionHeader
-            title={t("dashboard.section.recommendations")}
-            subtitle={t("dashboard.section.recommendations.sub.engine")}
-          />
-          {engineLoading || !engine
-            ? <RecommendationsSkeleton />
-            : <RecommendationCards recommendations={engine.recommendations} currency={currency} />
-          }
-        </section>
-      )}
+            {(engineLoading || (engine && engine.recommendations.length > 0)) && (
+              <section>
+                <SectionHeader
+                  title={t("dashboard.section.recommendations")}
+                  subtitle={t("dashboard.section.recommendations.sub.engine")}
+                />
+                {engineLoading || !engine
+                  ? <RecommendationsSkeleton />
+                  : <RecommendationCards recommendations={engine.recommendations} currency={currency} />
+                }
+              </section>
+            )}
+          </>
+        )}
+      </div>
 
     </div>
   );

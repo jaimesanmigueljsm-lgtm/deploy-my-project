@@ -166,6 +166,7 @@ function FamilyPage() {
   // ── Realtime: invitation channel (always active when logged in) ───────────
   useEffect(() => {
     if (!userId) return;
+    let subscribedOnce = false;
     const ch = supabase
       .channel(`nest-inv-${userId}`)
       .on("postgres_changes", {
@@ -173,7 +174,13 @@ function FamilyPage() {
         table: "family_invitations",
         filter: `invited_user_id=eq.${userId}`,
       }, () => void qc.invalidateQueries({ queryKey: FK.received(userId) }))
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          // On reconnect (not initial), refresh to catch any missed events
+          if (subscribedOnce) void qc.invalidateQueries({ queryKey: FK.received(userId) });
+          subscribedOnce = true;
+        }
+      });
     return () => {
       supabase.removeChannel(ch).then((status) => {
         if (status !== "ok") console.warn("[Nest] inv channel cleanup:", status);
@@ -184,6 +191,7 @@ function FamilyPage() {
   // ── Realtime: family channel (active when in a family) ────────────────────
   useEffect(() => {
     if (!familyId) return;
+    let subscribedOnce = false;
     const ch = supabase
       .channel(`nest-fam-${familyId}`)
       .on("postgres_changes", {
@@ -201,7 +209,16 @@ function FamilyPage() {
         table: "family_activity",
         filter: `family_id=eq.${familyId}`,
       }, () => void qc.invalidateQueries({ queryKey: FK.activity(familyId) }))
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          // On reconnect (not initial), refresh all family data to catch missed events
+          if (subscribedOnce) {
+            void qc.invalidateQueries({ queryKey: FK.data(familyId) });
+            void qc.invalidateQueries({ queryKey: FK.activity(familyId) });
+          }
+          subscribedOnce = true;
+        }
+      });
     return () => {
       supabase.removeChannel(ch).then((status) => {
         if (status !== "ok") console.warn("[Nest] fam channel cleanup:", status);

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { money, monthLabel, monthRange, relativeDate } from "@/lib/format";
 import {
   Plus,
@@ -158,6 +158,15 @@ function Budget() {
     }
     return Array.from(map.values()).sort((a, b) => b.total - a.total);
   }, [expenses, dedupedCategories, tab]);
+
+  const handleEditExpense = useCallback((expense: EditableExpense) => {
+    setEditingExpense(expense);
+    setOpen(true);
+  }, []);
+
+  const handleDeleteExpense = useCallback((id: string) => {
+    deleteExpense.mutate(id);
+  }, [deleteExpense.mutate]);
 
   if (isLoading) return <BudgetSkeleton />;
 
@@ -439,48 +448,19 @@ function Budget() {
               />
             ) : (
               <div className="card-flat divide-y divide-border-subtle">
-                {filtered.map((e) => {
-                  const cat = dedupedCategories.find((c) => c.id === e.category_id);
-                  return (
-                    <div key={e.id} className="group flex items-center justify-between px-4 py-3.5">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="size-9 rounded-xl bg-muted grid place-items-center">
-                          <CategoryDot color={cat?.color ?? "neutral"} />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">{e.description}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {cat?.name ?? e.kind} · {relativeDate(e.spent_at)}
-                            {e.recurring && ` · ${t("budget.expense.recurring")}`}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm font-semibold num">
-                          −{money(convert(e.amount), currency)}
-                        </div>
-                        <button
-                          onClick={() => {
-                            setEditingExpense(e);
-                            setOpen(true);
-                          }}
-                          aria-label={t("common.edit")}
-                          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
-                        >
-                          <Pencil className="size-3.5" />
-                        </button>
-                        <button
-                          onClick={() => deleteExpense.mutate(e.id)}
-                          disabled={deleteExpense.isPending}
-                          aria-label={t("common.delete")}
-                          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative-soft/40 transition"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {filtered.map((e) => (
+                  <ExpenseRow
+                    key={e.id}
+                    expense={e}
+                    cat={dedupedCategories.find((c) => c.id === e.category_id)}
+                    currency={currency}
+                    convert={convert}
+                    onEdit={handleEditExpense}
+                    onDelete={handleDeleteExpense}
+                    isPendingDelete={deleteExpense.isPending}
+                    t={t}
+                  />
+                ))}
               </div>
             )}
           </section>
@@ -1052,6 +1032,58 @@ function SavingsDialog({
     </Dialog>
   );
 }
+
+// ─── Memoized expense row ──────────────────────────────────────────────────────
+
+type ConvertFn = (n: number) => number;
+
+const ExpenseRow = memo(function ExpenseRow({
+  expense, cat, currency, convert, onEdit, onDelete, isPendingDelete, t,
+}: {
+  expense: EditableExpense;
+  cat: Category | undefined;
+  currency: string;
+  convert: ConvertFn;
+  onEdit: (e: EditableExpense) => void;
+  onDelete: (id: string) => void;
+  isPendingDelete: boolean;
+  t: (k: string) => string;
+}) {
+  return (
+    <div className="group flex items-center justify-between px-4 py-3.5">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="size-9 rounded-xl bg-muted grid place-items-center">
+          <CategoryDot color={cat?.color ?? "neutral"} />
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm font-medium truncate">{expense.description}</div>
+          <div className="text-xs text-muted-foreground">
+            {cat?.name ?? expense.kind} · {relativeDate(expense.spent_at)}
+            {expense.recurring && ` · ${t("budget.expense.recurring")}`}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="text-sm font-semibold num">−{money(convert(expense.amount), currency)}</div>
+        <button
+          onClick={() => onEdit(expense)}
+          aria-label={t("common.edit")}
+          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
+        >
+          <Pencil className="size-3.5" />
+        </button>
+        <button
+          onClick={() => onDelete(expense.id)}
+          disabled={isPendingDelete}
+          aria-label={t("common.delete")}
+          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative-soft/40 transition"
+        >
+          <Trash2 className="size-4" />
+        </button>
+      </div>
+    </div>
+  );
+});
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
 
