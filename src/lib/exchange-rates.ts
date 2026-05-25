@@ -34,3 +34,14 @@ export function applyRate(amount: number, to: string, rates: Record<string, numb
   const rate = rates[to];
   return rate != null ? amount * rate : amount;
 }
+
+const BASE_KEY_PREFIX = "nest.user_base_currency.";
+
+export function readUserBaseCurrencyOrNull(uid: string | undefined): string | null {
+  if (!uid) return null;
+  try { return localStorage.getItem(`${BASE_KEY_PREFIX}${uid}`); } catch { return null; }
+}
+
+export function writeUserBaseCurrency(uid: string, base: string): void {
+  try { localStorage.setItem(`${BASE_KEY_PREFIX}${uid}`, base); } catch {}
+}

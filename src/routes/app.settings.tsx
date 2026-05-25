@@ -25,6 +25,7 @@ import { searchUserByUsername } from "@/features/family/family.service";
 import { financialUsernameSchema } from "@/schemas/profile.schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { readUserBaseCurrencyOrNull, writeUserBaseCurrency } from "@/lib/exchange-rates";
 
 export const Route = createFileRoute("/app/settings")({
   component: Settings,
@@ -190,9 +191,10 @@ function Settings() {
                 <DropdownMenuItem
                   key={c.code}
                   onClick={() => {
-                    const updates: { currency: string; base_currency?: string } = { currency: c.code };
-                    if (!profile.base_currency) updates.base_currency = profile.currency ?? "EUR";
-                    updateProfile.mutate(updates);
+                    if (user?.id && !readUserBaseCurrencyOrNull(user.id)) {
+                      writeUserBaseCurrency(user.id, profile.currency ?? "EUR");
+                    }
+                    updateProfile.mutate({ currency: c.code });
                   }}
                   className="gap-3"
                 >
