@@ -78,7 +78,8 @@ function Settings() {
 
   function togglePref(key: string) {
     const cur = (profile?.notification_prefs as Record<string, boolean> | null) ?? {};
-    updateProfile.mutate({ notification_prefs: { ...cur, [key]: !cur[key] } });
+    const effective = cur[key] !== false; // undefined defaults to true (on)
+    updateProfile.mutate({ notification_prefs: { ...cur, [key]: !effective } });
   }
 
   async function signOut() {
@@ -279,46 +280,46 @@ function SecurityDialog({
   onClose: () => void;
   currentEmail: string;
 }) {
-  const [tab, setTab]                   = useState<"email" | "password">("email");
+  const { t } = useT();
+  const [tab, setTab]                 = useState<"reset" | "password">("reset");
 
-  // Email change
-  const [newEmail, setNewEmail]         = useState("");
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [emailSent, setEmailSent]       = useState(false);
+  // Reset link
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSent, setResetSent]       = useState(false);
 
   // Password change
-  const [newPwd, setNewPwd]             = useState("");
-  const [confirmPwd, setConfirmPwd]     = useState("");
-  const [showPwd, setShowPwd]           = useState(false);
-  const [showConfirm, setShowConfirm]   = useState(false);
-  const [pwdLoading, setPwdLoading]     = useState(false);
-  const [pwdDone, setPwdDone]           = useState(false);
+  const [newPwd, setNewPwd]           = useState("");
+  const [confirmPwd, setConfirmPwd]   = useState("");
+  const [showPwd, setShowPwd]         = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pwdLoading, setPwdLoading]   = useState(false);
+  const [pwdDone, setPwdDone]         = useState(false);
 
   useEffect(() => {
     if (open) {
-      setNewEmail(""); setEmailSent(false);
+      setResetSent(false);
       setNewPwd(""); setConfirmPwd(""); setPwdDone(false);
     }
   }, [open]);
 
-  async function changeEmail() {
-    const trimmed = newEmail.trim();
-    if (!trimmed.includes("@")) return toast.error("Enter a valid email address");
-    setEmailLoading(true);
+  async function sendResetLink() {
+    setResetLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ email: trimmed });
+      const { error } = await supabase.auth.resetPasswordForEmail(currentEmail, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
       if (error) throw error;
-      setEmailSent(true);
+      setResetSent(true);
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
-      setEmailLoading(false);
+      setResetLoading(false);
     }
   }
 
   async function changePassword() {
-    if (newPwd.length < 8) return toast.error("Password must be at least 8 characters");
-    if (newPwd !== confirmPwd) return toast.error("Passwords don't match");
+    if (newPwd.length < 8) return toast.error(t("settings.security.password.noMatch"));
+    if (newPwd !== confirmPwd) return toast.error(t("settings.security.password.noMatch"));
     setPwdLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPwd });
@@ -341,7 +342,7 @@ function SecurityDialog({
       <DialogContent className="rounded-2xl max-h-[92dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <KeyRound className="size-4" /> Security
+            <KeyRound className="size-4" /> {t("settings.security.label")}
           </DialogTitle>
         </DialogHeader>
 
@@ -352,68 +353,56 @@ function SecurityDialog({
               <Shield className="size-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] text-muted-foreground">Signed in as</p>
+              <p className="text-[11px] text-muted-foreground">{t("settings.security.dialog.signedIn")}</p>
               <p className="text-sm font-medium truncate">{currentEmail}</p>
             </div>
           </div>
 
           {/* Tabs */}
           <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-muted">
-            {(["email", "password"] as const).map((t) => (
+            {(["reset", "password"] as const).map((tab_) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`py-2 text-sm font-medium rounded-lg transition capitalize ${
-                  tab === t ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                key={tab_}
+                onClick={() => setTab(tab_)}
+                className={`py-2 text-sm font-medium rounded-lg transition ${
+                  tab === tab_ ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {t === "email" ? "Email" : "Password"}
+                {tab_ === "reset" ? t("settings.security.tab.reset") : t("settings.security.tab.password")}
               </button>
             ))}
           </div>
 
-          {/* Email tab */}
-          {tab === "email" && (
-            emailSent ? (
+          {/* Reset link tab */}
+          {tab === "reset" && (
+            resetSent ? (
               <div className="text-center py-8 space-y-3">
                 <div className="size-14 rounded-full bg-positive/10 grid place-items-center mx-auto">
                   <CheckCircle2 className="size-7 text-positive" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">Confirmation sent</p>
+                  <p className="text-sm font-semibold">{t("settings.security.reset.sent.title")}</p>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    Check <span className="font-medium">{newEmail}</span> to confirm the change. Your email won't update until you click the link.
+                    {t("settings.security.reset.sent.desc", { email: currentEmail })}
                   </p>
                 </div>
-                <button onClick={() => setEmailSent(false)} className="text-xs text-muted-foreground underline underline-offset-2">
-                  Use a different email
+                <button onClick={() => setResetSent(false)} className="text-xs text-muted-foreground underline underline-offset-2">
+                  {t("settings.security.reset.retry")}
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">New email address</Label>
-                  <Input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") void changeEmail(); }}
-                    placeholder="new@example.com"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                  />
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-snug">
-                  A confirmation link will be sent to both your current and new email address.
+                <p className="text-sm text-muted-foreground leading-snug">
+                  {t("settings.security.reset.desc")}
                 </p>
                 <Button
-                  onClick={() => void changeEmail()}
-                  disabled={emailLoading || !newEmail.trim()}
+                  onClick={() => void sendResetLink()}
+                  disabled={resetLoading}
                   className="w-full"
                 >
-                  {emailLoading ? (
-                    <><Loader2 className="size-4 mr-2 animate-spin" /> Sending…</>
-                  ) : "Send confirmation link"}
+                  {resetLoading ? (
+                    <><Loader2 className="size-4 mr-2 animate-spin" /> {t("settings.security.reset.sending")}</>
+                  ) : t("settings.security.reset.button")}
                 </Button>
               </div>
             )
@@ -427,23 +416,23 @@ function SecurityDialog({
                   <CheckCircle2 className="size-7 text-positive" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">Password updated</p>
-                  <p className="text-xs text-muted-foreground mt-1">Your password has been changed successfully.</p>
+                  <p className="text-sm font-semibold">{t("settings.security.password.done.title")}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("settings.security.password.done.desc")}</p>
                 </div>
                 <button onClick={() => setPwdDone(false)} className="text-xs text-muted-foreground underline underline-offset-2">
-                  Change again
+                  {t("settings.security.password.changeAgain")}
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">New password</Label>
+                  <Label className="text-xs">{t("settings.security.password.label")}</Label>
                   <div className="relative">
                     <Input
                       type={showPwd ? "text" : "password"}
                       value={newPwd}
                       onChange={(e) => setNewPwd(e.target.value)}
-                      placeholder="Min. 8 characters"
+                      placeholder={t("settings.security.password.placeholder")}
                       autoComplete="new-password"
                       className="pr-10"
                     />
@@ -474,14 +463,14 @@ function SecurityDialog({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Confirm new password</Label>
+                  <Label className="text-xs">{t("settings.security.password.confirm")}</Label>
                   <div className="relative">
                     <Input
                       type={showConfirm ? "text" : "password"}
                       value={confirmPwd}
                       onChange={(e) => setConfirmPwd(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") void changePassword(); }}
-                      placeholder="Repeat password"
+                      placeholder={t("settings.security.password.repeat")}
                       autoComplete="new-password"
                       className="pr-10"
                     />
@@ -496,12 +485,12 @@ function SecurityDialog({
                   </div>
                   {confirmPwd && newPwd !== confirmPwd && (
                     <p className="text-[11px] text-negative flex items-center gap-1">
-                      <XCircle className="size-3" /> Passwords don't match
+                      <XCircle className="size-3" /> {t("settings.security.password.noMatch")}
                     </p>
                   )}
                   {confirmPwd && newPwd === confirmPwd && newPwd.length >= 8 && (
                     <p className="text-[11px] text-positive flex items-center gap-1">
-                      <CheckCircle2 className="size-3" /> Looks good
+                      <CheckCircle2 className="size-3" /> {t("settings.security.password.match")}
                     </p>
                   )}
                 </div>
@@ -512,8 +501,8 @@ function SecurityDialog({
                   className="w-full"
                 >
                   {pwdLoading ? (
-                    <><Loader2 className="size-4 mr-2 animate-spin" /> Updating…</>
-                  ) : "Update password"}
+                    <><Loader2 className="size-4 mr-2 animate-spin" /> {t("settings.security.password.saving")}</>
+                  ) : t("settings.security.password.button")}
                 </Button>
               </div>
             )
