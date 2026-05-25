@@ -17,9 +17,11 @@ export type Theme = z.infer<typeof ThemeSchema>;
  * rest of the app never has to deal with `Json` or unchecked booleans.
  */
 export const NotificationPrefsSchema = z.object({
-  alerts: z.boolean().default(true),
-  weekly: z.boolean().default(true),
-  insights: z.boolean().default(true),
+  alerts:          z.boolean().default(true),
+  weekly:          z.boolean().default(true),
+  monthly:         z.boolean().default(true),
+  insights:        z.boolean().default(true),
+  investment_mode: z.boolean().default(false),
 });
 export type NotificationPrefs = z.infer<typeof NotificationPrefsSchema>;
 
