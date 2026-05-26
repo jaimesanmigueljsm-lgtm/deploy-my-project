@@ -121,7 +121,12 @@ const en: Dict = {
   "variable.education": "Education",
   "variable.travel": "Travel",
   "variable.pets": "Pets",
-  "variable.beauty": "Beauty",
+  "variable.beauty": "Beauty & wellness",
+  "variable.others": "Others",
+  "variable.home": "Home",
+  "variable.finance": "Finance",
+  "variable.clothing": "Clothing",
+  "variable.loan": "Loan",
 
   // Priorities
   "priority.savings": "Save more",
@@ -815,7 +820,12 @@ const es: Dict = {
   "variable.education": "Educación",
   "variable.travel": "Viajes",
   "variable.pets": "Mascotas",
-  "variable.beauty": "Belleza y cuidado",
+  "variable.beauty": "Bienestar y belleza",
+  "variable.others": "Otros",
+  "variable.home": "Hogar",
+  "variable.finance": "Finanzas",
+  "variable.clothing": "Ropa",
+  "variable.loan": "Préstamo",
 
   // Priorities
   "priority.savings": "Ahorrar más",
@@ -1493,7 +1503,12 @@ const fr: Dict = {
   "variable.education": "Éducation",
   "variable.travel": "Voyages",
   "variable.pets": "Animaux",
-  "variable.beauty": "Beauté & soin",
+  "variable.beauty": "Beauté & bien-être",
+  "variable.others": "Autres",
+  "variable.home": "Maison",
+  "variable.finance": "Finances",
+  "variable.clothing": "Vêtements",
+  "variable.loan": "Prêt",
   "priority.savings": "Épargner davantage",
   "priority.debt": "Rembourser les dettes",
   "priority.family": "Sécurité familiale",
@@ -1890,7 +1905,12 @@ const de: Dict = {
   "variable.education": "Bildung",
   "variable.travel": "Reisen",
   "variable.pets": "Haustiere",
-  "variable.beauty": "Beauty & Pflege",
+  "variable.beauty": "Beauty & Wellness",
+  "variable.others": "Sonstiges",
+  "variable.home": "Haushalt",
+  "variable.finance": "Finanzen",
+  "variable.clothing": "Kleidung",
+  "variable.loan": "Kredit",
   "priority.savings": "Mehr sparen",
   "priority.debt": "Schulden abbezahlen",
   "priority.family": "Familiensicherheit",
@@ -2287,7 +2307,12 @@ const pt: Dict = {
   "variable.education": "Educação",
   "variable.travel": "Viagens",
   "variable.pets": "Animais",
-  "variable.beauty": "Beleza & cuidado",
+  "variable.beauty": "Beleza & bem-estar",
+  "variable.others": "Outros",
+  "variable.home": "Casa",
+  "variable.finance": "Finanças",
+  "variable.clothing": "Roupa",
+  "variable.loan": "Empréstimo",
   "priority.savings": "Poupar mais",
   "priority.debt": "Pagar dívidas",
   "priority.family": "Segurança familiar",
@@ -2684,7 +2709,12 @@ const it: Dict = {
   "variable.education": "Istruzione",
   "variable.travel": "Viaggi",
   "variable.pets": "Animali",
-  "variable.beauty": "Bellezza & cura",
+  "variable.beauty": "Bellezza & benessere",
+  "variable.others": "Altro",
+  "variable.home": "Casa",
+  "variable.finance": "Finanze",
+  "variable.clothing": "Abbigliamento",
+  "variable.loan": "Prestito",
   "priority.savings": "Risparmiare di più",
   "priority.debt": "Saldare i debiti",
   "priority.family": "Sicurezza familiare",
@@ -2986,3 +3016,19 @@ const it: Dict = {
 };
 
 export const TRANSLATIONS: Record<LocaleCode, Dict> = { en, es, fr, de, pt, it };
+
+// Reverse lookup: any translated category name (in any language) → its translation key.
+// Lets the app re-translate DB-stored category names to the current locale even when
+// the user originally seeded categories in a different language.
+// Usage: CATEGORY_NAME_TO_KEY["Ocio"] === "variable.leisure"
+export const CATEGORY_NAME_TO_KEY: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  for (const dict of Object.values({ en, es, fr, de, pt, it })) {
+    for (const [key, value] of Object.entries(dict)) {
+      if (key.startsWith("fixed.") || key.startsWith("variable.")) {
+        map[value] = key;
+      }
+    }
+  }
+  return map;
+})();

@@ -41,6 +41,7 @@ import {
   useUpdateExpense,
 } from "@/features/expenses/use-expenses";
 import { useT } from "@/i18n";
+import { CATEGORY_NAME_TO_KEY } from "@/i18n/translations";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -409,7 +410,7 @@ function Budget() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <CategoryDot color={c.color} />
-                        <span className="text-sm font-medium">{c.name}</span>
+                        <span className="text-sm font-medium">{CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}</span>
                         <span className="text-[11px] text-muted-foreground">· {c.count}</span>
                       </div>
                       <div className="text-sm font-semibold num">{money(convert(c.total), currency)}</div>
@@ -661,7 +662,7 @@ function ExpenseDialog({
                       : "border-border bg-surface hover:border-foreground/20"
                   }`}
                 >
-                  {c.name}
+                  {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
                 </button>
               ))}
             </div>
@@ -1058,7 +1059,7 @@ const ExpenseRow = memo(function ExpenseRow({
         <div className="min-w-0">
           <div className="text-sm font-medium truncate">{expense.description}</div>
           <div className="text-xs text-muted-foreground">
-            {cat?.name ?? expense.kind} · {relativeDate(expense.spent_at)}
+            {cat ? (CATEGORY_NAME_TO_KEY[cat.name] ? t(CATEGORY_NAME_TO_KEY[cat.name]) : cat.name) : expense.kind} · {relativeDate(expense.spent_at)}
             {expense.recurring && ` · ${t("budget.expense.recurring")}`}
           </div>
         </div>

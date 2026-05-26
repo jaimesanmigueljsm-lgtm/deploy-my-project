@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   ArrowLeft, ArrowRight, Loader2, Check,
-  Home, Building2, Zap, Droplets, Flame, Wifi, Smartphone, Dumbbell, Repeat, Shield, Car, Bus, Baby,
-  ShoppingCart, Utensils, Music, ShoppingBag, Heart, BookOpen, Plane, PawPrint, Sparkles,
+  Home, Building2, Zap, Droplets, Flame, Smartphone, Dumbbell, Repeat, Shield, Bus, Baby,
+  ShoppingCart, Utensils, Music, Heart, Plane, PawPrint, Sparkles,
   PiggyBank, CreditCard, TrendingDown, Star, Brain, Target, TrendingUp,
+  Sofa, Landmark, Shirt, MoreHorizontal,
 } from "lucide-react";
 import { useT } from "@/i18n";
 
@@ -25,27 +26,26 @@ const FIXED_CATS: CatDef[] = [
   { id: "electricity",   icon: Zap,        color: "warn",   dbIcon: "zap" },
   { id: "water",         icon: Droplets,   color: "sky",    dbIcon: "droplets" },
   { id: "gas",           icon: Flame,      color: "warn",   dbIcon: "flame" },
-  { id: "internet",      icon: Wifi,       color: "mint",   dbIcon: "wifi" },
   { id: "phone",         icon: Smartphone, color: "mint",   dbIcon: "smartphone" },
   { id: "gym",           icon: Dumbbell,   color: "mint",   dbIcon: "dumbbell" },
   { id: "subscriptions", icon: Repeat,     color: "violet", dbIcon: "repeat" },
   { id: "insurance",     icon: Shield,     color: "sky",    dbIcon: "shield" },
-  { id: "car",           icon: Car,        color: "warn",   dbIcon: "car" },
   { id: "transport",     icon: Bus,        color: "sky",    dbIcon: "bus" },
   { id: "childcare",     icon: Baby,       color: "mint",   dbIcon: "baby" },
 ];
 
 const VARIABLE_CATS: CatDef[] = [
-  { id: "groceries",   icon: ShoppingCart, color: "mint",   dbIcon: "shopping-cart" },
-  { id: "restaurants", icon: Utensils,     color: "warn",   dbIcon: "utensils" },
-  { id: "transport",   icon: Car,          color: "sky",    dbIcon: "car" },
-  { id: "leisure",     icon: Music,        color: "violet", dbIcon: "music" },
-  { id: "shopping",    icon: ShoppingBag,  color: "warn",   dbIcon: "shopping-bag" },
-  { id: "health",      icon: Heart,        color: "mint",   dbIcon: "heart" },
-  { id: "education",   icon: BookOpen,     color: "sky",    dbIcon: "book-open" },
-  { id: "travel",      icon: Plane,        color: "sky",    dbIcon: "plane" },
-  { id: "pets",        icon: PawPrint,     color: "mint",   dbIcon: "paw-print" },
-  { id: "beauty",      icon: Sparkles,     color: "violet", dbIcon: "sparkles" },
+  { id: "others",    icon: MoreHorizontal, color: "mint",   dbIcon: "more-horizontal" },
+  { id: "leisure",   icon: Music,          color: "violet", dbIcon: "music" },
+  { id: "beauty",    icon: Sparkles,       color: "violet", dbIcon: "sparkles" },
+  { id: "home",      icon: Sofa,           color: "sky",    dbIcon: "sofa" },
+  { id: "health",    icon: Heart,          color: "mint",   dbIcon: "heart" },
+  { id: "travel",    icon: Plane,          color: "sky",    dbIcon: "plane" },
+  { id: "finance",   icon: Landmark,       color: "violet", dbIcon: "landmark" },
+  { id: "transport", icon: Bus,            color: "sky",    dbIcon: "bus" },
+  { id: "clothing",  icon: Shirt,          color: "warn",   dbIcon: "shirt" },
+  { id: "pets",      icon: PawPrint,       color: "mint",   dbIcon: "paw-print" },
+  { id: "loan",      icon: CreditCard,     color: "violet", dbIcon: "credit-card" },
 ];
 
 const PRIORITY_DEFS = [

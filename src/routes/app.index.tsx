@@ -111,15 +111,15 @@ function Dashboard() {
       <div className="card-soft p-5 gradient-hero relative overflow-hidden">
         <div>
           <p className="text-xs text-muted-foreground">{t("dashboard.available")}</p>
-          <div className="mt-1 balance-display text-[44px] font-semibold leading-tight">
+          <div className="mt-1 balance-display num-display text-[44px] font-semibold leading-tight">
             {shortMoney(convert(remaining), currency)}
           </div>
           <div className="mt-2 flex items-center gap-3 text-xs">
-            <span className="inline-flex items-center gap-1 text-positive font-medium">
+            <span className="num inline-flex items-center gap-1 text-positive font-medium">
               <ArrowUpRight className="size-3" /> {money(convert(incomeTotal), currency)}
             </span>
             <span className="text-border">|</span>
-            <span className="inline-flex items-center gap-1 text-muted-foreground">
+            <span className="num inline-flex items-center gap-1 text-muted-foreground">
               <ArrowDownRight className="size-3" /> {money(convert(totalSpent), currency)}
             </span>
             {prevMonthTotal > 0 && <TrendBadge value={monthChange} className="ml-1" />}
