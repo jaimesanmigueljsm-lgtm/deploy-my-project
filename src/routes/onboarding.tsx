@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   ArrowLeft, ArrowRight, Loader2, Check,
-  Home, Building2, Zap, Droplets, Flame, Smartphone, Dumbbell, Repeat, Shield, Bus, Baby,
+  Home, Building2, Car, Banknote, Wrench, Smartphone, Dumbbell, Repeat, Shield, Bus, Baby,
   ShoppingCart, Utensils, Music, Heart, Plane, PawPrint, Sparkles,
   PiggyBank, CreditCard, TrendingDown, Star, Brain, Target, TrendingUp,
   Sofa, Landmark, Shirt, MoreHorizontal,
@@ -20,12 +20,13 @@ export const Route = createFileRoute("/onboarding")({
 
 type CatDef = { id: string; icon: React.ElementType; color: string; dbIcon: string };
 
+// electricity / water / gas removed; car / loans / household added
 const FIXED_CATS: CatDef[] = [
   { id: "rent",          icon: Home,       color: "sky",    dbIcon: "home" },
   { id: "mortgage",      icon: Building2,  color: "sky",    dbIcon: "building-2" },
-  { id: "electricity",   icon: Zap,        color: "warn",   dbIcon: "zap" },
-  { id: "water",         icon: Droplets,   color: "sky",    dbIcon: "droplets" },
-  { id: "gas",           icon: Flame,      color: "warn",   dbIcon: "flame" },
+  { id: "car",           icon: Car,        color: "sky",    dbIcon: "car" },
+  { id: "loans",         icon: Banknote,   color: "warn",   dbIcon: "banknote" },
+  { id: "household",     icon: Wrench,     color: "sky",    dbIcon: "wrench" },
   { id: "phone",         icon: Smartphone, color: "mint",   dbIcon: "smartphone" },
   { id: "gym",           icon: Dumbbell,   color: "mint",   dbIcon: "dumbbell" },
   { id: "subscriptions", icon: Repeat,     color: "violet", dbIcon: "repeat" },
@@ -69,27 +70,24 @@ const COLOR_CLS: Record<string, string> = {
   violet: "bg-violet-soft text-violet",
 };
 
-const TOTAL_STEPS = 5;
+// Step order: savings → income → día-a-día → fixed cats → fixed amounts → priorities
+const TOTAL_STEPS = 6;
 
 function Onboarding() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t } = useT();
-  const [step, setStep]     = useState(0);
+  const [step, setStep]       = useState(0);
   const [loading, setLoading] = useState(false);
-  // Hard guard against double-invocation of finish() (React StrictMode,
-  // rapid double-clicks, button enable/disable race). A ref flips
-  // synchronously — state updates can't get there in time on a 2nd click.
   const finishingRef = useRef(false);
 
   const [savingsTarget,    setSavingsTarget]    = useState("");
   const [income,           setIncome]           = useState("");
   const [selectedFixed,    setSelectedFixed]    = useState<string[]>([]);
+  const [fixedAmounts,     setFixedAmounts]     = useState<Record<string, string>>({});
   const [selectedVariable, setSelectedVariable] = useState<string[]>([]);
   const [priorities,       setPriorities]       = useState<string[]>([]);
 
-  // If the user is already onboarded, never let them re-run finish() — that
-  // would duplicate income/category rows on every visit to /onboarding.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -108,9 +106,10 @@ function Onboarding() {
   const canNext =
     (step === 0 && Number(savingsTarget) > 0) ||
     (step === 1 && Number(income) > 0)         ||
-    step === 2                                  ||
-    step === 3                                  ||
-    (step === 4 && priorities.length > 0);
+    step === 2                                  || // variable — optional selection
+    step === 3                                  || // fixed cats — optional
+    step === 4                                  || // fixed amounts — always skippable
+    (step === 5 && priorities.length > 0);
 
   const last = step === TOTAL_STEPS - 1;
 
@@ -123,10 +122,11 @@ function Onboarding() {
   function togglePriority(id: string) {
     setPriorities((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
   }
+  function setFixedAmount(id: string, val: string) {
+    setFixedAmounts((p) => ({ ...p, [id]: val }));
+  }
 
   async function finish() {
-    // Idempotency guard: ref flips synchronously so a 2nd click in the
-    // same tick (before setLoading commits) is a no-op.
     if (finishingRef.current) return;
     finishingRef.current = true;
     setLoading(true);
@@ -134,8 +134,6 @@ function Onboarding() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
 
-      // Re-check server state: if another tab/run already onboarded, bail
-      // out without re-inserting anything (prevents duplicate salary/income).
       const { data: existing } = await supabase
         .from("profiles")
         .select("onboarded")
@@ -155,7 +153,6 @@ function Onboarding() {
       }).eq("id", user.id);
 
       if (Number(income) > 0) {
-        // Only insert if no recurring "Monthly income" row already exists.
         const { data: existingIncome } = await supabase
           .from("incomes")
           .select("id")
@@ -173,8 +170,6 @@ function Onboarding() {
         }
       }
 
-      // Only seed categories if the user has none yet — re-running onboarding
-      // must never duplicate the category list.
       const { data: existingCats } = await supabase
         .from("categories")
         .select("id")
@@ -194,20 +189,45 @@ function Onboarding() {
         const allRows = [...fixedRows, ...varRows];
         if (allRows.length === 0) {
           allRows.push(
-            { user_id: user.id, name: t("fixed.rent"),          icon: "home",          color: "sky",  kind: "fixed" },
-            { user_id: user.id, name: t("variable.groceries"),  icon: "shopping-cart", color: "mint", kind: "variable" },
+            { user_id: user.id, name: t("fixed.rent"),         icon: "home",          color: "sky",  kind: "fixed" },
+            { user_id: user.id, name: t("variable.groceries"), icon: "shopping-cart", color: "mint", kind: "variable" },
           );
         }
-        await supabase.from("categories").insert(allRows);
+
+        const { data: insertedCats } = await supabase.from("categories").insert(allRows).select();
+
+        // Seed recurring expenses for fixed cats that have an estimated amount
+        if (insertedCats && insertedCats.length > 0) {
+          const today = new Date().toISOString().slice(0, 10);
+          const expenseRows = selectedFixed
+            .filter((id) => Number(fixedAmounts[id]) > 0)
+            .map((id) => {
+              const catName = t(`fixed.${id}`);
+              const cat = insertedCats.find((c) => c.name === catName);
+              if (!cat) return null;
+              return {
+                user_id: user.id,
+                category_id: cat.id,
+                amount: Number(fixedAmounts[id]),
+                description: catName,
+                kind: "fixed",
+                recurring: true,
+                spent_at: today,
+              };
+            })
+            .filter((r): r is NonNullable<typeof r> => r !== null);
+
+          if (expenseRows.length > 0) {
+            await supabase.from("expenses").insert(expenseRows);
+          }
+        }
       }
 
       toast.success(t("onboarding.toast.success"), { description: t("onboarding.toast.success.desc") });
-      // Invalidate cached profile check so /app guard reads fresh onboarded=true
       await queryClient.invalidateQueries({ queryKey: ["profiles-auth-check", user.id] });
       queryClient.removeQueries({ queryKey: ["profiles-auth-check", user.id] });
       navigate({ to: "/app" });
     } catch (e) {
-      // Allow retry on error
       finishingRef.current = false;
       toast.error(e instanceof Error ? e.message : "Could not save");
     } finally {
@@ -217,8 +237,11 @@ function Onboarding() {
 
   return (
     <div className="min-h-screen gradient-hero flex flex-col">
-      {/* Top bar: back + progress */}
-      <div className="px-6 pt-6 flex items-center justify-between">
+      {/* Top bar: back + progress — safe-area-inset so it clears the notch on PWA */}
+      <div
+        className="px-6 flex items-center justify-between"
+        style={{ paddingTop: "max(env(safe-area-inset-top), 20px)" }}
+      >
         {step > 0 ? (
           <button
             onClick={() => setStep(step - 1)}
@@ -252,13 +275,24 @@ function Onboarding() {
         {step === 1 && (
           <StepIncome t={t} value={income} onChange={setIncome} />
         )}
+        {/* Step 2: día a día (variable) — moved before fixed */}
         {step === 2 && (
-          <StepFixed t={t} selected={selectedFixed} onToggle={toggleFixed} />
-        )}
-        {step === 3 && (
           <StepVariable t={t} selected={selectedVariable} onToggle={toggleVariable} />
         )}
+        {/* Step 3: fixed categories selection */}
+        {step === 3 && (
+          <StepFixed t={t} selected={selectedFixed} onToggle={toggleFixed} />
+        )}
+        {/* Step 4: estimated amounts for selected fixed categories */}
         {step === 4 && (
+          <StepFixedAmounts
+            t={t}
+            selectedFixed={selectedFixed}
+            amounts={fixedAmounts}
+            onAmountChange={setFixedAmount}
+          />
+        )}
+        {step === 5 && (
           <StepPriorities t={t} selected={priorities} onToggle={togglePriority} />
         )}
 
@@ -285,10 +319,10 @@ function Onboarding() {
 
 function StepSavings({ t, value, onChange }: { t: (k: string) => string; value: string; onChange: (v: string) => void }) {
   const chips = [
-    { label: t("onboarding.step1.chip.100"), amount: "100" },
-    { label: t("onboarding.step1.chip.200"), amount: "200" },
-    { label: t("onboarding.step1.chip.400"), amount: "400" },
-    { label: t("onboarding.step1.chip.whatever"), amount: "50" },
+    { label: t("onboarding.step1.chip.100"),      amount: "100" },
+    { label: t("onboarding.step1.chip.200"),      amount: "200" },
+    { label: t("onboarding.step1.chip.400"),      amount: "400" },
+    { label: t("onboarding.step1.chip.whatever"), amount: "50"  },
   ];
 
   return (
@@ -344,7 +378,20 @@ function StepIncome({ t, value, onChange }: { t: (k: string) => string; value: s
   );
 }
 
-/* ───────────────────────── Step 3: Fixed expenses ─────────────────────── */
+/* ───────────────────────── Step 3: Variable lifestyle (día a día) ─────── */
+
+function StepVariable({ t, selected, onToggle }: { t: (k: string) => string; selected: string[]; onToggle: (id: string) => void }) {
+  return (
+    <>
+      <StepHeading title={t("onboarding.step4.title")} subtitle={t("onboarding.step4.subtitle")} />
+      <div className="mt-6 flex-1">
+        <CategoryGrid cats={VARIABLE_CATS} prefix="variable" selected={selected} onToggle={onToggle} t={t} />
+      </div>
+    </>
+  );
+}
+
+/* ───────────────────────── Step 4: Fixed categories ───────────────────── */
 
 function StepFixed({ t, selected, onToggle }: { t: (k: string) => string; selected: string[]; onToggle: (id: string) => void }) {
   return (
@@ -358,20 +405,52 @@ function StepFixed({ t, selected, onToggle }: { t: (k: string) => string; select
   );
 }
 
-/* ───────────────────────── Step 4: Variable lifestyle ─────────────────── */
+/* ───────────────────────── Step 5: Fixed amounts ──────────────────────── */
 
-function StepVariable({ t, selected, onToggle }: { t: (k: string) => string; selected: string[]; onToggle: (id: string) => void }) {
+function StepFixedAmounts({
+  t, selectedFixed, amounts, onAmountChange,
+}: {
+  t: (k: string) => string;
+  selectedFixed: string[];
+  amounts: Record<string, string>;
+  onAmountChange: (id: string, val: string) => void;
+}) {
   return (
     <>
-      <StepHeading title={t("onboarding.step4.title")} subtitle={t("onboarding.step4.subtitle")} />
-      <div className="mt-6 flex-1">
-        <CategoryGrid cats={VARIABLE_CATS} prefix="variable" selected={selected} onToggle={onToggle} t={t} />
+      <StepHeading title={t("onboarding.step3b.title")} subtitle={t("onboarding.step3b.subtitle")} />
+      <div className="mt-6 flex-1 space-y-2.5 overflow-y-auto">
+        {selectedFixed.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center pt-8">{t("onboarding.step3b.empty")}</p>
+        ) : (
+          selectedFixed.map((id) => {
+            const cat = FIXED_CATS.find((c) => c.id === id)!;
+            const Icon = cat.icon;
+            return (
+              <div key={id} className="card-soft flex items-center gap-3 px-4 py-3">
+                <span className={`size-9 rounded-xl grid place-items-center shrink-0 ${COLOR_CLS[cat.color] ?? "bg-muted text-muted-foreground"}`}>
+                  <Icon className="size-4" />
+                </span>
+                <span className="flex-1 text-sm font-medium">{t(`fixed.${id}`)}</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-muted-foreground text-sm">€</span>
+                  <input
+                    type="number" inputMode="decimal" min="0"
+                    value={amounts[id] ?? ""}
+                    onChange={(e) => onAmountChange(id, e.target.value)}
+                    placeholder="0"
+                    className="w-20 text-right text-sm font-semibold bg-transparent border-0 outline-none focus:ring-0 num placeholder:text-muted-foreground/40"
+                  />
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </>
   );
 }
 
-/* ───────────────────────── Step 5: Priorities ─────────────────────────── */
+/* ───────────────────────── Step 6: Priorities ─────────────────────────── */
 
 function StepPriorities({ t, selected, onToggle }: { t: (k: string) => string; selected: string[]; onToggle: (id: string) => void }) {
   return (
