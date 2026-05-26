@@ -76,7 +76,7 @@ export function LockScreen() {
         <div className="size-16 rounded-3xl bg-white/8 border border-white/12 grid place-items-center mb-3 backdrop-blur-sm">
           <span className="text-2xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>N</span>
         </div>
-        <h1 className="text-base font-semibold tracking-tight">Nest</h1>
+        <h1 className="text-base font-semibold tracking-tight">NOOLY</h1>
         <p className="text-[13px] text-white/45 mt-1">{t("lock.title")}</p>
       </div>
 

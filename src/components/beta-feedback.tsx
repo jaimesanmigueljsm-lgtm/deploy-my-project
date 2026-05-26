@@ -18,8 +18,8 @@ const TYPES: { key: FeedbackType; Icon: typeof Bug; label: string }[] = [
 
 const PLACEHOLDERS: Record<FeedbackType, string> = {
   bug:        "Describe what happened and how to reproduce it…",
-  suggestion: "What would you like to see in Nest?",
-  general:    "Share your thoughts about your Nest experience…",
+  suggestion: "What would you like to see in NOOLY?",
+  general:    "Share your thoughts about your NOOLY experience…",
 };
 
 interface Props {
@@ -58,7 +58,7 @@ export function BetaFeedbackModal({ open, onClose }: Props) {
               <MessageSquare className="size-5 text-positive" />
             </div>
             <p className="font-semibold text-sm">Thanks for your feedback!</p>
-            <p className="text-xs text-muted-foreground mt-1">It helps us build a better Nest.</p>
+            <p className="text-xs text-muted-foreground mt-1">It helps us build a better NOOLY.</p>
           </div>
         ) : (
           <div className="space-y-4">

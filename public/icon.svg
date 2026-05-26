@@ -4,7 +4,7 @@
       <stop offset="0%" stop-color="#1e2640"/>
       <stop offset="100%" stop-color="#0f1520"/>
     </linearGradient>
-    <linearGradient id="nest-grad" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="nooly-grad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#4ade80"/>
       <stop offset="100%" stop-color="#22d3ee"/>
     </linearGradient>
@@ -15,11 +15,11 @@
 
   <!-- Nest arcs — three concentric curves, green gradient -->
   <path d="M 100,390 Q 256,168 412,390"
-        stroke="url(#nest-grad)" stroke-width="20" fill="none" stroke-linecap="round"/>
+        stroke="url(#nooly-grad)" stroke-width="20" fill="none" stroke-linecap="round"/>
   <path d="M 150,390 Q 256,215 362,390"
-        stroke="url(#nest-grad)" stroke-width="15" fill="none" stroke-linecap="round" opacity="0.55"/>
+        stroke="url(#nooly-grad)" stroke-width="15" fill="none" stroke-linecap="round" opacity="0.55"/>
   <path d="M 200,390 Q 256,258 312,390"
-        stroke="url(#nest-grad)" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.28"/>
+        stroke="url(#nooly-grad)" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.28"/>
 
   <!-- Bold N lettermark -->
   <text x="256" y="308"

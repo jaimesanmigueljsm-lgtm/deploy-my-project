@@ -192,7 +192,7 @@ function Settings() {
         <div className="relative flex items-center justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-wider opacity-60 font-medium">{t("settings.plan")}</p>
-            <div className="text-lg font-semibold mt-0.5 text-white">Nest Premium</div>
+            <div className="text-lg font-semibold mt-0.5 text-white">NOOLY Premium</div>
             <p className="text-xs opacity-80 mt-1 text-white">Unlimited insights · Family · Investments</p>
           </div>
           <Sparkles className="size-6 opacity-90 text-white" />
@@ -394,7 +394,7 @@ function Settings() {
         <LogOut className="size-4 mr-2" /> {t("settings.signOut")}
       </Button>
 
-      <p className="text-[10px] text-muted-foreground text-center pt-2">Nest · v0.1.0-beta · Closed beta</p>
+      <p className="text-[10px] text-muted-foreground text-center pt-2">NOOLY · v0.1.0-beta · Closed beta</p>
 
       <ProfileEditDialog
         open={openPrivacy}

@@ -7,10 +7,13 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/i18n";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AppLockProvider } from "@/features/app-lock/use-app-lock";
+import { NoolySplash } from "@/components/nooly-splash";
 
 import appCss from "../styles.css?url";
 
@@ -112,18 +115,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
       // Theme color — two tags for light/dark (browser picks the matching one)
       { name: "theme-color", content: "#ffffff", media: "(prefers-color-scheme: light)" },
-      { name: "theme-color", content: "#1e2640", media: "(prefers-color-scheme: dark)" },
+      { name: "theme-color", content: "#070c18", media: "(prefers-color-scheme: dark)" },
 
       // PWA / iOS home screen
       { name: "mobile-web-app-capable",             content: "yes" },
       { name: "apple-mobile-web-app-capable",        content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title",          content: "Nest" },
+      { name: "apple-mobile-web-app-title",          content: "NOOLY" },
 
       // SEO & social
-      { title: "Nest — Family financial copilot" },
+      { title: "NOOLY — Family financial copilot" },
       { name: "description", content: "An AI-powered family copilot to track income, expenses and savings goals with calm, beautiful clarity." },
-      { property: "og:title",       content: "Nest — Family financial copilot" },
+      { property: "og:title",       content: "NOOLY — Family financial copilot" },
       { property: "og:description", content: "Track income, expenses and savings goals with AI-powered insight." },
       { property: "og:type",        content: "website" },
       { name: "twitter:card",       content: "summary" },
@@ -165,6 +168,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [splashDone, setSplashDone] = useState(false);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -176,6 +180,9 @@ function RootComponent() {
           </AppLockProvider>
         </AuthProvider>
       </I18nProvider>
+      <AnimatePresence>
+        {!splashDone && <NoolySplash onDone={() => setSplashDone(true)} />}
+      </AnimatePresence>
       {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   );
