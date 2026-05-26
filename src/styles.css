@@ -291,6 +291,7 @@
     cursor: pointer;
     transition:
       transform var(--duration-fast) var(--ease-smooth),
+      box-shadow var(--duration-fast) var(--ease-smooth),
       border-color var(--duration-fast) var(--ease-smooth);
     -webkit-user-select: none;
     user-select: none;
@@ -301,7 +302,7 @@
     border-color: var(--border);
   }
   .card-interactive:active {
-    transform: translateY(0px) scale(0.995);
+    transform: translateY(0px) scale(0.99);
     box-shadow: var(--shadow-xs);
     transition-duration: var(--duration-instant);
   }
@@ -388,22 +389,24 @@
   /* ── Skeleton / loading ────────────────────────────────────────────────── */
   @keyframes shimmer {
     0% {
-      background-position: -200% center;
+      background-position: -300% center;
     }
     100% {
-      background-position: 200% center;
+      background-position: 300% center;
     }
   }
 
   .skeleton {
     background: linear-gradient(
       90deg,
-      var(--color-muted) 25%,
-      color-mix(in oklab, var(--color-muted) 40%, var(--color-surface-elevated)) 50%,
-      var(--color-muted) 75%
+      var(--color-muted) 0%,
+      var(--color-muted) 30%,
+      color-mix(in oklab, var(--color-muted) 55%, var(--color-surface-elevated)) 50%,
+      var(--color-muted) 70%,
+      var(--color-muted) 100%
     );
-    background-size: 200% 100%;
-    animation: shimmer 1.8s ease-in-out infinite;
+    background-size: 300% 100%;
+    animation: shimmer 2.2s ease-in-out infinite;
     border-radius: var(--radius-md);
   }
 
@@ -469,7 +472,7 @@
     transition: transform var(--duration-instant) var(--ease-decelerate);
   }
   .press-scale:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
 
   /* Hover lift for standalone interactive elements */
@@ -615,6 +618,23 @@
   html[data-app-hidden] main {
     filter: blur(20px);
     transition: filter 0.15s ease;
+  }
+
+  /* ── Reduced-motion: respect system preference ─────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    .skeleton {
+      animation: none;
+      background: var(--color-muted);
+    }
   }
 }
 

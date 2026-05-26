@@ -118,13 +118,16 @@ function AppShell() {
                 <Link
                   key={tab.to}
                   to={tab.to}
-                  className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 rounded-xl transition-all ${
+                  className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 rounded-xl transition-[transform,color,background-color] duration-150 ease-out active:scale-[0.93] ${
                     active
                       ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
-                  <Icon className="size-[17px] shrink-0" strokeWidth={active ? 2.4 : 1.9} />
+                  <Icon
+                    className={`size-[17px] shrink-0 transition-transform duration-150 ${active ? "scale-[1.08]" : ""}`}
+                    strokeWidth={active ? 2.4 : 1.9}
+                  />
                   <span className="text-[9px] font-medium tracking-tight truncate max-w-full">
                     {t(tab.labelKey)}
                   </span>

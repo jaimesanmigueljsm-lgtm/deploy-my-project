@@ -145,7 +145,7 @@ function Dashboard() {
 
       {/* ── Where money goes ── */}
       {dist.length > 0 && (
-        <section>
+        <section className="animate-rise-delay-1">
           <SectionHeader
             title={t("dashboard.section.spending")}
             subtitle={t("dashboard.section.spending.sub")}
@@ -161,7 +161,7 @@ function Dashboard() {
       )}
 
       {/* ── For you (AI recommendations) ── */}
-      <section className="animate-rise-delay-2 pb-4">
+      <section className="animate-rise-delay-3 pb-4">
         <SectionHeader
           title={t("dashboard.section.recommendations")}
           subtitle={
@@ -373,13 +373,55 @@ function buildDistribution(expenses: Expense[], cats: Category[]) {
 
 function DashboardSkeleton() {
   return (
-    <div className="px-4 pt-6 space-y-5">
-      <SkeletonBlock className="h-10 w-44" />
-      <SkeletonBlock className="h-52" />
-      <SkeletonBlock className="h-40" />
+    <div className="px-4 pt-5 space-y-5 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between pt-2">
+        <div className="space-y-1.5">
+          <SkeletonBlock className="h-3 w-20 rounded-full" />
+          <SkeletonBlock className="h-6 w-36 rounded-lg" />
+        </div>
+        <div className="flex gap-2">
+          <SkeletonBlock className="size-8 rounded-full" />
+          <SkeletonBlock className="size-10 rounded-full" />
+        </div>
+      </div>
+
+      {/* Hero card */}
+      <div className="card-soft p-5 space-y-3">
+        <SkeletonBlock className="h-3 w-24 rounded-full" />
+        <SkeletonBlock className="h-11 w-44 rounded-lg" />
+        <div className="flex gap-4">
+          <SkeletonBlock className="h-3.5 w-20 rounded-full" />
+          <SkeletonBlock className="h-3.5 w-20 rounded-full" />
+        </div>
+        <SkeletonBlock className="h-20 w-full rounded-xl mt-2" />
+      </div>
+
+      {/* Forecast tiles */}
+      <div className="grid grid-cols-3 gap-2.5">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="card-flat p-3.5 space-y-2">
+            <SkeletonBlock className="h-2.5 w-10 rounded-full" />
+            <SkeletonBlock className="h-6 w-14 rounded-md" />
+            <SkeletonBlock className="h-2 w-8 rounded-full" />
+          </div>
+        ))}
+      </div>
+
+      {/* Spending distribution */}
+      <div className="card-flat p-5 flex items-center gap-5">
+        <SkeletonBlock className="size-[104px] rounded-full shrink-0" />
+        <div className="flex-1 space-y-3">
+          {[72, 56, 64, 48].map((w, i) => (
+            <SkeletonBlock key={i} className="h-3 rounded-full" style={{ width: `${w}%` }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Insight cards */}
       <div className="space-y-2">
-        <SkeletonBlock className="h-16" />
-        <SkeletonBlock className="h-16" />
+        <SkeletonBlock className="h-[72px]" />
+        <SkeletonBlock className="h-[72px]" />
       </div>
     </div>
   );

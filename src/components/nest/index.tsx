@@ -9,7 +9,7 @@
  *  · Numbers: tabular-nums always; .num for inline, .num-display for larger
  */
 
-import { type ReactNode } from "react";
+import { type ReactNode, type CSSProperties } from "react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,17 +17,17 @@ import { cn } from "@/lib/utils";
 // Use <Skeleton> instead of `animate-pulse bg-muted` everywhere.
 // The shimmer animation is defined in styles.css as .skeleton.
 
-export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("skeleton", className)} aria-hidden="true" />;
+export function Skeleton({ className, style }: { className?: string; style?: CSSProperties }) {
+  return <div className={cn("skeleton", className)} style={style} aria-hidden="true" />;
 }
 
 // Convenience composed shapes
-export function SkeletonText({ className }: { className?: string }) {
-  return <Skeleton className={cn("h-3 rounded", className)} />;
+export function SkeletonText({ className, style }: { className?: string; style?: CSSProperties }) {
+  return <Skeleton className={cn("h-3 rounded", className)} style={style} />;
 }
 
-export function SkeletonBlock({ className }: { className?: string }) {
-  return <Skeleton className={cn("rounded-2xl", className)} />;
+export function SkeletonBlock({ className, style }: { className?: string; style?: CSSProperties }) {
+  return <Skeleton className={cn("rounded-2xl", className)} style={style} />;
 }
 
 // ─── TrendBadge ──────────────────────────────────────────────────────────────
@@ -268,7 +268,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="card-soft p-8 flex flex-col items-center text-center">
+    <div className="card-soft p-8 flex flex-col items-center text-center animate-rise">
       <div
         className="size-14 rounded-2xl grid place-items-center mb-4"
         style={{
@@ -310,7 +310,7 @@ export function InsightCard({
     violet: "bg-violet-soft text-violet",
   };
   return (
-    <div className="card-flat p-4 flex gap-3">
+    <div className="card-flat p-4 flex gap-3 transition-[transform,box-shadow] duration-150 hover:shadow-[var(--shadow-xs)] active:scale-[0.99]">
       <div
         className={cn(
           "size-9 rounded-xl grid place-items-center shrink-0 mt-0.5",
