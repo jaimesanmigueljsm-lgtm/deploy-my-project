@@ -4,12 +4,9 @@ import { hashPin, verifyPin } from "@/lib/pin-crypto";
 import { pinStore, metaStore, promptStore, type LockMeta } from "./app-lock-store";
 import { LockScreen } from "./LockScreen";
 import { PinSetupScreen } from "./PinSetupScreen";
-
-// ─── Biometric abstraction ────────────────────────────────────────────────────
-// Web always returns false. Capacitor/native can override this.
-export function isBiometricAvailable(): boolean {
-  return false;
-}
+import { isBiometricAvailable as checkBiometric } from "@/lib/biometric";
+import { logSecurityEvent } from "@/lib/security/security-events";
+import { trustCurrentDevice, updateDeviceLastActive } from "@/lib/device";
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -47,6 +44,11 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
   const [meta, setMeta] = useState<LockMeta>(() => metaStore.read(""));
   const [setupMode, setSetupMode] = useState<"setup" | "change" | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [biometricAvailableState, setBiometricAvailable] = useState(false);
+
+  useEffect(() => {
+    void checkBiometric().then(setBiometricAvailable);
+  }, []);
 
   // ── Bootstrap when uid becomes available ──────────────────────────────────
   useEffect(() => {
@@ -146,12 +148,17 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
         metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
         setMeta(metaStore.read(uid));
         setIsLocked(false);
+        trustCurrentDevice(uid);
+        updateDeviceLastActive(uid);
+        logSecurityEvent(uid, "login");
         return true;
       }
       const newCount = m.failedCount + 1;
       const lockout = newCount >= 5 ? Date.now() + 30_000 : 0;
       metaStore.write(uid, { failedCount: newCount, lockoutUntil: lockout });
       setMeta(metaStore.read(uid));
+      logSecurityEvent(uid, "failed_unlock", { attempt: newCount });
+      if (lockout) logSecurityEvent(uid, "lockout_triggered");
       return false;
     },
     [uid],
@@ -160,12 +167,15 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
   const setupPin = useCallback(
     async (pin: string): Promise<void> => {
       if (!uid) return;
+      const alreadySet = !!pinStore.read(uid);
       const hash = await hashPin(uid, pin);
       pinStore.write(uid, hash);
       metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
       setIsPinSet(true);
       setIsLocked(false);
       setMeta(metaStore.read(uid));
+      trustCurrentDevice(uid);
+      logSecurityEvent(uid, alreadySet ? "pin_changed" : "pin_set");
     },
     [uid],
   );
@@ -196,6 +206,7 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
     pinStore.clear(uid);
     setIsPinSet(false);
     setIsLocked(false);
+    logSecurityEvent(uid, "pin_removed");
   }, [uid]);
 
   const lockNow = useCallback(() => {
@@ -230,7 +241,7 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
     isPinSet,
     isLocked,
     meta,
-    biometricAvailable: isBiometricAvailable(),
+    biometricAvailable: biometricAvailableState,
     unlock,
     setupPin,
     verifyCurrentPin,

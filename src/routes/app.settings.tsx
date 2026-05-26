@@ -58,6 +58,7 @@ import { uploadAvatar, regenerateUsername, type Profile } from "@/features/profi
 import { searchUserByUsername } from "@/features/family/family.service";
 import { financialUsernameSchema } from "@/schemas/profile.schema";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { SecurityCenter } from "@/features/security/SecurityCenter";
 import { queryKeys } from "@/lib/query-keys";
 import { readUserBaseCurrencyOrNull, writeUserBaseCurrency } from "@/lib/exchange-rates";
 import {
@@ -159,6 +160,7 @@ function Settings() {
   const [openPrivacy, setOpenPrivacy] = useState(false);
   const [openSecurity, setOpenSecurity] = useState(false);
   const [openCategories, setOpenCategories] = useState(false);
+  const [openSecurityCenter, setOpenSecurityCenter] = useState(false);
   const { isPinSet, meta, openSetup, updateMeta } = useAppLock();
 
   function toggleTheme() {
@@ -465,6 +467,12 @@ function Settings() {
         <div className="card-flat divide-y divide-border-subtle">
           <Row
             icon={<Shield className="size-4" />}
+            label="Security Center"
+            value="Devices · Activity"
+            onClick={() => setOpenSecurityCenter(true)}
+          />
+          <Row
+            icon={<KeyRound className="size-4" />}
             label={t("settings.security.label")}
             value="Email & password"
             onClick={() => setOpenSecurity(true)}
@@ -472,8 +480,8 @@ function Settings() {
           <Row
             icon={<CreditCard className="size-4" />}
             label={t("settings.bankConnections")}
-            value="None"
-            onClick={() => toast("Coming soon")}
+            value="Coming soon"
+            onClick={() => toast("Bank connections coming soon")}
           />
           <Row
             icon={<Database className="size-4" />}
@@ -509,6 +517,23 @@ function Settings() {
         onClose={() => setOpenCategories(false)}
         userId={user?.id ?? ""}
       />
+
+      {/* Security Center dialog */}
+      <Dialog
+        open={openSecurityCenter}
+        onOpenChange={(v) => {
+          if (!v) setOpenSecurityCenter(false);
+        }}
+      >
+        <DialogContent className="max-h-[92dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="size-4" /> Security Center
+            </DialogTitle>
+          </DialogHeader>
+          <SecurityCenter uid={user?.id ?? ""} isPinSet={isPinSet} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
