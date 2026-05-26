@@ -296,43 +296,29 @@ export async function removeFamilyMember(memberId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-export async function leaveFamily(userId: string): Promise<void> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ family_id: null })
-    .eq("id", userId);
+export async function leaveFamily(_userId: string): Promise<void> {
+  // SECURITY DEFINER RPC: atomically removes family_members row + clears
+  // profiles.family_id in one transaction. If the leaving user was the owner
+  // and other members remain, ownership transfers to the longest-standing member.
+  // If no members are left, the family is dissolved entirely.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("leave_family");
   if (error) throw new Error(error.message);
 }
 
 // ─── Family creation ──────────────────────────────────────────────────────────
 
 export async function createFamily(
-  userId: string,
+  _userId: string,
   name: string,
 ): Promise<string> {
-  const { data: fam, error: fe } = await supabase
-    .from("families")
-    .insert({ name, owner_id: userId })
-    .select("id")
-    .single();
-  if (fe) throw new Error(fe.message);
-
-  const familyId = fam.id;
-
-  // Add owner as first member
-  const { error: me } = await supabase
-    .from("family_members")
-    .insert({ family_id: familyId, user_id: userId, role: "owner" });
-  if (me) throw new Error(me.message);
-
-  // Link profile to family
-  const { error: pe } = await supabase
-    .from("profiles")
-    .update({ family_id: familyId })
-    .eq("id", userId);
-  if (pe) throw new Error(pe.message);
-
-  return familyId;
+  // SECURITY DEFINER RPC: atomically inserts into families + family_members +
+  // updates profiles.family_id in one transaction. The previous 3-call pattern
+  // could leave an orphaned family row if step 2 or 3 failed.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("create_family", { p_name: name });
+  if (error) throw new Error(error.message);
+  return data as string;
 }
 
 // ─── Shared goal mutations ────────────────────────────────────────────────────
@@ -364,13 +350,17 @@ export async function updateSharedGoal(
 
 export async function addGoalContribution(
   goalId: string,
-  currentAmount: number,
+  _currentAmount: number,
   delta: number,
 ): Promise<void> {
-  const { error } = await supabase
-    .from("shared_goals")
-    .update({ current_amount: currentAmount + delta })
-    .eq("id", goalId);
+  // SECURITY DEFINER RPC: uses UPDATE current_amount = current_amount + delta
+  // evaluated inside the transaction — race-condition-safe. The previous client-
+  // side pattern computed (currentAmount + delta) from a stale render value.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("add_shared_goal_contribution", {
+    p_goal_id: goalId,
+    p_delta:   delta,
+  });
   if (error) throw new Error(error.message);
 }
 
