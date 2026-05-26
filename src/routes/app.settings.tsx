@@ -6,8 +6,9 @@ import {
   Bell, Shield, CreditCard, Database, Moon, Sun, LogOut, ChevronRight,
   Sparkles, Globe, Languages, Check, TrendingUp,
   Camera, AtSign, Copy, MapPin, User, Loader2, XCircle, CheckCircle2, CalendarDays,
-  Eye, EyeOff, KeyRound,
+  Eye, EyeOff, KeyRound, Lock, Timer, Fingerprint, Clock,
 } from "lucide-react";
+import { useAppLock } from "@/features/app-lock/use-app-lock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,6 +61,22 @@ const CURRENCIES = [
   { code: "AED", symbol: "د.إ",name: "UAE Dirham" },
 ] as const;
 
+const AUTO_LOCK_OPTIONS = [
+  { value: -1,      labelKey: "settings.appLock.autoLock.immediately" },
+  { value: 60_000,  labelKey: "settings.appLock.autoLock.1min"        },
+  { value: 120_000, labelKey: "settings.appLock.autoLock.2min"        },
+  { value: 300_000, labelKey: "settings.appLock.autoLock.5min"        },
+  { value: 0,       labelKey: "settings.appLock.autoLock.never"       },
+] as const;
+
+function relativeTime(ts: number): string {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60)  return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 function Settings() {
   const nav = useNavigate();
   const { t, locale, setLocale, locales } = useT();
@@ -68,6 +85,7 @@ function Settings() {
   const updateProfile = useUpdateProfile();
   const [openPrivacy, setOpenPrivacy]   = useState(false);
   const [openSecurity, setOpenSecurity] = useState(false);
+  const { isPinSet, meta, openSetup, updateMeta } = useAppLock();
 
   function toggleTheme() {
     const next = profile?.theme === "dark" ? "light" : "dark";
@@ -236,6 +254,85 @@ function Settings() {
             value={notifPrefs.monthly ?? true} onChange={() => togglePref("monthly")} />
           <RowToggle icon={<Sparkles className="size-4" />} label={t("settings.aiInsights")}
             value={notifPrefs.insights ?? true} onChange={() => togglePref("insights")} />
+        </div>
+      </section>
+
+      {/* App protection */}
+      <section>
+        <SectionHeader title={t("settings.appProtection")} />
+        <div className="card-flat divide-y divide-border-subtle">
+          {/* PIN row */}
+          <Row
+            icon={<Lock className="size-4" />}
+            label={t("settings.appLock.pin")}
+            value={isPinSet ? t("settings.appLock.pin.change") : t("settings.appLock.pin.notSet")}
+            onClick={() => openSetup(isPinSet ? "change" : "setup")}
+          />
+
+          {/* Auto-lock — only meaningful when PIN is set */}
+          {isPinSet && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-lg bg-muted grid place-items-center text-foreground">
+                      <Timer className="size-4" />
+                    </div>
+                    <span className="text-sm font-medium">{t("settings.appLock.autoLock")}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">
+                      {t(AUTO_LOCK_OPTIONS.find((o) => o.value === meta.autoLockMs)?.labelKey ?? "settings.appLock.autoLock.2min")}
+                    </span>
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                {AUTO_LOCK_OPTIONS.map((opt) => (
+                  <DropdownMenuItem
+                    key={opt.value}
+                    onClick={() => updateMeta({ autoLockMs: opt.value })}
+                    className="gap-2"
+                  >
+                    <span className="flex-1">{t(opt.labelKey)}</span>
+                    {meta.autoLockMs === opt.value && <Check className="size-4 opacity-70" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Hide balances */}
+          <RowToggle
+            icon={<EyeOff className="size-4" />}
+            label={t("settings.appLock.hideBalances")}
+            desc={t("settings.appLock.hideBalances.desc")}
+            value={meta.hideBalances}
+            onChange={() => updateMeta({ hideBalances: !meta.hideBalances })}
+          />
+
+          {/* Biometric — coming soon */}
+          <RowToggle
+            icon={<Fingerprint className="size-4" />}
+            label={t("settings.appLock.biometric")}
+            value={meta.biometricEnabled}
+            onChange={() => {}}
+            badge="Coming soon"
+          />
+
+          {/* Last session */}
+          {isPinSet && meta.lastActiveAt > 0 && (
+            <div className="px-4 py-3 flex items-center gap-3">
+              <div className="size-8 rounded-lg bg-muted grid place-items-center text-muted-foreground shrink-0">
+                <Clock className="size-4" />
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">{t("settings.appLock.lastUnlock")}</span>
+                <p className="text-[11px] text-muted-foreground">{relativeTime(meta.lastActiveAt)}</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

@@ -10,6 +10,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/i18n";
 import { AuthProvider } from "@/hooks/use-auth";
+import { AppLockProvider } from "@/features/app-lock/use-app-lock";
 
 import appCss from "../styles.css?url";
 
@@ -169,8 +170,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <AuthProvider>
-          <Outlet />
-          <Toaster position="top-center" />
+          <AppLockProvider>
+            <Outlet />
+            <Toaster position="top-center" />
+          </AppLockProvider>
         </AuthProvider>
       </I18nProvider>
       {/* <ReactQueryDevtools initialIsOpen={false} /> */}

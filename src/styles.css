@@ -504,6 +504,37 @@
     font-feature-settings: "tnum", "ss01";
     letter-spacing: -0.03em;
   }
+
+  /* ── App-lock: PIN shake ───────────────────────────────────────────────── */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15%      { transform: translateX(-7px); }
+    30%      { transform: translateX(6px); }
+    45%      { transform: translateX(-5px); }
+    60%      { transform: translateX(4px); }
+    75%      { transform: translateX(-3px); }
+    90%      { transform: translateX(2px); }
+  }
+
+  .animate-shake {
+    animation: shake 0.55s var(--ease-standard) both;
+  }
+
+  /* ── Privacy mode: blur .num / .num-display / .num-display when hide-balances ── */
+  html[data-privacy="1"] .num,
+  html[data-privacy="1"] .num-display,
+  html[data-privacy="1"] .num-display * {
+    filter: blur(7px);
+    user-select: none;
+    pointer-events: none;
+    transition: filter 0.25s ease;
+  }
+
+  /* ── Background privacy: blur main content when app is switched away ──── */
+  html[data-app-hidden] main {
+    filter: blur(20px);
+    transition: filter 0.15s ease;
+  }
 }
 
 /* ─── Chart tooltip base (used in recharts contentStyle) ────────────────────── */
