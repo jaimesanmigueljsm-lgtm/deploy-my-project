@@ -244,7 +244,10 @@ function AuthPage() {
           />
 
           {/* Top bar */}
-          <div className="relative flex items-center justify-between px-6 pt-6 lg:px-10 lg:pt-8">
+          <div
+            className="relative flex items-center justify-between px-6 lg:px-10 lg:pt-8"
+            style={{ paddingTop: "max(env(safe-area-inset-top), 24px)" }}
+          >
             <Link to="/auth" className="flex items-center gap-2.5 lg:hidden">
               <NMark className="size-8" />
               <span
