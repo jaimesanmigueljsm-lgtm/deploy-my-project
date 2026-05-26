@@ -600,6 +600,7 @@ const en: Dict = {
   "settings.categories.save": "Save",
   "settings.categories.reset": "Reset to defaults",
   "settings.categories.reset.confirm": "This will delete your custom categories and restore the defaults. Continue?",
+  "settings.categories.error.duplicate": "A category with this name already exists.",
 
   // ── Recommendations ───────────────────────────────────────────────────────
   "rec.impact.monthlySavings": "Save {amount}/mo",
@@ -1306,6 +1307,7 @@ const es: Dict = {
   "settings.categories.save": "Guardar",
   "settings.categories.reset": "Restablecer por defecto",
   "settings.categories.reset.confirm": "Se eliminarán tus categorías personalizadas y se restaurarán las predeterminadas. ¿Continuar?",
+  "settings.categories.error.duplicate": "Ya existe una categoría con ese nombre.",
 
   // ── Recomendaciones ───────────────────────────────────────────────────────
   "rec.impact.monthlySavings": "Ahorra {amount}/mes",
@@ -1782,6 +1784,7 @@ const fr: Dict = {
   "settings.categories.save": "Enregistrer",
   "settings.categories.reset": "Réinitialiser par défaut",
   "settings.categories.reset.confirm": "Cela supprimera vos catégories personnalisées et restaurera les valeurs par défaut. Continuer ?",
+  "settings.categories.error.duplicate": "Une catégorie avec ce nom existe déjà.",
 
   // ── Recommandations ───────────────────────────────────────────────────────
   "rec.impact.monthlySavings": "Économise {amount}/mois",
@@ -2193,6 +2196,7 @@ const de: Dict = {
   "settings.categories.save": "Speichern",
   "settings.categories.reset": "Auf Standard zurücksetzen",
   "settings.categories.reset.confirm": "Dadurch werden deine Kategorien gelöscht und die Standardkategorien wiederhergestellt. Fortfahren?",
+  "settings.categories.error.duplicate": "Eine Kategorie mit diesem Namen existiert bereits.",
 
   // ── Empfehlungen ──────────────────────────────────────────────────────────
   "rec.impact.monthlySavings": "Spare {amount}/Monat",
@@ -2604,6 +2608,7 @@ const pt: Dict = {
   "settings.categories.save": "Guardar",
   "settings.categories.reset": "Repor predefinições",
   "settings.categories.reset.confirm": "Isto eliminará as tuas categorias personalizadas e restaurará as predefinições. Continuar?",
+  "settings.categories.error.duplicate": "Já existe uma categoria com esse nome.",
 
   // ── Recomendações ─────────────────────────────────────────────────────────
   "rec.impact.monthlySavings": "Poupa {amount}/mês",
@@ -3015,6 +3020,7 @@ const it: Dict = {
   "settings.categories.save": "Salva",
   "settings.categories.reset": "Ripristina predefiniti",
   "settings.categories.reset.confirm": "Questo eliminerà le tue categorie e ripristinerà quelle predefinite. Continuare?",
+  "settings.categories.error.duplicate": "Esiste già una categoria con questo nome.",
 
   // ── Raccomandazioni ───────────────────────────────────────────────────────
   "rec.impact.monthlySavings": "Risparmia {amount}/mese",

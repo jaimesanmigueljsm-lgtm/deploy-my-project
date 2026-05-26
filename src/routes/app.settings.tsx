@@ -445,7 +445,11 @@ function CategoriesDialog({
   const addMut = useMutation({
     mutationFn: (payload: AddCategoryPayload) => addCategory(userId, payload),
     onSuccess: () => { invalidate(); setAddSection(null); setAddName(""); },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => toast.error(
+      err.message === "already_exists"
+        ? t("settings.categories.error.duplicate")
+        : err.message
+    ),
   });
 
   const deleteMut = useMutation({

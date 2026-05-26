@@ -26,7 +26,15 @@ export async function fetchCategories(userId: string): Promise<Category[]> {
     .order("name");
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as Category[];
+
+  // Deduplicate by kind+name — keeps the first row when the DB has stale duplicates
+  const seen = new Set<string>();
+  return (data ?? []).filter((c) => {
+    const key = `${c.kind}:${c.name.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }) as Category[];
 }
 
 export type AddCategoryPayload = {
@@ -37,6 +45,15 @@ export type AddCategoryPayload = {
 };
 
 export async function addCategory(userId: string, payload: AddCategoryPayload): Promise<Category> {
+  const { data: existing } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("user_id", userId)
+    .ilike("name", payload.name.trim())
+    .maybeSingle();
+
+  if (existing) throw new Error("already_exists");
+
   const { data, error } = await supabase
     .from("categories")
     .insert({ name: payload.name, color: payload.color, kind: payload.kind, icon: payload.icon ?? "tag", user_id: userId })
