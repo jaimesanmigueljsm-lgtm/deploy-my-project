@@ -7,6 +7,7 @@ import {
   Sparkles, Globe, Languages, Check, TrendingUp,
   Camera, AtSign, Copy, MapPin, User, Loader2, XCircle, CheckCircle2, CalendarDays,
   Eye, EyeOff, KeyRound, Lock, Timer, Fingerprint, Clock,
+  Tags, Trash2, Plus, RotateCcw,
 } from "lucide-react";
 import { useAppLock } from "@/features/app-lock/use-app-lock";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { SectionHeader } from "@/components/nest";
+import { SectionHeader, CategoryDot } from "@/components/nest";
 import { useT } from "@/i18n";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -25,9 +26,14 @@ import { useProfile, useUpdateProfile } from "@/features/profile/use-profile";
 import { uploadAvatar, regenerateUsername, type Profile } from "@/features/profile/profile.service";
 import { searchUserByUsername } from "@/features/family/family.service";
 import { financialUsernameSchema } from "@/schemas/profile.schema";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { readUserBaseCurrencyOrNull, writeUserBaseCurrency } from "@/lib/exchange-rates";
+import {
+  fetchCategories, addCategory, deleteCategory, resetCategoriesToDefaults,
+  type AddCategoryPayload, type Category,
+} from "@/features/budget/budget.service";
+import { CATEGORY_NAME_TO_KEY } from "@/i18n/translations";
 
 export const Route = createFileRoute("/app/settings")({
   component: Settings,
@@ -69,6 +75,38 @@ const AUTO_LOCK_OPTIONS = [
   { value: 0,       labelKey: "settings.appLock.autoLock.never"       },
 ] as const;
 
+const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fixed" }[] = [
+  { nameKey: "fixed.rent",         color: "sky",    kind: "fixed"    },
+  { nameKey: "fixed.mortgage",     color: "sky",    kind: "fixed"    },
+  { nameKey: "fixed.electricity",  color: "warn",   kind: "fixed"    },
+  { nameKey: "fixed.water",        color: "sky",    kind: "fixed"    },
+  { nameKey: "fixed.gas",          color: "warn",   kind: "fixed"    },
+  { nameKey: "fixed.phone",        color: "mint",   kind: "fixed"    },
+  { nameKey: "fixed.gym",          color: "mint",   kind: "fixed"    },
+  { nameKey: "fixed.subscriptions",color: "violet", kind: "fixed"    },
+  { nameKey: "fixed.insurance",    color: "sky",    kind: "fixed"    },
+  { nameKey: "fixed.transport",    color: "sky",    kind: "fixed"    },
+  { nameKey: "fixed.childcare",    color: "mint",   kind: "fixed"    },
+  { nameKey: "variable.others",    color: "mint",   kind: "variable" },
+  { nameKey: "variable.leisure",   color: "violet", kind: "variable" },
+  { nameKey: "variable.beauty",    color: "violet", kind: "variable" },
+  { nameKey: "variable.home",      color: "sky",    kind: "variable" },
+  { nameKey: "variable.health",    color: "mint",   kind: "variable" },
+  { nameKey: "variable.travel",    color: "sky",    kind: "variable" },
+  { nameKey: "variable.finance",   color: "violet", kind: "variable" },
+  { nameKey: "variable.transport", color: "sky",    kind: "variable" },
+  { nameKey: "variable.clothing",  color: "warn",   kind: "variable" },
+  { nameKey: "variable.pets",      color: "mint",   kind: "variable" },
+  { nameKey: "variable.loan",      color: "violet", kind: "variable" },
+];
+
+const CAT_COLORS = [
+  { value: "mint",   cls: "bg-positive" },
+  { value: "sky",    cls: "bg-sky" },
+  { value: "warn",   cls: "bg-warn" },
+  { value: "violet", cls: "bg-violet" },
+];
+
 function relativeTime(ts: number): string {
   const diff = Math.floor((Date.now() - ts) / 1000);
   if (diff < 60)  return `${diff}s ago`;
@@ -83,8 +121,9 @@ function Settings() {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
-  const [openPrivacy, setOpenPrivacy]   = useState(false);
-  const [openSecurity, setOpenSecurity] = useState(false);
+  const [openPrivacy,     setOpenPrivacy]     = useState(false);
+  const [openSecurity,    setOpenSecurity]    = useState(false);
+  const [openCategories,  setOpenCategories]  = useState(false);
   const { isPinSet, meta, openSetup, updateMeta } = useAppLock();
 
   function toggleTheme() {
@@ -240,6 +279,11 @@ function Settings() {
             onChange={() => {}}
             badge="Coming soon"
           />
+          <Row
+            icon={<Tags className="size-4" />}
+            label={t("settings.categories")}
+            onClick={() => setOpenCategories(true)}
+          />
         </div>
       </section>
 
@@ -364,7 +408,220 @@ function Settings() {
         onClose={() => setOpenSecurity(false)}
         currentEmail={user?.email ?? ""}
       />
+      <CategoriesDialog
+        open={openCategories}
+        onClose={() => setOpenCategories(false)}
+        userId={user?.id ?? ""}
+      />
     </div>
+  );
+}
+
+// ─── CategoriesDialog ─────────────────────────────────────────────────────────
+
+function CategoriesDialog({
+  open, onClose, userId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  userId: string;
+}) {
+  const { t } = useT();
+  const qc = useQueryClient();
+
+  const { data: cats = [], isLoading } = useQuery({
+    queryKey: queryKeys.categories(userId),
+    queryFn: () => fetchCategories(userId),
+    enabled: open && !!userId,
+  });
+
+  const [addSection, setAddSection]   = useState<"variable" | "fixed" | null>(null);
+  const [addName, setAddName]         = useState("");
+  const [addColor, setAddColor]       = useState("mint");
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: queryKeys.categories(userId) });
+
+  const addMut = useMutation({
+    mutationFn: (payload: AddCategoryPayload) => addCategory(userId, payload),
+    onSuccess: () => { invalidate(); setAddSection(null); setAddName(""); },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: deleteCategory,
+    onSuccess: invalidate,
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const resetMut = useMutation({
+    mutationFn: (rows: AddCategoryPayload[]) => resetCategoriesToDefaults(userId, rows),
+    onSuccess: () => { invalidate(); setConfirmReset(false); },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  function openAdd(section: "variable" | "fixed") {
+    setAddSection(section);
+    setAddName("");
+    setAddColor("mint");
+  }
+
+  function saveAdd() {
+    if (!addName.trim() || !addSection) return;
+    addMut.mutate({ name: addName.trim(), color: addColor, kind: addSection });
+  }
+
+  function doReset() {
+    const rows = DEFAULT_CAT_DEFS.map((d) => ({
+      name: t(d.nameKey),
+      color: d.color,
+      kind: d.kind,
+    }));
+    resetMut.mutate(rows);
+  }
+
+  function handleClose() {
+    onClose();
+    setConfirmReset(false);
+    setAddSection(null);
+  }
+
+  const variable = cats.filter((c) => c.kind === "variable");
+  const fixed    = cats.filter((c) => c.kind === "fixed");
+
+  function renderSection(items: Category[], section: "variable" | "fixed") {
+    const label = section === "variable"
+      ? t("settings.categories.section.variable")
+      : t("settings.categories.section.fixed");
+    return (
+      <div className="space-y-0.5">
+        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium px-1 pb-1">
+          {label}
+        </p>
+        {items.map((c) => (
+          <div key={c.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-muted/40 transition">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <CategoryDot color={c.color} size="md" />
+              <span className="text-sm truncate">
+                {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
+              </span>
+            </div>
+            <button
+              onClick={() => deleteMut.mutate(c.id)}
+              disabled={deleteMut.isPending}
+              className="shrink-0 p-1.5 text-muted-foreground hover:text-negative transition rounded-lg"
+              aria-label="Delete"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </div>
+        ))}
+        {addSection === section ? (
+          <div className="mt-2 p-3 rounded-xl bg-muted/50 space-y-3">
+            <input
+              autoFocus
+              value={addName}
+              onChange={(e) => setAddName(e.target.value)}
+              placeholder={t("settings.categories.add.placeholder")}
+              className="w-full bg-transparent text-sm outline-none border-b border-border pb-1.5"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveAdd();
+                if (e.key === "Escape") setAddSection(null);
+              }}
+            />
+            <div className="flex items-center gap-2">
+              {CAT_COLORS.map((cl) => (
+                <button
+                  key={cl.value}
+                  onClick={() => setAddColor(cl.value)}
+                  className={`size-5 rounded-full ${cl.cls} transition-all ${
+                    addColor === cl.value ? "ring-2 ring-offset-1 ring-foreground scale-110" : "opacity-50"
+                  }`}
+                />
+              ))}
+              <div className="flex-1" />
+              <button
+                onClick={() => setAddSection(null)}
+                className="text-xs text-muted-foreground px-2 py-1"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={saveAdd}
+                disabled={!addName.trim() || addMut.isPending}
+                className="text-xs font-medium px-3 py-1 rounded-lg bg-foreground text-background disabled:opacity-50 transition"
+              >
+                {addMut.isPending ? <Loader2 className="size-3.5 animate-spin" /> : t("settings.categories.save")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => openAdd(section)}
+            className="w-full text-left px-2 py-2.5 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition"
+          >
+            <Plus className="size-3.5" />
+            {t("settings.categories.add")}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
+      <DialogContent className="rounded-2xl max-h-[92dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Tags className="size-4" /> {t("settings.categories.title")}
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />)}
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {renderSection(variable, "variable")}
+            <div className="border-t border-border-subtle" />
+            {renderSection(fixed, "fixed")}
+          </div>
+        )}
+
+        <div className="pt-3 border-t border-border-subtle">
+          {confirmReset ? (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground leading-snug">
+                {t("settings.categories.reset.confirm")}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 h-9 text-xs" onClick={() => setConfirmReset(false)}>
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  className="flex-1 h-9 text-xs bg-negative hover:bg-negative/90 text-white"
+                  disabled={resetMut.isPending}
+                  onClick={doReset}
+                >
+                  {resetMut.isPending
+                    ? <Loader2 className="size-3.5 animate-spin" />
+                    : t("settings.categories.reset")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmReset(true)}
+              className="w-full text-xs text-muted-foreground hover:text-negative transition flex items-center justify-center gap-1.5 py-2"
+            >
+              <RotateCcw className="size-3.5" />
+              {t("settings.categories.reset")}
+            </button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

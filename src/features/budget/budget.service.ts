@@ -29,6 +29,41 @@ export async function fetchCategories(userId: string): Promise<Category[]> {
   return (data ?? []) as Category[];
 }
 
+export type AddCategoryPayload = {
+  name: string;
+  color: string;
+  kind: "variable" | "fixed";
+  icon?: string;
+};
+
+export async function addCategory(userId: string, payload: AddCategoryPayload): Promise<Category> {
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({ name: payload.name, color: payload.color, kind: payload.kind, icon: payload.icon ?? "tag", user_id: userId })
+    .select("id, name, color, kind")
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Category;
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  const { error } = await supabase.from("categories").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function resetCategoriesToDefaults(
+  userId: string,
+  rows: AddCategoryPayload[],
+): Promise<void> {
+  const { error: delErr } = await supabase.from("categories").delete().eq("user_id", userId);
+  if (delErr) throw new Error(delErr.message);
+  if (rows.length === 0) return;
+  const { error: insErr } = await supabase
+    .from("categories")
+    .insert(rows.map((r) => ({ name: r.name, color: r.color, kind: r.kind, icon: r.icon ?? "tag", user_id: userId })));
+  if (insErr) throw new Error(insErr.message);
+}
+
 // ─── Bills ────────────────────────────────────────────────────────────────────
 
 export async function fetchBills(userId: string): Promise<Bill[]> {
