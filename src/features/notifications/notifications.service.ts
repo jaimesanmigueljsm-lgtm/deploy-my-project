@@ -8,7 +8,11 @@ const db = _supabase as any;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type NotificationType = "family_invite" | "invite_accepted" | "contribution_added" | "goal_updated";
+export type NotificationType =
+  | "family_invite"
+  | "invite_accepted"
+  | "contribution_added"
+  | "goal_updated";
 
 export function notificationRoute(type: NotificationType): string {
   switch (type) {

@@ -3,9 +3,24 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  Plus, Users, Crown, Baby, Heart, Target, Clock, Search, Send,
-  Pencil, TrendingUp, Calendar, Trash2, UserPlus, UserMinus,
-  Sparkles, Zap, CircleDollarSign,
+  Plus,
+  Users,
+  Crown,
+  Baby,
+  Heart,
+  Target,
+  Clock,
+  Search,
+  Send,
+  Pencil,
+  TrendingUp,
+  Calendar,
+  Trash2,
+  UserPlus,
+  UserMinus,
+  Sparkles,
+  Zap,
+  CircleDollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,9 +123,9 @@ function formatActivity(
 }
 
 const FK = {
-  data:     (familyId: string) => ["family", "data",     familyId] as const,
-  received: (userId:   string) => ["family", "received", userId]   as const,
-  sent:     (familyId: string) => ["family", "sent",     familyId] as const,
+  data: (familyId: string) => ["family", "data", familyId] as const,
+  received: (userId: string) => ["family", "received", userId] as const,
+  sent: (familyId: string) => ["family", "sent", familyId] as const,
   activity: (familyId: string) => ["family", "activity", familyId] as const,
 };
 
@@ -126,39 +141,39 @@ function FamilyPage() {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const qc = useQueryClient();
 
-  const userId   = user?.id ?? "";
+  const userId = user?.id ?? "";
   const familyId = profile?.family_id ?? null;
   const currency = profile?.currency ?? "EUR";
-  const convert  = useCurrencyConvert();
+  const convert = useCurrencyConvert();
   const myDisplayName = profile?.full_name ?? profile?.first_name ?? t("family.role.member");
 
   const { data: receivedInvitations = [] } = useQuery({
     queryKey: FK.received(userId),
-    queryFn:  getMyInvitations,
-    enabled:  !!userId,
+    queryFn: getMyInvitations,
+    enabled: !!userId,
     staleTime: 20_000,
     placeholderData: keepPreviousData,
   });
 
   const { data: familyData, isLoading: familyLoading } = useQuery({
     queryKey: FK.data(familyId ?? ""),
-    queryFn:  () => loadFamilyData(familyId!, userId),
-    enabled:  !!familyId && !!userId,
+    queryFn: () => loadFamilyData(familyId!, userId),
+    enabled: !!familyId && !!userId,
     staleTime: 20_000,
     placeholderData: keepPreviousData,
   });
 
   const { data: sentInvitations = [] } = useQuery({
     queryKey: FK.sent(familyId ?? ""),
-    queryFn:  () => getFamilySentInvitations(familyId!),
-    enabled:  !!familyId && familyData?.isOwner === true,
+    queryFn: () => getFamilySentInvitations(familyId!),
+    enabled: !!familyId && familyData?.isOwner === true,
     staleTime: 20_000,
   });
 
   const { data: activityLog = [] } = useQuery({
     queryKey: FK.activity(familyId ?? ""),
-    queryFn:  () => getFamilyActivity(familyId!),
-    enabled:  !!familyId,
+    queryFn: () => getFamilyActivity(familyId!),
+    enabled: !!familyId,
     staleTime: 15_000,
     placeholderData: keepPreviousData,
   });
@@ -169,11 +184,16 @@ function FamilyPage() {
     let subscribedOnce = false;
     const ch = supabase
       .channel(`nest-inv-${userId}`)
-      .on("postgres_changes", {
-        event: "INSERT", schema: "public",
-        table: "family_invitations",
-        filter: `invited_user_id=eq.${userId}`,
-      }, () => void qc.invalidateQueries({ queryKey: FK.received(userId) }))
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "family_invitations",
+          filter: `invited_user_id=eq.${userId}`,
+        },
+        () => void qc.invalidateQueries({ queryKey: FK.received(userId) }),
+      )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           // On reconnect (not initial), refresh to catch any missed events
@@ -194,21 +214,36 @@ function FamilyPage() {
     let subscribedOnce = false;
     const ch = supabase
       .channel(`nest-fam-${familyId}`)
-      .on("postgres_changes", {
-        event: "*", schema: "public",
-        table: "family_members",
-        filter: `family_id=eq.${familyId}`,
-      }, () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }))
-      .on("postgres_changes", {
-        event: "*", schema: "public",
-        table: "shared_goals",
-        filter: `family_id=eq.${familyId}`,
-      }, () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }))
-      .on("postgres_changes", {
-        event: "INSERT", schema: "public",
-        table: "family_activity",
-        filter: `family_id=eq.${familyId}`,
-      }, () => void qc.invalidateQueries({ queryKey: FK.activity(familyId) }))
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "family_members",
+          filter: `family_id=eq.${familyId}`,
+        },
+        () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shared_goals",
+          filter: `family_id=eq.${familyId}`,
+        },
+        () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "family_activity",
+          filter: `family_id=eq.${familyId}`,
+        },
+        () => void qc.invalidateQueries({ queryKey: FK.activity(familyId) }),
+      )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           // On reconnect (not initial), refresh all family data to catch missed events
@@ -231,8 +266,8 @@ function FamilyPage() {
     if (!familyData || !userId || !familyId || familyData.isOwner) return;
     const inMembers = familyData.members.some((m) => m.user_id === userId);
     if (inMembers) return;
-    void leaveFamily(userId).then(() =>
-      void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }),
+    void leaveFamily(userId).then(
+      () => void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }),
     );
   }, [familyData, userId, familyId, qc]);
 
@@ -250,11 +285,14 @@ function FamilyPage() {
       void qc.invalidateQueries({ queryKey: FK.received(userId) });
       try {
         await notifyFamilyMembers(
-          invFamilyId, "invite_accepted",
+          invFamilyId,
+          "invite_accepted",
           t("family.notif.joined.title"),
           t("family.notif.joined.body").replace("{name}", myDisplayName),
         );
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -287,18 +325,21 @@ function FamilyPage() {
   });
 
   // ── Dialog state ──────────────────────────────────────────────────────────
-  const [openCreate, setOpenCreate]       = useState(false);
-  const [openInvite, setOpenInvite]       = useState(false);
-  const [openGoal, setOpenGoal]           = useState(false);
-  const [openWhoAreWe, setOpenWhoAreWe]   = useState(false);
+  const [openCreate, setOpenCreate] = useState(false);
+  const [openInvite, setOpenInvite] = useState(false);
+  const [openGoal, setOpenGoal] = useState(false);
+  const [openWhoAreWe, setOpenWhoAreWe] = useState(false);
   const [openGoalPicker, setOpenGoalPicker] = useState(false);
   const [viewingMember, setViewingMember] = useState<FamilyMemberProfile | null>(null);
-  const [editingGoal, setEditingGoal]     = useState<SharedGoal | null>(null);
+  const [editingGoal, setEditingGoal] = useState<SharedGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<SharedGoal | null>(null);
 
   function quickContribute() {
     if (goals.length === 0) return;
-    if (goals.length === 1) { setContributingGoal(goals[0]); return; }
+    if (goals.length === 1) {
+      setContributingGoal(goals[0]);
+      return;
+    }
     setOpenGoalPicker(true);
   }
 
@@ -307,12 +348,15 @@ function FamilyPage() {
 
   const isOwner = familyData?.isOwner ?? false;
   const { family, members, memberProfiles, goals } = familyData ?? {
-    family: null, members: [], memberProfiles: [], goals: [],
+    family: null,
+    members: [],
+    memberProfiles: [],
+    goals: [],
   };
 
   // ── Stats (derived, no extra query) ───────────────────────────────────────
-  const activeGoals  = goals.filter((g) => g.current_amount < g.target_amount).length;
-  const totalSaved   = goals.reduce((s, g) => s + g.current_amount, 0);
+  const activeGoals = goals.filter((g) => g.current_amount < g.target_amount).length;
+  const totalSaved = goals.reduce((s, g) => s + g.current_amount, 0);
 
   // ── No family ──────────────────────────────────────────────────────────────
   if (!familyId || (!familyLoading && !family)) {
@@ -371,7 +415,6 @@ function FamilyPage() {
   // ── Has family ──────────────────────────────────────────────────────────────
   return (
     <div className="px-4 pt-5 space-y-5 animate-rise pb-6">
-
       {/* Header */}
       <header className="flex items-center justify-between pt-2">
         <div>
@@ -459,19 +502,30 @@ function FamilyPage() {
           }
         />
         <div className="card-flat divide-y divide-border-subtle">
-          {(memberProfiles.length > 0 ? memberProfiles : members.map((m) => ({
-            member_id: m.id, user_id: m.user_id, role: m.role,
-            relationship_type: m.relationship_type ?? null,
-            joined_at: m.created_at ?? null,
-            first_name: m.first_name ?? "", last_name_1: m.last_name_1 ?? "",
-            financial_username: m.financial_username ?? "",
-            full_name: m.full_name ?? null, avatar_url: m.avatar_url ?? null,
-          } as FamilyMemberProfile))).map((m) => {
+          {(memberProfiles.length > 0
+            ? memberProfiles
+            : members.map(
+                (m) =>
+                  ({
+                    member_id: m.id,
+                    user_id: m.user_id,
+                    role: m.role,
+                    relationship_type: m.relationship_type ?? null,
+                    joined_at: m.created_at ?? null,
+                    first_name: m.first_name ?? "",
+                    last_name_1: m.last_name_1 ?? "",
+                    financial_username: m.financial_username ?? "",
+                    full_name: m.full_name ?? null,
+                    avatar_url: m.avatar_url ?? null,
+                  }) as FamilyMemberProfile,
+              )
+          ).map((m) => {
             const Icon = m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
             const isMe = m.user_id === userId;
-            const displayName = m.full_name
-              ?? (m.first_name ? `${m.first_name} ${m.last_name_1}`.trim() : null)
-              ?? t("family.role.member");
+            const displayName =
+              m.full_name ??
+              (m.first_name ? `${m.first_name} ${m.last_name_1}`.trim() : null) ??
+              t("family.role.member");
             return (
               <button
                 key={m.member_id}
@@ -480,7 +534,11 @@ function FamilyPage() {
               >
                 <div className="flex items-center gap-3">
                   {m.avatar_url ? (
-                    <img src={m.avatar_url} alt={displayName} className="size-10 rounded-full object-cover shrink-0" />
+                    <img
+                      src={m.avatar_url}
+                      alt={displayName}
+                      className="size-10 rounded-full object-cover shrink-0"
+                    />
                   ) : (
                     <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
                       <Icon className="size-4" />
@@ -505,13 +563,24 @@ function FamilyPage() {
                       {m.relationship_type && (
                         <>
                           <span className="opacity-40">·</span>
-                          <span>{t(`family.member.relationship.${m.relationship_type}`) ?? m.relationship_type}</span>
+                          <span>
+                            {t(`family.member.relationship.${m.relationship_type}`) ??
+                              m.relationship_type}
+                          </span>
                         </>
                       )}
                     </div>
                   </div>
                 </div>
-                <svg className="size-3.5 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                <svg
+                  className="size-3.5 text-muted-foreground shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             );
           })}
@@ -524,7 +593,10 @@ function FamilyPage() {
           title={t("family.section.goals")}
           action={
             <button
-              onClick={() => { setEditingGoal(null); setOpenGoal(true); }}
+              onClick={() => {
+                setEditingGoal(null);
+                setOpenGoal(true);
+              }}
               className="text-xs font-medium text-positive"
             >
               {t("family.add.goal")}
@@ -540,11 +612,10 @@ function FamilyPage() {
         ) : (
           <div className="space-y-2">
             {goals.map((g) => {
-              const pct = g.target_amount > 0
-                ? Math.min(100, (g.current_amount / g.target_amount) * 100)
-                : 0;
+              const pct =
+                g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0;
               const remaining = Math.max(0, g.target_amount - g.current_amount);
-              const monthly   = monthlyNeeded(g);
+              const monthly = monthlyNeeded(g);
               return (
                 <div key={g.id} className="card-flat p-4">
                   <div className="flex items-start justify-between mb-2 gap-2">
@@ -579,7 +650,10 @@ function FamilyPage() {
                         <CircleDollarSign className="size-5" />
                       </button>
                       <button
-                        onClick={() => { setEditingGoal(g); setOpenGoal(true); }}
+                        onClick={() => {
+                          setEditingGoal(g);
+                          setOpenGoal(true);
+                        }}
                         aria-label={t("common.edit")}
                         className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
                       >
@@ -596,11 +670,16 @@ function FamilyPage() {
                   {(remaining > 0 || monthly !== null) && (
                     <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
                       {remaining > 0 && (
-                        <span>{money(convert(remaining), currency)} {t("family.goal.remaining")}</span>
+                        <span>
+                          {money(convert(remaining), currency)} {t("family.goal.remaining")}
+                        </span>
                       )}
                       {monthly !== null && (
                         <span className="text-positive font-medium">
-                          {t("family.goal.monthly").replace("{amount}", money(convert(Math.ceil(monthly)), currency))}
+                          {t("family.goal.monthly").replace(
+                            "{amount}",
+                            money(convert(Math.ceil(monthly)), currency),
+                          )}
                         </span>
                       )}
                     </p>
@@ -615,11 +694,7 @@ function FamilyPage() {
       {/* Activity feed */}
       <section>
         <SectionHeader title={t("family.section.activity")} />
-        <ActivityFeed
-          items={activityLog}
-          currency={currency}
-          t={t}
-        />
+        <ActivityFeed items={activityLog} currency={currency} t={t} />
       </section>
 
       {/* Dialogs */}
@@ -638,7 +713,10 @@ function FamilyPage() {
         open={openGoalPicker}
         onClose={() => setOpenGoalPicker(false)}
         goals={goals}
-        onPick={(g) => { setOpenGoalPicker(false); setContributingGoal(g); }}
+        onPick={(g) => {
+          setOpenGoalPicker(false);
+          setContributingGoal(g);
+        }}
         t={t}
       />
 
@@ -651,7 +729,9 @@ function FamilyPage() {
         currentUserId={userId}
         onRenamed={(newName) => {
           void qc.invalidateQueries({ queryKey: FK.data(family.id) });
-          void logFamilyActivity(family.id, "family_renamed", myDisplayName, { newName }).catch(() => {});
+          void logFamilyActivity(family.id, "family_renamed", myDisplayName, { newName }).catch(
+            () => {},
+          );
           void qc.invalidateQueries({ queryKey: FK.activity(family.id) });
         }}
         onRemoveMember={(memberId, memberUserId) =>
@@ -672,7 +752,10 @@ function FamilyPage() {
 
       <GoalDialog
         open={openGoal}
-        onClose={() => { setOpenGoal(false); setEditingGoal(null); }}
+        onClose={() => {
+          setOpenGoal(false);
+          setEditingGoal(null);
+        }}
         familyId={family.id}
         editing={editingGoal}
         myName={myDisplayName}
@@ -707,7 +790,11 @@ function FamilyPage() {
 // ─── FamilyStatsStrip ─────────────────────────────────────────────────────────
 
 function FamilyStatsStrip({
-  memberCount, activeGoals, totalSaved, currency, t,
+  memberCount,
+  activeGoals,
+  totalSaved,
+  currency,
+  t,
 }: {
   memberCount: number;
   activeGoals: number;
@@ -720,15 +807,23 @@ function FamilyStatsStrip({
     <div className="grid grid-cols-3 gap-2">
       <div className="card-flat p-3.5 space-y-0.5 text-center">
         <p className="text-xl font-semibold num">{memberCount}</p>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("family.stats.members")}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+          {t("family.stats.members")}
+        </p>
       </div>
       <div className="card-flat p-3.5 space-y-0.5 text-center">
         <p className="text-xl font-semibold num">{activeGoals}</p>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("family.stats.goals")}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+          {t("family.stats.goals")}
+        </p>
       </div>
       <div className="card-flat p-3.5 space-y-0.5 text-center">
-        <p className="text-base font-semibold num text-positive">{shortMoney(convert(totalSaved), currency)}</p>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("family.stats.saved")}</p>
+        <p className="text-base font-semibold num text-positive">
+          {shortMoney(convert(totalSaved), currency)}
+        </p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+          {t("family.stats.saved")}
+        </p>
       </div>
     </div>
   );
@@ -737,7 +832,9 @@ function FamilyStatsStrip({
 // ─── ActivityFeed ─────────────────────────────────────────────────────────────
 
 function ActivityFeed({
-  items, currency, t,
+  items,
+  currency,
+  t,
 }: {
   items: FamilyActivity[];
   currency: string;
@@ -755,18 +852,26 @@ function ActivityFeed({
 
   function getIcon(type: string) {
     switch (type) {
-      case "member_joined":     return <UserPlus  className="size-3.5" />;
-      case "member_removed":    return <UserMinus className="size-3.5" />;
-      case "goal_contribution": return <TrendingUp className="size-3.5" />;
-      case "goal_created":      return <Target    className="size-3.5" />;
-      case "goal_updated":      return <Pencil    className="size-3.5" />;
-      case "family_renamed":    return <Pencil    className="size-3.5" />;
-      default:                  return <Zap       className="size-3.5" />;
+      case "member_joined":
+        return <UserPlus className="size-3.5" />;
+      case "member_removed":
+        return <UserMinus className="size-3.5" />;
+      case "goal_contribution":
+        return <TrendingUp className="size-3.5" />;
+      case "goal_created":
+        return <Target className="size-3.5" />;
+      case "goal_updated":
+        return <Pencil className="size-3.5" />;
+      case "family_renamed":
+        return <Pencil className="size-3.5" />;
+      default:
+        return <Zap className="size-3.5" />;
     }
   }
 
   function getIconColor(type: string): string {
-    if (type === "member_joined" || type === "goal_contribution") return "bg-positive-soft text-positive";
+    if (type === "member_joined" || type === "goal_contribution")
+      return "bg-positive-soft text-positive";
     if (type === "member_removed") return "bg-muted text-muted-foreground";
     return "bg-accent/10 text-accent";
   }
@@ -775,13 +880,16 @@ function ActivityFeed({
     <div className="card-flat divide-y divide-border-subtle">
       {items.map((item) => (
         <div key={item.id} className="flex items-start gap-3 px-4 py-3">
-          <div className={cn("size-7 rounded-full grid place-items-center shrink-0 mt-0.5", getIconColor(item.type))}>
+          <div
+            className={cn(
+              "size-7 rounded-full grid place-items-center shrink-0 mt-0.5",
+              getIconColor(item.type),
+            )}
+          >
             {getIcon(item.type)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm leading-snug">
-              {formatActivity(item, t, currency, convert)}
-            </p>
+            <p className="text-sm leading-snug">{formatActivity(item, t, currency, convert)}</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {relativeTime(item.created_at)}
             </p>
@@ -795,7 +903,11 @@ function ActivityFeed({
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function InvitationCard({
-  invitation, onAccept, onReject, busy, t,
+  invitation,
+  onAccept,
+  onReject,
+  busy,
+  t,
 }: {
   invitation: ReceivedInvitation;
   onAccept: () => void;
@@ -822,7 +934,13 @@ function InvitationCard({
         </div>
       </div>
       <div className="flex gap-2 mt-3">
-        <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" disabled={busy} onClick={onReject}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1 h-8 text-xs"
+          disabled={busy}
+          onClick={onReject}
+        >
           {t("family.invite.reject")}
         </Button>
         <Button size="sm" className="flex-1 h-8 text-xs" disabled={busy} onClick={onAccept}>
@@ -853,11 +971,22 @@ function SentInvitationRow({ inv }: { inv: SentInvitation }) {
 // ─── MemberProfileSheet ───────────────────────────────────────────────────────
 
 const RELATIONSHIP_OPTIONS = [
-  "partner", "spouse", "child", "parent", "sibling", "roommate", "other",
+  "partner",
+  "spouse",
+  "child",
+  "parent",
+  "sibling",
+  "roommate",
+  "other",
 ] as const;
 
 function MemberProfileSheet({
-  member, onClose, isOwnProfile, isOwner, onUpdateRelationship, t,
+  member,
+  onClose,
+  isOwnProfile,
+  isOwner,
+  onUpdateRelationship,
+  t,
 }: {
   member: FamilyMemberProfile | null;
   onClose: () => void;
@@ -874,9 +1003,10 @@ function MemberProfileSheet({
 
   if (!member) return null;
 
-  const displayName = member.full_name
-    ?? (member.first_name ? `${member.first_name} ${member.last_name_1}`.trim() : null)
-    ?? t("family.role.member");
+  const displayName =
+    member.full_name ??
+    (member.first_name ? `${member.first_name} ${member.last_name_1}`.trim() : null) ??
+    t("family.role.member");
   const RoleIcon = member.role === "owner" ? Crown : member.role === "child" ? Baby : Heart;
 
   function handleRelationshipChange(val: string) {
@@ -885,11 +1015,20 @@ function MemberProfileSheet({
   }
 
   return (
-    <Dialog open={!!member} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={!!member}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="rounded-2xl max-w-xs">
         <div className="flex flex-col items-center gap-3 pt-2">
           {member.avatar_url ? (
-            <img src={member.avatar_url} alt={displayName} className="size-24 rounded-full object-cover" />
+            <img
+              src={member.avatar_url}
+              alt={displayName}
+              className="size-24 rounded-full object-cover"
+            />
           ) : (
             <div className="size-24 rounded-full bg-muted grid place-items-center text-foreground">
               <RoleIcon className="size-8" />
@@ -908,7 +1047,8 @@ function MemberProfileSheet({
               </span>
               {member.relationship_type && (
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-accent/10 text-accent">
-                  {t(`family.member.relationship.${member.relationship_type}`) ?? member.relationship_type}
+                  {t(`family.member.relationship.${member.relationship_type}`) ??
+                    member.relationship_type}
                 </span>
               )}
             </div>
@@ -917,13 +1057,19 @@ function MemberProfileSheet({
 
         {member.joined_at && (
           <p className="text-center text-[11px] text-muted-foreground -mt-1">
-            {t("family.member.joined")} {new Date(member.joined_at).toLocaleDateString(undefined, { year: "numeric", month: "long" })}
+            {t("family.member.joined")}{" "}
+            {new Date(member.joined_at).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+            })}
           </p>
         )}
 
         {(isOwnProfile || isOwner) && (
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{t("family.member.relationship.label")}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {t("family.member.relationship.label")}
+            </Label>
             <select
               value={relationship}
               onChange={(e) => handleRelationshipChange(e.target.value)}
@@ -939,7 +1085,9 @@ function MemberProfileSheet({
           </div>
         )}
 
-        <Button variant="outline" onClick={onClose} className="w-full">{t("common.close")}</Button>
+        <Button variant="outline" onClick={onClose} className="w-full">
+          {t("common.close")}
+        </Button>
       </DialogContent>
     </Dialog>
   );
@@ -948,7 +1096,11 @@ function MemberProfileSheet({
 // ─── CreateFamilyDialog ───────────────────────────────────────────────────────
 
 function CreateFamilyDialog({
-  open, onClose, userId, onCreated, t,
+  open,
+  onClose,
+  userId,
+  onCreated,
+  t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -996,7 +1148,11 @@ function CreateFamilyDialog({
             <Button variant="outline" onClick={onClose} className="flex-1">
               {t("common.cancel")}
             </Button>
-            <Button onClick={() => void create()} disabled={saving || !name.trim()} className="flex-1">
+            <Button
+              onClick={() => void create()}
+              disabled={saving || !name.trim()}
+              className="flex-1"
+            >
               {saving ? t("family.dialog.create.creating") : t("family.dialog.create.cta")}
             </Button>
           </div>
@@ -1009,7 +1165,11 @@ function CreateFamilyDialog({
 // ─── InviteDialog ─────────────────────────────────────────────────────────────
 
 function InviteDialog({
-  open, onClose, familyId, onSent, t,
+  open,
+  onClose,
+  familyId,
+  onSent,
+  t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1017,16 +1177,22 @@ function InviteDialog({
   onSent: () => void;
   t: (k: string) => string;
 }) {
-  const [query, setQuery]       = useState("");
+  const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
-  const [sending, setSending]   = useState(false);
-  const [result, setResult]     = useState<UserSearchResult | null | "not-found">(null);
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<UserSearchResult | null | "not-found">(null);
 
-  function reset() { setQuery(""); setResult(null); setSearching(false); setSending(false); }
+  function reset() {
+    setQuery("");
+    setResult(null);
+    setSearching(false);
+    setSending(false);
+  }
 
   async function doSearch() {
     if (!query.trim()) return;
-    setSearching(true); setResult(null);
+    setSearching(true);
+    setResult(null);
     try {
       const found = await searchUserByUsername(query.trim());
       setResult(found ?? "not-found");
@@ -1043,7 +1209,9 @@ function InviteDialog({
     try {
       await sendFamilyInvite(familyId, result.financial_username);
       toast.success(t("family.toast.invite.sent"));
-      onSent(); reset(); onClose();
+      onSent();
+      reset();
+      onClose();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -1052,7 +1220,15 @@ function InviteDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { reset(); onClose(); } }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          reset();
+          onClose();
+        }
+      }}
+    >
       <DialogContent className="rounded-2xl">
         <DialogHeader>
           <DialogTitle>{t("family.dialog.invite.title")}</DialogTitle>
@@ -1063,12 +1239,20 @@ function InviteDialog({
             <div className="flex gap-2">
               <Input
                 value={query}
-                onChange={(e) => { setQuery(e.target.value); setResult(null); }}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setResult(null);
+                }}
                 placeholder={t("family.invite.search.placeholder")}
                 autoFocus
                 onKeyDown={(e) => e.key === "Enter" && void doSearch()}
               />
-              <Button variant="outline" size="icon" disabled={searching || !query.trim()} onClick={() => void doSearch()}>
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={searching || !query.trim()}
+                onClick={() => void doSearch()}
+              >
                 <Search className="size-4" />
               </Button>
             </div>
@@ -1084,16 +1268,31 @@ function InviteDialog({
                 <Heart className="size-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold">{result.first_name} {result.last_name_1}</div>
-                <div className="text-xs text-muted-foreground font-mono">@{result.financial_username}</div>
+                <div className="text-sm font-semibold">
+                  {result.first_name} {result.last_name_1}
+                </div>
+                <div className="text-xs text-muted-foreground font-mono">
+                  @{result.financial_username}
+                </div>
               </div>
             </div>
           )}
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={() => { reset(); onClose(); }} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => {
+                reset();
+                onClose();
+              }}
+              className="flex-1"
+            >
               {t("common.cancel")}
             </Button>
-            <Button onClick={() => void doSend()} disabled={!result || result === "not-found" || sending} className="flex-1">
+            <Button
+              onClick={() => void doSend()}
+              disabled={!result || result === "not-found" || sending}
+              className="flex-1"
+            >
               <Send className="size-3.5 mr-1.5" />
               {t("family.invite.send.cta")}
             </Button>
@@ -1107,7 +1306,14 @@ function InviteDialog({
 // ─── GoalDialog ───────────────────────────────────────────────────────────────
 
 function GoalDialog({
-  open, onClose, familyId, editing, myName, currency, onSaved, t,
+  open,
+  onClose,
+  familyId,
+  editing,
+  myName,
+  currency,
+  onSaved,
+  t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1118,11 +1324,11 @@ function GoalDialog({
   onSaved: () => void;
   t: (k: string) => string;
 }) {
-  const [name, setName]         = useState("");
-  const [target, setTarget]     = useState("");
-  const [current, setCurrent]   = useState("");
+  const [name, setName] = useState("");
+  const [target, setTarget] = useState("");
+  const [current, setCurrent] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [saving, setSaving]     = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -1132,7 +1338,10 @@ function GoalDialog({
         setCurrent(String(editing.current_amount));
         setDeadline(editing.deadline?.slice(0, 10) ?? "");
       } else {
-        setName(""); setTarget(""); setCurrent(""); setDeadline("");
+        setName("");
+        setTarget("");
+        setCurrent("");
+        setDeadline("");
       }
     }
   }, [open, editing]);
@@ -1149,20 +1358,40 @@ function GoalDialog({
         });
         toast.success(t("family.toast.goal.updated"));
         try {
-          await notifyFamilyMembers(familyId, "goal_updated",
+          await notifyFamilyMembers(
+            familyId,
+            "goal_updated",
             t("family.notif.goal.updated.title"),
-            t("family.notif.goal.updated.body").replace("{name}", myName).replace("{goal}", name.trim()));
+            t("family.notif.goal.updated.body")
+              .replace("{name}", myName)
+              .replace("{goal}", name.trim()),
+          );
           await logFamilyActivity(familyId, "goal_updated", myName, { goalName: name.trim() });
-        } catch { /* non-critical */ }
+        } catch {
+          /* non-critical */
+        }
       } else {
-        await createSharedGoal(familyId, name.trim(), Number(target), Number(current || 0), deadline || null);
+        await createSharedGoal(
+          familyId,
+          name.trim(),
+          Number(target),
+          Number(current || 0),
+          deadline || null,
+        );
         toast.success(t("family.toast.goal.added"));
         try {
-          await notifyFamilyMembers(familyId, "goal_updated",
+          await notifyFamilyMembers(
+            familyId,
+            "goal_updated",
             t("family.notif.goal.created.title"),
-            t("family.notif.goal.created.body").replace("{name}", myName).replace("{goal}", name.trim()));
+            t("family.notif.goal.created.body")
+              .replace("{name}", myName)
+              .replace("{goal}", name.trim()),
+          );
           await logFamilyActivity(familyId, "goal_created", myName, { goalName: name.trim() });
-        } catch { /* non-critical */ }
+        } catch {
+          /* non-critical */
+        }
       }
       onSaved();
       onClose();
@@ -1174,7 +1403,12 @@ function GoalDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="rounded-2xl">
         <DialogHeader>
           <DialogTitle>
@@ -1184,17 +1418,32 @@ function GoalDialog({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>{t("family.dialog.goal.name.label")}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("family.dialog.goal.name.placeholder")} autoFocus />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("family.dialog.goal.name.placeholder")}
+              autoFocus
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{t("family.dialog.goal.target")}</Label>
-              <Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="3000" />
+              <Input
+                type="number"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                placeholder="3000"
+              />
             </div>
             {!editing && (
               <div className="space-y-1.5">
                 <Label>{t("family.dialog.goal.saved")}</Label>
-                <Input type="number" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="0" />
+                <Input
+                  type="number"
+                  value={current}
+                  onChange={(e) => setCurrent(e.target.value)}
+                  placeholder="0"
+                />
               </div>
             )}
             {editing && (
@@ -1206,14 +1455,26 @@ function GoalDialog({
           </div>
           {!editing && (
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">{t("family.dialog.goal.deadline")}</Label>
+              <Label className="text-xs text-muted-foreground">
+                {t("family.dialog.goal.deadline")}
+              </Label>
               <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
             </div>
           )}
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">{t("common.cancel")}</Button>
-            <Button onClick={() => void save()} disabled={saving || !name.trim() || !target} className="flex-1">
-              {saving ? t("common.loading") : editing ? t("common.save") : t("family.dialog.goal.cta")}
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={() => void save()}
+              disabled={saving || !name.trim() || !target}
+              className="flex-1"
+            >
+              {saving
+                ? t("common.loading")
+                : editing
+                  ? t("common.save")
+                  : t("family.dialog.goal.cta")}
             </Button>
           </div>
         </div>
@@ -1225,7 +1486,14 @@ function GoalDialog({
 // ─── ContributionDialog ───────────────────────────────────────────────────────
 
 function ContributionDialog({
-  open, onClose, goal, familyId, myName, currency, onSaved, t,
+  open,
+  onClose,
+  goal,
+  familyId,
+  myName,
+  currency,
+  onSaved,
+  t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1237,7 +1505,7 @@ function ContributionDialog({
   t: (k: string) => string;
 }) {
   const [amount, setAmount] = useState("");
-  const [note, setNote]     = useState("");
+  const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const convert = useCurrencyConvert();
 
@@ -1253,16 +1521,22 @@ function ContributionDialog({
           .replace("{amount}", money(convert(n), currency))
           .replace("{goal}", goal.name);
         await notifyFamilyMembers(
-          familyId, "contribution_added",
+          familyId,
+          "contribution_added",
           t("family.notif.contribution.title").replace("{goal}", goal.name),
           note ? `${bodyTpl} — ${note}` : bodyTpl,
         );
         await logFamilyActivity(familyId, "goal_contribution", myName, {
-          goalName: goal.name, amount: n, ...(note.trim() ? { note: note.trim() } : {}),
+          goalName: goal.name,
+          amount: n,
+          ...(note.trim() ? { note: note.trim() } : {}),
         });
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
       toast.success(t("family.toast.contribution.added"));
-      setAmount(""); setNote("");
+      setAmount("");
+      setNote("");
       onSaved();
     } catch (e) {
       toast.error((e as Error).message);
@@ -1272,10 +1546,19 @@ function ContributionDialog({
   }
 
   const remaining = Math.max(0, goal.target_amount - goal.current_amount);
-  const monthly   = monthlyNeeded(goal);
+  const monthly = monthlyNeeded(goal);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { setAmount(""); setNote(""); onClose(); } }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          setAmount("");
+          setNote("");
+          onClose();
+        }
+      }}
+    >
       <DialogContent className="rounded-2xl">
         <DialogHeader>
           <DialogTitle>{t("family.dialog.contribute.title")}</DialogTitle>
@@ -1288,9 +1571,12 @@ function ContributionDialog({
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold truncate">{goal.name}</div>
               <div className="text-xs text-muted-foreground num">
-                {money(convert(goal.current_amount), currency)} / {money(convert(goal.target_amount), currency)}
+                {money(convert(goal.current_amount), currency)} /{" "}
+                {money(convert(goal.target_amount), currency)}
                 {remaining > 0 && (
-                  <span className="ml-1 opacity-70">· {money(convert(remaining), currency)} {t("family.goal.remaining")}</span>
+                  <span className="ml-1 opacity-70">
+                    · {money(convert(remaining), currency)} {t("family.goal.remaining")}
+                  </span>
                 )}
               </div>
             </div>
@@ -1299,29 +1585,44 @@ function ContributionDialog({
           <div className="card-sunken p-5 flex items-baseline gap-2">
             <span className="text-xl text-muted-foreground">€</span>
             <Input
-              type="number" inputMode="decimal" autoFocus
-              value={amount} onChange={(e) => setAmount(e.target.value)}
+              type="number"
+              inputMode="decimal"
+              autoFocus
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
               className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
             />
           </div>
           {monthly !== null && (
             <p className="text-xs text-positive font-medium text-center -mt-1">
-              {t("family.dialog.contribute.monthly").replace("{amount}", money(convert(Math.ceil(monthly)), currency))}
+              {t("family.dialog.contribute.monthly").replace(
+                "{amount}",
+                money(convert(Math.ceil(monthly)), currency),
+              )}
             </p>
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{t("family.dialog.contribute.note")}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {t("family.dialog.contribute.note")}
+            </Label>
             <Input
-              value={note} onChange={(e) => setNote(e.target.value)}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
               placeholder={t("family.dialog.contribute.note.placeholder")}
             />
           </div>
 
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">{t("common.cancel")}</Button>
-            <Button onClick={() => void save()} disabled={saving || !amount || Number(amount) <= 0} className="flex-1">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={() => void save()}
+              disabled={saving || !amount || Number(amount) <= 0}
+              className="flex-1"
+            >
               {saving ? t("common.loading") : t("family.dialog.contribute.cta")}
             </Button>
           </div>
@@ -1334,7 +1635,11 @@ function ContributionDialog({
 // ─── GoalPickerDialog ─────────────────────────────────────────────────────────
 
 function GoalPickerDialog({
-  open, onClose, goals, onPick, t,
+  open,
+  onClose,
+  goals,
+  onPick,
+  t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1343,7 +1648,12 @@ function GoalPickerDialog({
   t: (k: string) => string;
 }) {
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="rounded-2xl">
         <DialogHeader>
           <DialogTitle>{t("family.dialog.pick.title")}</DialogTitle>
@@ -1361,7 +1671,8 @@ function GoalPickerDialog({
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold truncate">{g.name}</div>
                 <div className="text-xs text-muted-foreground num">
-                  {Math.round(g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0)}%
+                  {Math.round(g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0)}
+                  %
                 </div>
               </div>
             </button>
@@ -1375,7 +1686,15 @@ function GoalPickerDialog({
 // ─── WhoAreWeDialog ───────────────────────────────────────────────────────────
 
 function WhoAreWeDialog({
-  open, onClose, family, members, isOwner, currentUserId, onRenamed, onRemoveMember, t,
+  open,
+  onClose,
+  family,
+  members,
+  isOwner,
+  currentUserId,
+  onRenamed,
+  onRemoveMember,
+  t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1387,12 +1706,15 @@ function WhoAreWeDialog({
   onRemoveMember: (memberId: string, memberUserId: string) => void;
   t: (k: string) => string;
 }) {
-  const [editName, setEditName]       = useState(family.name);
-  const [saving, setSaving]           = useState(false);
+  const [editName, setEditName] = useState(family.name);
+  const [saving, setSaving] = useState(false);
   const [pendingRemove, setPendingRemove] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) { setEditName(family.name); setPendingRemove(null); }
+    if (open) {
+      setEditName(family.name);
+      setPendingRemove(null);
+    }
   }, [open, family.name]);
 
   async function rename() {
@@ -1410,7 +1732,12 @@ function WhoAreWeDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="rounded-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("family.whoarewe.title")}</DialogTitle>
@@ -1418,7 +1745,9 @@ function WhoAreWeDialog({
         <div className="space-y-5">
           {/* Family name */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">{t("family.whoarewe.name.label")}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {t("family.whoarewe.name.label")}
+            </Label>
             {isOwner ? (
               <div className="flex gap-2">
                 <Input
@@ -1427,7 +1756,8 @@ function WhoAreWeDialog({
                   onKeyDown={(e) => e.key === "Enter" && void rename()}
                 />
                 <Button
-                  size="sm" variant="outline"
+                  size="sm"
+                  variant="outline"
                   disabled={saving || !editName.trim() || editName.trim() === family.name}
                   onClick={() => void rename()}
                 >
@@ -1441,16 +1771,25 @@ function WhoAreWeDialog({
 
           {/* Members */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">{t("family.whoarewe.members.title")}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {t("family.whoarewe.members.title")}
+            </Label>
             <div className="card-flat divide-y divide-border-subtle">
               {members.map((m) => {
                 const RoleIcon = m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
-                const displayName = m.full_name ?? `${m.first_name} ${m.last_name_1}`.trim() ?? t("family.role.member");
+                const displayName =
+                  m.full_name ??
+                  `${m.first_name} ${m.last_name_1}`.trim() ??
+                  t("family.role.member");
                 const canRemove = isOwner && m.role !== "owner" && m.user_id !== currentUserId;
                 return (
                   <div key={m.member_id} className="flex items-center gap-3 px-4 py-3.5">
                     {m.avatar_url ? (
-                      <img src={m.avatar_url} alt={displayName} className="size-10 rounded-full object-cover shrink-0" />
+                      <img
+                        src={m.avatar_url}
+                        alt={displayName}
+                        className="size-10 rounded-full object-cover shrink-0"
+                      />
                     ) : (
                       <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
                         <RoleIcon className="size-4" />
@@ -1459,22 +1798,30 @@ function WhoAreWeDialog({
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold truncate">{displayName}</div>
                       {m.financial_username && (
-                        <div className="text-xs text-muted-foreground font-mono">@{m.financial_username}</div>
+                        <div className="text-xs text-muted-foreground font-mono">
+                          @{m.financial_username}
+                        </div>
                       )}
                       <div className="text-[11px] text-muted-foreground capitalize">
                         {t(`family.role.${m.role}`) ?? m.role}
                       </div>
                     </div>
-                    {canRemove && (
-                      pendingRemove === m.member_id ? (
+                    {canRemove &&
+                      (pendingRemove === m.member_id ? (
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button
-                            onClick={() => { onRemoveMember(m.member_id, m.user_id); setPendingRemove(null); }}
+                            onClick={() => {
+                              onRemoveMember(m.member_id, m.user_id);
+                              setPendingRemove(null);
+                            }}
                             className="text-[11px] text-negative font-medium px-2 py-1 rounded-lg bg-negative/10 hover:bg-negative/20 transition"
                           >
                             {t("family.member.remove.cta")}
                           </button>
-                          <button onClick={() => setPendingRemove(null)} className="text-[11px] text-muted-foreground px-2 py-1">
+                          <button
+                            onClick={() => setPendingRemove(null)}
+                            className="text-[11px] text-muted-foreground px-2 py-1"
+                          >
                             {t("common.cancel")}
                           </button>
                         </div>
@@ -1486,15 +1833,16 @@ function WhoAreWeDialog({
                         >
                           <Trash2 className="size-3.5" />
                         </button>
-                      )
-                    )}
+                      ))}
                   </div>
                 );
               })}
             </div>
           </div>
 
-          <Button variant="outline" onClick={onClose} className="w-full">{t("common.close")}</Button>
+          <Button variant="outline" onClick={onClose} className="w-full">
+            {t("common.close")}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

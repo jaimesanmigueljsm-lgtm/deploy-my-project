@@ -115,10 +115,7 @@ export function adaptProfile(p: RawProfile): EngineProfile {
   };
 }
 
-export function adaptExpenses(
-  expenses: RawExpense[],
-  categories: RawCategory[],
-): EngineExpense[] {
+export function adaptExpenses(expenses: RawExpense[], categories: RawCategory[]): EngineExpense[] {
   return expenses.map((e) => ({
     id: e.id,
     amount: Number(e.amount),

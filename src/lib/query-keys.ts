@@ -18,8 +18,7 @@ export const queryKeys = {
     /** Invalidate all expense queries for the user regardless of month. */
     all: ["expenses", userId] as const,
     /** Scoped to a specific ISO date range — used for per-month fetches. */
-    byMonth: (start: string, end: string) =>
-      ["expenses", userId, start, end] as const,
+    byMonth: (start: string, end: string) => ["expenses", userId, start, end] as const,
   }),
 
   // ─── Categories ─────────────────────────────────────────────────────────────
@@ -46,8 +45,7 @@ export const queryKeys = {
   savings: (userId: string) => ["savings", userId] as const,
 
   // ─── Analytics (6-month expense window) ──────────────────────────────────────
-  analytics: (userId: string, windowStart: string) =>
-    ["analytics", userId, windowStart] as const,
+  analytics: (userId: string, windowStart: string) => ["analytics", userId, windowStart] as const,
 
   // ─── Analytics incomes (same 6-month window) ──────────────────────────────────
   analyticsIncomes: (userId: string, windowStart: string) =>
@@ -58,6 +56,5 @@ export const queryKeys = {
 
   // ─── Dashboard (aggregate) ──────────────────────────────────────────────────
   // Keyed by userId + month start so the cache turns over automatically each month.
-  dashboard: (userId: string, monthStart: string) =>
-    ["dashboard", userId, monthStart] as const,
+  dashboard: (userId: string, monthStart: string) => ["dashboard", userId, monthStart] as const,
 } as const;

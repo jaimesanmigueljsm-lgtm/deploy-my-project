@@ -29,10 +29,7 @@ export type ExpenseSummary = Pick<
 >;
 
 /** Shape used by the analytics 6-month window. */
-export type AnalyticsExpense = Pick<
-  Expense,
-  "amount" | "spent_at" | "category_id" | "kind"
->;
+export type AnalyticsExpense = Pick<Expense, "amount" | "spent_at" | "category_id" | "kind">;
 
 // ─── Categories ──────────────────────────────────────────────────────────────
 
@@ -42,18 +39,12 @@ export type CategorySummary = Pick<Category, "id" | "name" | "color" | "kind">;
 // ─── Bills ───────────────────────────────────────────────────────────────────
 
 export type Bill = Tables<"bills">;
-export type BillSummary = Pick<
-  Bill,
-  "id" | "name" | "amount" | "due_day" | "paid_this_month"
->;
+export type BillSummary = Pick<Bill, "id" | "name" | "amount" | "due_day" | "paid_this_month">;
 
 // ─── Incomes ─────────────────────────────────────────────────────────────────
 
 export type Income = Tables<"incomes">;
-export type IncomeSummary = Pick<
-  Income,
-  "id" | "source" | "amount" | "recurring" | "received_at"
->;
+export type IncomeSummary = Pick<Income, "id" | "source" | "amount" | "recurring" | "received_at">;
 
 // ─── Goals ───────────────────────────────────────────────────────────────────
 
@@ -73,5 +64,5 @@ export type RecommendationSeverity = "info" | "warning" | "success";
 // ─── Analytics ───────────────────────────────────────────────────────────────
 
 export type MonthlySeries = { label: string; value: number };
-export type WeekdaySeries  = { name: string; value: number };
-export type CategoryStat   = { name: string; total: number };
+export type WeekdaySeries = { name: string; value: number };
+export type CategoryStat = { name: string; total: number };

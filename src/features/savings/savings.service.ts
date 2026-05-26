@@ -54,18 +54,12 @@ export async function updateSavingsAccount(
   updates: Partial<SavingsAccountPayload>,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
-    .from("savings_accounts")
-    .update(updates)
-    .eq("id", id);
+  const { error } = await (supabase as any).from("savings_accounts").update(updates).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
 export async function deleteSavingsAccount(id: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
-    .from("savings_accounts")
-    .delete()
-    .eq("id", id);
+  const { error } = await (supabase as any).from("savings_accounts").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }

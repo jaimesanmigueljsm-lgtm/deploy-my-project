@@ -30,8 +30,8 @@ export function useGoals() {
 
   return useQuery({
     queryKey: queryKeys.goals(user?.id ?? ""),
-    queryFn:  () => fetchGoals(user!.id),
-    enabled:  !!user?.id,
+    queryFn: () => fetchGoals(user!.id),
+    enabled: !!user?.id,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
@@ -42,8 +42,8 @@ export function useGoalContributions() {
 
   return useQuery({
     queryKey: queryKeys.contributions(user?.id ?? ""),
-    queryFn:  () => fetchGoalContributions(user!.id),
-    enabled:  !!user?.id,
+    queryFn: () => fetchGoalContributions(user!.id),
+    enabled: !!user?.id,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
@@ -55,8 +55,8 @@ export function useMonthIncomeTotal() {
 
   return useQuery({
     queryKey: ["incomes", user?.id ?? "", "monthTotal", range.start, range.end],
-    queryFn:  () => fetchMonthIncomeTotal(user!.id, range.start, range.end),
-    enabled:  !!user?.id,
+    queryFn: () => fetchMonthIncomeTotal(user!.id, range.start, range.end),
+    enabled: !!user?.id,
     staleTime: 5 * 60_000,
   });
 }
@@ -78,8 +78,11 @@ export function useAddGoal() {
 
   return useMutation({
     mutationFn: (payload: AddGoalPayload) => addGoal(user!.id, payload),
-    onSuccess:  () => { invalidate(); toast.success("Goal created"); },
-    onError:    (err) => toast.error(err instanceof Error ? err.message : "Failed to create goal"),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Goal created");
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to create goal"),
   });
 }
 
@@ -89,8 +92,11 @@ export function useUpdateGoal() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateGoalPayload }) =>
       updateGoal(id, payload),
-    onSuccess:  () => { invalidate(); toast.success("Goal updated"); },
-    onError:    (err) => toast.error(err instanceof Error ? err.message : "Failed to update goal"),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Goal updated");
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to update goal"),
   });
 }
 
@@ -105,15 +111,12 @@ export function useDeleteGoal() {
       const key = queryKeys.goals(user!.id);
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<Goal[]>(key);
-      queryClient.setQueryData<Goal[]>(key, (old) =>
-        (old ?? []).filter((g) => g.id !== deletedId),
-      );
+      queryClient.setQueryData<Goal[]>(key, (old) => (old ?? []).filter((g) => g.id !== deletedId));
       return { previous, key };
     },
 
     onError: (_err, _id, context) => {
-      if (context?.previous !== undefined)
-        queryClient.setQueryData(context.key, context.previous);
+      if (context?.previous !== undefined) queryClient.setQueryData(context.key, context.previous);
       toast.error("Failed to delete goal");
     },
 
@@ -138,7 +141,8 @@ export function useAddContribution() {
       toast.success("Contribution added");
     },
 
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to add contribution"),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Failed to add contribution"),
   });
 }
 
@@ -148,7 +152,10 @@ export function useSeedDemoGoals() {
 
   return useMutation({
     mutationFn: () => seedDemoGoals(user!.id),
-    onSuccess:  () => { invalidate(); toast.success("Example goals added"); },
-    onError:    (err) => toast.error(err instanceof Error ? err.message : "Failed to seed goals"),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Example goals added");
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to seed goals"),
   });
 }

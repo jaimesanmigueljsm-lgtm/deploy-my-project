@@ -102,7 +102,8 @@ export function useFinancialEngine(): {
     ],
   });
 
-  const [profileQ, expensesQ, incomesQ, billsQ, goalsQ, investmentsQ, categoriesQ, savingsQ] = results;
+  const [profileQ, expensesQ, incomesQ, billsQ, goalsQ, investmentsQ, categoriesQ, savingsQ] =
+    results;
 
   const output = useMemo((): FinancialEngineOutput | null => {
     const profile = profileQ.data;
@@ -116,11 +117,11 @@ export function useFinancialEngine(): {
       profile,
       expenses,
       incomes,
-      bills:           billsQ.data        ?? [],
-      goals:           goalsQ.data        ?? [],
-      investments:     investmentsQ.data  ?? [],
-      categories:      categoriesQ.data   ?? [],
-      savingsAccounts: savingsQ.data      ?? [],
+      bills: billsQ.data ?? [],
+      goals: goalsQ.data ?? [],
+      investments: investmentsQ.data ?? [],
+      categories: categoriesQ.data ?? [],
+      savingsAccounts: savingsQ.data ?? [],
     });
 
     return runFinancialEngine(ctx);

@@ -31,20 +31,26 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  const value = useMemo<Ctx>(() => ({
-    locale,
-    setLocale: (l) => {
-      setLocaleState(l);
-      try { window.localStorage.setItem(STORAGE_KEY, l); } catch {}
-      if (typeof document !== "undefined") document.documentElement.lang = l;
-    },
-    t: (key, params) => {
-      const tpl = TRANSLATIONS[locale]?.[key] ?? TRANSLATIONS.en[key] ?? key;
-      if (!params) return tpl;
-      return tpl.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`));
-    },
-    locales: LOCALES,
-  }), [locale]);
+  const value = useMemo<Ctx>(
+    () => ({
+      locale,
+      setLocale: (l) => {
+        setLocaleState(l);
+        try {
+          window.localStorage.setItem(STORAGE_KEY, l);
+          // eslint-disable-next-line no-empty
+        } catch {}
+        if (typeof document !== "undefined") document.documentElement.lang = l;
+      },
+      t: (key, params) => {
+        const tpl = TRANSLATIONS[locale]?.[key] ?? TRANSLATIONS.en[key] ?? key;
+        if (!params) return tpl;
+        return tpl.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`));
+      },
+      locales: LOCALES,
+    }),
+    [locale],
+  );
 
   return <I18nCtx.Provider value={value}>{children}</I18nCtx.Provider>;
 }

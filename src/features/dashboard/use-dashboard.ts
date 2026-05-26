@@ -143,9 +143,7 @@ export function useGenerateInsights() {
     },
 
     onError: (err) => {
-      toast.error(
-        err instanceof Error ? err.message : "Could not generate insights",
-      );
+      toast.error(err instanceof Error ? err.message : "Could not generate insights");
     },
   });
 }

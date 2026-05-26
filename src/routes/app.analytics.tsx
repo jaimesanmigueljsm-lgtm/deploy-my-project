@@ -3,17 +3,31 @@ import { useMemo, useState, memo, useRef, useEffect } from "react";
 import { money, monthRange, shortMoney } from "@/lib/format";
 import { Sparkles, TrendingUp as TUp, PiggyBank, Wallet2 } from "lucide-react";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  ReferenceLine, Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ReferenceLine,
+  Legend,
 } from "recharts";
 import { SectionHeader, EmptyState, SkeletonBlock } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle } from "@/lib/chart";
 import type { AnalyticsExpense } from "@/types/finance";
 import { useAnalyticsData } from "@/features/analytics/use-analytics";
-import { buildTopCategories, buildIncomeExpenseSeries, buildFixedVariableSeries } from "@/features/analytics/analytics.utils";
+import {
+  buildTopCategories,
+  buildIncomeExpenseSeries,
+  buildFixedVariableSeries,
+} from "@/features/analytics/analytics.utils";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { HealthCard, HealthCardSkeleton } from "@/features/dashboard/components/health-card";
-import { SmartInsightsFeed, SmartInsightsSkeleton } from "@/features/dashboard/components/smart-insights";
+import {
+  SmartInsightsFeed,
+  SmartInsightsSkeleton,
+} from "@/features/dashboard/components/smart-insights";
 import {
   RecommendationCards,
   RecommendationsSkeleton,
@@ -37,7 +51,9 @@ function useInView() {
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
       { rootMargin: "200px" },
     );
     io.observe(el);
@@ -72,13 +88,13 @@ function Analytics() {
 
   const [period, setPeriod] = useState<Period>("month");
 
-  const fixedVarInView   = useInView();
-  const savingsInView    = useInView();
-  const healthInView     = useInView();
+  const fixedVarInView = useInView();
+  const savingsInView = useInView();
+  const healthInView = useInView();
 
   const months = periodMonths(period);
-  const start  = useMemo(() => periodStart(period), [period]);
-  const end    = range.end;
+  const start = useMemo(() => periodStart(period), [period]);
+  const end = range.end;
 
   const filteredExpenses = useMemo(
     () => expenses.filter((e: AnalyticsExpense) => e.spent_at >= start && e.spent_at <= end),
@@ -89,9 +105,15 @@ function Analytics() {
     [incomes, start, end],
   );
 
-  const expenseTotal = useMemo(() => filteredExpenses.reduce((s, e) => s + e.amount, 0), [filteredExpenses]);
-  const incomeTotal  = useMemo(() => filteredIncomes.reduce((s, i) => s + i.amount, 0), [filteredIncomes]);
-  const net          = incomeTotal - expenseTotal;
+  const expenseTotal = useMemo(
+    () => filteredExpenses.reduce((s, e) => s + e.amount, 0),
+    [filteredExpenses],
+  );
+  const incomeTotal = useMemo(
+    () => filteredIncomes.reduce((s, i) => s + i.amount, 0),
+    [filteredIncomes],
+  );
+  const net = incomeTotal - expenseTotal;
 
   const topCats = useMemo(
     () => buildTopCategories(expenses, categories, start, end),
@@ -157,17 +179,18 @@ function Analytics() {
   const monthSavingsRate = monthIncome > 0 ? Math.max(0, monthRemaining) / monthIncome : 0;
 
   const periods: { key: Period; label: string }[] = [
-    { key: "month",    label: t("analytics.period.month") },
-    { key: "quarter",  label: t("analytics.period.quarter") },
+    { key: "month", label: t("analytics.period.month") },
+    { key: "quarter", label: t("analytics.period.quarter") },
     { key: "semester", label: t("analytics.period.semester") },
   ];
 
   return (
     <div className="px-4 pt-5 space-y-5 animate-rise pb-6">
-
       {/* Header */}
       <header className="pt-2">
-        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{t("analytics.subtitle")}</p>
+        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+          {t("analytics.subtitle")}
+        </p>
         <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("analytics.title")}</h1>
       </header>
 
@@ -193,15 +216,24 @@ function Analytics() {
       <div className="grid grid-cols-3 gap-2.5">
         <div className="card-flat p-3.5 space-y-1">
           <p className="label-overline">{t("analytics.income.label")}</p>
-          <p className="text-base font-semibold num text-positive">{shortMoney(convert(incomeTotal), currency)}</p>
+          <p className="text-base font-semibold num text-positive">
+            {shortMoney(convert(incomeTotal), currency)}
+          </p>
         </div>
         <div className="card-flat p-3.5 space-y-1">
           <p className="label-overline">{t("analytics.expenses.label")}</p>
-          <p className="text-base font-semibold num">{shortMoney(convert(expenseTotal), currency)}</p>
+          <p className="text-base font-semibold num">
+            {shortMoney(convert(expenseTotal), currency)}
+          </p>
         </div>
         <div className="card-flat p-3.5 space-y-1">
           <p className="label-overline">{t("analytics.net.label")}</p>
-          <p className={cn("text-base font-semibold num", net >= 0 ? "text-positive" : "text-negative")}>
+          <p
+            className={cn(
+              "text-base font-semibold num",
+              net >= 0 ? "text-positive" : "text-negative",
+            )}
+          >
             {shortMoney(convert(net), currency)}
           </p>
         </div>
@@ -227,14 +259,18 @@ function Analytics() {
             {topCats.map(({ name, total }: { name: string; total: number }, i: number) => (
               <div key={name} className="flex items-center justify-between px-4 py-3.5">
                 <div className="flex items-center gap-3">
-                  <div className="size-7 rounded-lg bg-muted grid place-items-center text-[11px] font-semibold text-muted-foreground tabular-nums">{i + 1}</div>
+                  <div className="size-7 rounded-lg bg-muted grid place-items-center text-[11px] font-semibold text-muted-foreground tabular-nums">
+                    {i + 1}
+                  </div>
                   <span className="text-sm font-medium">{name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-muted-foreground">
                     {expenseTotal > 0 ? `${Math.round((total / expenseTotal) * 100)}%` : "—"}
                   </span>
-                  <span className="text-sm font-semibold num">{money(convert(total), currency)}</span>
+                  <span className="text-sm font-semibold num">
+                    {money(convert(total), currency)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -244,17 +280,21 @@ function Analytics() {
 
       {/* Fixed vs Variable expenses chart — lazy render until in view */}
       <section ref={fixedVarInView.ref}>
-        <SectionHeader title={t("analytics.section.fixedVsVariable")} subtitle={t("analytics.section.fixedVsVariable.sub")} />
-        {fixedVarInView.visible
-          ? <FixedVariableBarChart
-              data={fixedVariableSeries}
-              currency={currency}
-              convert={convert}
-              fixedLabel={t("analytics.chart.fixed")}
-              variableLabel={t("analytics.chart.variable")}
-            />
-          : <SkeletonBlock className="h-48" />
-        }
+        <SectionHeader
+          title={t("analytics.section.fixedVsVariable")}
+          subtitle={t("analytics.section.fixedVsVariable.sub")}
+        />
+        {fixedVarInView.visible ? (
+          <FixedVariableBarChart
+            data={fixedVariableSeries}
+            currency={currency}
+            convert={convert}
+            fixedLabel={t("analytics.chart.fixed")}
+            variableLabel={t("analytics.chart.variable")}
+          />
+        ) : (
+          <SkeletonBlock className="h-48" />
+        )}
       </section>
 
       {/* Tu ahorro — lazy render until in view */}
@@ -279,33 +319,47 @@ function Analytics() {
               <p className="text-base font-semibold num text-positive">
                 {shortMoney(convert(engine.totalSavings + Math.max(0, monthRemaining)), currency)}
               </p>
-              <p className="text-[10px] text-muted-foreground">{t("analytics.yoursavings.total.sub")}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {t("analytics.yoursavings.total.sub")}
+              </p>
             </div>
             <div className="card-flat p-3.5 space-y-1">
               <div className="flex items-center justify-between">
                 <p className="label-overline">{t("analytics.yoursavings.rate")}</p>
                 <TUp className="size-3.5 text-sky" />
               </div>
-              <p className={cn(
-                "text-base font-semibold num",
-                monthSavingsRate >= 0.1 ? "text-positive" : monthRemaining < 0 ? "text-negative" : "text-muted-foreground",
-              )}>
+              <p
+                className={cn(
+                  "text-base font-semibold num",
+                  monthSavingsRate >= 0.1
+                    ? "text-positive"
+                    : monthRemaining < 0
+                      ? "text-negative"
+                      : "text-muted-foreground",
+                )}
+              >
                 {monthIncome > 0 ? `${Math.round(monthSavingsRate * 100)}%` : "—"}
               </p>
-              <p className="text-[10px] text-muted-foreground">{t("analytics.yoursavings.rate.sub")}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {t("analytics.yoursavings.rate.sub")}
+              </p>
             </div>
             <div className="card-flat p-3.5 space-y-1">
               <div className="flex items-center justify-between">
                 <p className="label-overline">{t("analytics.yoursavings.avg")}</p>
                 <Wallet2 className="size-3.5 text-muted-foreground" />
               </div>
-              <p className={cn(
-                "text-base font-semibold num",
-                avgMonthlySavings >= 0 ? "text-positive" : "text-negative",
-              )}>
+              <p
+                className={cn(
+                  "text-base font-semibold num",
+                  avgMonthlySavings >= 0 ? "text-positive" : "text-negative",
+                )}
+              >
                 {shortMoney(convert(avgMonthlySavings), currency)}
               </p>
-              <p className="text-[10px] text-muted-foreground">{t("analytics.yoursavings.avg.sub")}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {t("analytics.yoursavings.avg.sub")}
+              </p>
             </div>
           </div>
         )}
@@ -317,19 +371,21 @@ function Analytics() {
           <>
             <section>
               <SectionHeader title={t("analytics.section.healthDetail")} />
-              {engineLoading || !engine
-                ? <HealthCardSkeleton />
-                : <HealthCard healthScore={engine.healthScore} currency={currency} />
-              }
+              {engineLoading || !engine ? (
+                <HealthCardSkeleton />
+              ) : (
+                <HealthCard healthScore={engine.healthScore} currency={currency} />
+              )}
             </section>
 
             {(engineLoading || (engine && engine.spendingIntelligence)) && (
               <section>
                 <SectionHeader title={t("analytics.section.signals")} />
-                {engineLoading || !engine
-                  ? <SmartInsightsSkeleton />
-                  : <SmartInsightsFeed intelligence={engine.spendingIntelligence} />
-                }
+                {engineLoading || !engine ? (
+                  <SmartInsightsSkeleton />
+                ) : (
+                  <SmartInsightsFeed intelligence={engine.spendingIntelligence} />
+                )}
               </section>
             )}
 
@@ -339,16 +395,19 @@ function Analytics() {
                   title={t("dashboard.section.recommendations")}
                   subtitle={t("dashboard.section.recommendations.sub.engine")}
                 />
-                {engineLoading || !engine
-                  ? <RecommendationsSkeleton />
-                  : <RecommendationCards recommendations={engine.recommendations} currency={currency} />
-                }
+                {engineLoading || !engine ? (
+                  <RecommendationsSkeleton />
+                ) : (
+                  <RecommendationCards
+                    recommendations={engine.recommendations}
+                    currency={currency}
+                  />
+                )}
               </section>
             )}
           </>
         )}
       </div>
-
     </div>
   );
 }
@@ -360,25 +419,61 @@ type MonthSeries = { label: string; income: number; expenses: number; net: numbe
 type FVSeries = { label: string; fixed: number; variable: number };
 
 const IncomeExpenseBarChart = memo(function IncomeExpenseBarChart({
-  data, currency, convert, incomeLabel, expensesLabel,
-}: { data: MonthSeries[]; currency: string; convert: ConvertFn; incomeLabel: string; expensesLabel: string }) {
+  data,
+  currency,
+  convert,
+  incomeLabel,
+  expensesLabel,
+}: {
+  data: MonthSeries[];
+  currency: string;
+  convert: ConvertFn;
+  incomeLabel: string;
+  expensesLabel: string;
+}) {
   return (
     <div className="card-flat p-4">
       <div className="h-48 -ml-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={14} barGap={3}>
+          <BarChart
+            data={data}
+            margin={{ top: 8, right: 4, left: 4, bottom: 0 }}
+            barSize={14}
+            barGap={3}
+          >
             <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(convert(Number(v)), currency)} width={44} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => shortMoney(convert(Number(v)), currency)}
+              width={44}
+            />
             <Tooltip
               cursor={{ fill: "oklch(0.96 0.006 250)" }}
               contentStyle={getChartTooltipStyle()}
-              formatter={((v: unknown, name: unknown) => [money(convert(Number(v)), currency), name]) as never}
+              formatter={
+                ((v: unknown, name: unknown) => [
+                  money(convert(Number(v)), currency),
+                  name,
+                ]) as never
+              }
             />
             <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
             <ReferenceLine y={0} stroke="oklch(0.85 0.005 250)" />
-            <Bar dataKey="income"   name={incomeLabel}   fill={CHART_COLORS[2]} radius={[4, 4, 2, 2]} />
-            <Bar dataKey="expenses" name={expensesLabel} fill={CHART_COLORS[0]} radius={[4, 4, 2, 2]} />
+            <Bar dataKey="income" name={incomeLabel} fill={CHART_COLORS[2]} radius={[4, 4, 2, 2]} />
+            <Bar
+              dataKey="expenses"
+              name={expensesLabel}
+              fill={CHART_COLORS[0]}
+              radius={[4, 4, 2, 2]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -387,24 +482,60 @@ const IncomeExpenseBarChart = memo(function IncomeExpenseBarChart({
 });
 
 const FixedVariableBarChart = memo(function FixedVariableBarChart({
-  data, currency, convert, fixedLabel, variableLabel,
-}: { data: FVSeries[]; currency: string; convert: ConvertFn; fixedLabel: string; variableLabel: string }) {
+  data,
+  currency,
+  convert,
+  fixedLabel,
+  variableLabel,
+}: {
+  data: FVSeries[];
+  currency: string;
+  convert: ConvertFn;
+  fixedLabel: string;
+  variableLabel: string;
+}) {
   return (
     <div className="card-flat p-4">
       <div className="h-48 -ml-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={14} barGap={3}>
+          <BarChart
+            data={data}
+            margin={{ top: 8, right: 4, left: 4, bottom: 0 }}
+            barSize={14}
+            barGap={3}
+          >
             <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }} axisLine={false} tickLine={false} tickFormatter={(v) => shortMoney(convert(Number(v)), currency)} width={44} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => shortMoney(convert(Number(v)), currency)}
+              width={44}
+            />
             <Tooltip
               cursor={{ fill: "oklch(0.96 0.006 250)" }}
               contentStyle={getChartTooltipStyle()}
-              formatter={((v: unknown, name: unknown) => [money(convert(Number(v)), currency), name]) as never}
+              formatter={
+                ((v: unknown, name: unknown) => [
+                  money(convert(Number(v)), currency),
+                  name,
+                ]) as never
+              }
             />
             <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-            <Bar dataKey="fixed"    name={fixedLabel}    fill={CHART_COLORS[3]} radius={[4, 4, 2, 2]} />
-            <Bar dataKey="variable" name={variableLabel} fill={CHART_COLORS[0]} radius={[4, 4, 2, 2]} />
+            <Bar dataKey="fixed" name={fixedLabel} fill={CHART_COLORS[3]} radius={[4, 4, 2, 2]} />
+            <Bar
+              dataKey="variable"
+              name={variableLabel}
+              fill={CHART_COLORS[0]}
+              radius={[4, 4, 2, 2]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

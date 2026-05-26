@@ -22,15 +22,15 @@ export function useFinancesData() {
     queries: [
       {
         queryKey: queryKeys.investments(uid),
-        queryFn:  () => fetchInvestments(uid),
-        enabled:  !!uid,
+        queryFn: () => fetchInvestments(uid),
+        enabled: !!uid,
         staleTime: 60_000,
         placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.profile(uid),
-        queryFn:  () => fetchProfile(uid),
-        enabled:  !!uid,
+        queryFn: () => fetchProfile(uid),
+        enabled: !!uid,
         staleTime: 5 * 60_000,
         select: (p: Awaited<ReturnType<typeof fetchProfile>>) => p?.currency ?? "EUR",
         placeholderData: keepPreviousData,
@@ -42,9 +42,9 @@ export function useFinancesData() {
 
   return {
     investments: invQ.data ?? [],
-    currency:    (currencyQ.data as string | undefined) ?? "EUR",
-    isLoading:   results.some((r) => r.isLoading),
-    isError:     results.some((r) => r.isError),
+    currency: (currencyQ.data as string | undefined) ?? "EUR",
+    isLoading: results.some((r) => r.isLoading),
+    isError: results.some((r) => r.isError),
   };
 }
 
@@ -56,7 +56,7 @@ export function useAddInvestment() {
 
   return useMutation({
     mutationFn: (payload: AddInvestmentPayload) => addInvestment(user!.id, payload),
-    onSuccess:  () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.investments(user!.id) });
       toast.success("Holding added");
     },
@@ -82,8 +82,7 @@ export function useDeleteInvestment() {
     },
 
     onError: (_err, _id, context) => {
-      if (context?.previous !== undefined)
-        queryClient.setQueryData(context.key, context.previous);
+      if (context?.previous !== undefined) queryClient.setQueryData(context.key, context.previous);
       toast.error("Failed to delete holding");
     },
 
@@ -99,7 +98,7 @@ export function useSeedDemoInvestments() {
 
   return useMutation({
     mutationFn: () => seedDemoInvestments(user!.id),
-    onSuccess:  () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.investments(user!.id) });
       toast.success("Demo portfolio loaded");
     },

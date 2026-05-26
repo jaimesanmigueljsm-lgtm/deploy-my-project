@@ -139,8 +139,8 @@ export function HealthCard({
   ];
 
   const criticalRisks = risks.filter((r) => r.severity === "critical");
-  const warningRisks  = risks.filter((r) => r.severity === "warning");
-  const statusLabel   = t(`health.status.${status}` as never);
+  const warningRisks = risks.filter((r) => r.severity === "warning");
+  const statusLabel = t(`health.status.${status}` as never);
 
   return (
     <div className="card-flat overflow-hidden">

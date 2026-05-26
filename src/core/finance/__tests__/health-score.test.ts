@@ -103,7 +103,7 @@ describe("computeHealthScore — zero data (empty account)", () => {
 describe("savingsConsistency sub-score", () => {
   it("is lower when overspending", () => {
     const good = computeHealthScore(makeGoodSaverCtx());
-    const bad  = computeHealthScore(makeOverspendingCtx());
+    const bad = computeHealthScore(makeOverspendingCtx());
     expect(good.subScores.savingsConsistency.value).toBeGreaterThan(
       bad.subScores.savingsConsistency.value,
     );
@@ -167,20 +167,24 @@ describe("emergencyReadiness sub-score", () => {
 
   it("counts savings-type investments as emergency reserves", () => {
     const expenses = makeMonthlyExpenses([1500, 1500, 1500, 1500, 1500, 1500]);
-    const incomes  = makeMonthlyIncomes([3000, 3000, 3000, 3000, 3000, 3000]);
+    const incomes = makeMonthlyIncomes([3000, 3000, 3000, 3000, 3000, 3000]);
 
-    const withInvestment = computeHealthScore(makeCtx({
-      goals: [],
-      investments: [makeInvestment({ type: "savings", quantity: 1, currentPrice: 9000 })],
-      expenses,
-      incomes,
-    }));
-    const withoutInvestment = computeHealthScore(makeCtx({
-      goals: [],
-      investments: [],
-      expenses,
-      incomes,
-    }));
+    const withInvestment = computeHealthScore(
+      makeCtx({
+        goals: [],
+        investments: [makeInvestment({ type: "savings", quantity: 1, currentPrice: 9000 })],
+        expenses,
+        incomes,
+      }),
+    );
+    const withoutInvestment = computeHealthScore(
+      makeCtx({
+        goals: [],
+        investments: [],
+        expenses,
+        incomes,
+      }),
+    );
 
     // Savings-type investments must count as reserves — score must be higher
     expect(withInvestment.subScores.emergencyReadiness.value).toBeGreaterThan(
@@ -245,9 +249,7 @@ describe("fixedExpensePressure sub-score", () => {
 
   it("flags FIXED_PRESSURE_CRITICAL when ratio > 70%", () => {
     const ctx = makeCtx({
-      expenses: [
-        ...makeMonthlyFixedExpenses([2200, 2200, 2200, 2200, 2200, 2200]),
-      ],
+      expenses: [...makeMonthlyFixedExpenses([2200, 2200, 2200, 2200, 2200, 2200])],
       incomes: makeMonthlyIncomes([3000, 3000, 3000, 3000, 3000, 3000]),
     });
     const { risks } = computeHealthScore(ctx);
@@ -278,9 +280,9 @@ describe("spendingStability sub-score", () => {
 describe("computeHealthScore — score bounds and status mapping", () => {
   const scenarios = [
     { label: "overspending user", ctx: () => makeOverspendingCtx() },
-    { label: "good saver",        ctx: () => makeGoodSaverCtx() },
-    { label: "empty account",     ctx: () => makeEmptyCtx() },
-    { label: "healthy user",      ctx: () => makeCtx() },
+    { label: "good saver", ctx: () => makeGoodSaverCtx() },
+    { label: "empty account", ctx: () => makeEmptyCtx() },
+    { label: "healthy user", ctx: () => makeCtx() },
   ];
 
   for (const { label, ctx } of scenarios) {

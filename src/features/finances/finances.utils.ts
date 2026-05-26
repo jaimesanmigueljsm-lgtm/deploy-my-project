@@ -2,10 +2,10 @@ import type { Investment } from "@/types/finance";
 
 export type PortfolioStats = {
   invested: number;
-  value:    number;
-  pl:       number;
-  plPct:    number;
-  byType:   Map<string, number>;
+  value: number;
+  pl: number;
+  plPct: number;
+  byType: Map<string, number>;
 };
 
 /**
@@ -14,18 +14,18 @@ export type PortfolioStats = {
  */
 export function computePortfolioStats(investments: Investment[]): PortfolioStats {
   let invested = 0;
-  let value    = 0;
+  let value = 0;
   const byType = new Map<string, number>();
 
   for (const inv of investments) {
-    const cost = Number(inv.avg_cost)      * Number(inv.quantity);
-    const val  = Number(inv.current_price) * Number(inv.quantity);
+    const cost = Number(inv.avg_cost) * Number(inv.quantity);
+    const val = Number(inv.current_price) * Number(inv.quantity);
     invested += cost;
-    value    += val;
+    value += val;
     byType.set(inv.type, (byType.get(inv.type) ?? 0) + val);
   }
 
-  const pl    = value - invested;
+  const pl = value - invested;
   const plPct = invested > 0 ? (pl / invested) * 100 : 0;
 
   return { invested, value, pl, plPct, byType };

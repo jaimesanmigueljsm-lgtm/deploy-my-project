@@ -3,11 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  fetchProfile,
-  updateProfile,
-  type ProfileUpdate,
-} from "./profile.service";
+import { fetchProfile, updateProfile, type ProfileUpdate } from "./profile.service";
 
 // ─── localStorage persistence ─────────────────────────────────────────────────
 
@@ -23,7 +19,10 @@ function readCachedProfile(id: string) {
 }
 
 function writeCachedProfile(id: string, data: unknown) {
-  try { localStorage.setItem(CACHE_KEY(id), JSON.stringify(data)); } catch {}
+  try {
+    localStorage.setItem(CACHE_KEY(id), JSON.stringify(data));
+    // eslint-disable-next-line no-empty
+  } catch {}
 }
 
 // ─── Read ─────────────────────────────────────────────────────────────────────

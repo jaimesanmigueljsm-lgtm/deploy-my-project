@@ -38,10 +38,7 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
   return data;
 }
 
-export async function updateProfile(
-  userId: string,
-  updates: ProfileUpdate,
-): Promise<Profile> {
+export async function updateProfile(userId: string, updates: ProfileUpdate): Promise<Profile> {
   const validated = parseOrThrow(UpdateProfileSchema, updates, "updateProfile");
 
   const { data, error } = await supabase

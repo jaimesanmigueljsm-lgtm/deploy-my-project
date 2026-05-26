@@ -67,12 +67,23 @@ export function buildIncomeExpenseSeries(
     const yr = d.getFullYear();
     const mo = d.getMonth();
     const inc = incomes
-      .filter((x) => { const r = new Date(x.received_at); return r.getFullYear() === yr && r.getMonth() === mo; })
+      .filter((x) => {
+        const r = new Date(x.received_at);
+        return r.getFullYear() === yr && r.getMonth() === mo;
+      })
       .reduce((s, x) => s + x.amount, 0);
     const exp = expenses
-      .filter((x) => { const r = new Date(x.spent_at); return r.getFullYear() === yr && r.getMonth() === mo; })
+      .filter((x) => {
+        const r = new Date(x.spent_at);
+        return r.getFullYear() === yr && r.getMonth() === mo;
+      })
       .reduce((s, x) => s + x.amount, 0);
-    return { label: shortMonth(d), income: Math.round(inc), expenses: Math.round(exp), net: Math.round(inc - exp) };
+    return {
+      label: shortMonth(d),
+      income: Math.round(inc),
+      expenses: Math.round(exp),
+      net: Math.round(inc - exp),
+    };
   });
 }
 

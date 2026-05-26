@@ -7,9 +7,9 @@ import { useT } from "@/i18n";
 type Step = "verify_current" | "enter_new" | "confirm" | "done";
 
 interface Props {
-  mode:       "setup" | "change";
+  mode: "setup" | "change";
   onComplete: () => void;
-  onSkip?:    () => void;
+  onSkip?: () => void;
 }
 
 export function PinSetupScreen({ mode, onComplete, onSkip }: Props) {
@@ -17,77 +17,89 @@ export function PinSetupScreen({ mode, onComplete, onSkip }: Props) {
   const { t } = useT();
 
   const initial: Step = mode === "change" ? "verify_current" : "enter_new";
-  const [step,       setStep]       = useState<Step>(initial);
-  const [pin,        setPin]        = useState("");
-  const [firstPin,   setFirstPin]   = useState("");
-  const [shaking,    setShaking]    = useState(false);
-  const [errored,    setErrored]    = useState(false);
-  const [loading,    setLoading]    = useState(false);
+  const [step, setStep] = useState<Step>(initial);
+  const [pin, setPin] = useState("");
+  const [firstPin, setFirstPin] = useState("");
+  const [shaking, setShaking] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errorLabel, setErrorLabel] = useState("");
 
   function shake(label?: string) {
     setErrorLabel(label ?? "");
     setShaking(true);
     setErrored(true);
-    setTimeout(() => { setShaking(false); setErrored(false); }, 600);
+    setTimeout(() => {
+      setShaking(false);
+      setErrored(false);
+    }, 600);
   }
 
-  const onDigit = useCallback(async (d: string) => {
-    const next = (pin + d).slice(0, 4);
-    setPin(next);
-    if (next.length < 4) return;
+  const onDigit = useCallback(
+    async (d: string) => {
+      const next = (pin + d).slice(0, 4);
+      setPin(next);
+      if (next.length < 4) return;
 
-    if (step === "verify_current") {
-      setLoading(true);
-      const ok = await verifyCurrentPin(next);
-      setLoading(false);
-      if (!ok) {
+      if (step === "verify_current") {
+        setLoading(true);
+        const ok = await verifyCurrentPin(next);
+        setLoading(false);
+        if (!ok) {
+          setPin("");
+          shake(t("pin.setup.wrongCurrent"));
+          return;
+        }
         setPin("");
-        shake(t("pin.setup.wrongCurrent"));
-        return;
-      }
-      setPin("");
-      setStep("enter_new");
-
-    } else if (step === "enter_new") {
-      setFirstPin(next);
-      setPin("");
-      setStep("confirm");
-
-    } else if (step === "confirm") {
-      if (next !== firstPin) {
+        setStep("enter_new");
+      } else if (step === "enter_new") {
+        setFirstPin(next);
         setPin("");
-        shake(t("pin.setup.mismatch"));
-        return;
+        setStep("confirm");
+      } else if (step === "confirm") {
+        if (next !== firstPin) {
+          setPin("");
+          shake(t("pin.setup.mismatch"));
+          return;
+        }
+        setLoading(true);
+        await setupPin(next);
+        setLoading(false);
+        setStep("done");
+        setTimeout(onComplete, 1400);
       }
-      setLoading(true);
-      await setupPin(next);
-      setLoading(false);
-      setStep("done");
-      setTimeout(onComplete, 1400);
-    }
-  }, [pin, step, firstPin, verifyCurrentPin, setupPin, onComplete, t]);
+    },
+    [pin, step, firstPin, verifyCurrentPin, setupPin, onComplete, t],
+  );
 
   function onDelete() {
     setPin((p) => p.slice(0, -1));
   }
 
   // ── Labels per step ──────────────────────────────────────────────────────
-  const title = step === "done"           ? t("pin.setup.done.title")
-    : step === "verify_current"           ? t("pin.setup.verifyCurrentTitle")
-    : step === "enter_new"                ? t(mode === "setup" ? "pin.setup.title" : "pin.setup.newTitle")
-    :                                       t("pin.setup.confirmTitle");
+  const title =
+    step === "done"
+      ? t("pin.setup.done.title")
+      : step === "verify_current"
+        ? t("pin.setup.verifyCurrentTitle")
+        : step === "enter_new"
+          ? t(mode === "setup" ? "pin.setup.title" : "pin.setup.newTitle")
+          : t("pin.setup.confirmTitle");
 
-  const desc = step === "done"            ? t("pin.setup.done.desc")
-    : step === "verify_current"           ? t("pin.setup.verifyCurrentDesc")
-    : step === "enter_new"                ? t("pin.setup.desc")
-    :                                       t("pin.setup.confirmDesc");
+  const desc =
+    step === "done"
+      ? t("pin.setup.done.desc")
+      : step === "verify_current"
+        ? t("pin.setup.verifyCurrentDesc")
+        : step === "enter_new"
+          ? t("pin.setup.desc")
+          : t("pin.setup.confirmDesc");
 
   return (
     <div
       className="fixed inset-0 z-[10000] flex flex-col items-center bg-background text-foreground animate-fade-in"
       style={{
-        paddingTop:    "max(env(safe-area-inset-top), 16px)",
+        paddingTop: "max(env(safe-area-inset-top), 16px)",
         paddingBottom: "max(env(safe-area-inset-bottom), 16px)",
       }}
     >

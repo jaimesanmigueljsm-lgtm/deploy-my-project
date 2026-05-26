@@ -1,7 +1,4 @@
-import {
-  createContext, useContext, useState, useEffect, useCallback,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { hashPin, verifyPin } from "@/lib/pin-crypto";
 import { pinStore, metaStore, promptStore, type LockMeta } from "./app-lock-store";
@@ -17,18 +14,18 @@ export function isBiometricAvailable(): boolean {
 // ─── Context ──────────────────────────────────────────────────────────────────
 
 export interface AppLockCtx {
-  isPinSet:          boolean;
-  isLocked:          boolean;
-  meta:              LockMeta;
+  isPinSet: boolean;
+  isLocked: boolean;
+  meta: LockMeta;
   biometricAvailable: boolean;
-  unlock:            (pin: string) => Promise<boolean>;
-  setupPin:          (pin: string) => Promise<void>;
-  verifyCurrentPin:  (pin: string) => Promise<boolean>;
-  changePin:         (currentPin: string, newPin: string) => Promise<boolean>;
-  removePin:         () => void;
-  lockNow:           () => void;
-  openSetup:         (mode?: "setup" | "change") => void;
-  updateMeta:        (patch: Partial<LockMeta>) => void;
+  unlock: (pin: string) => Promise<boolean>;
+  setupPin: (pin: string) => Promise<void>;
+  verifyCurrentPin: (pin: string) => Promise<boolean>;
+  changePin: (currentPin: string, newPin: string) => Promise<boolean>;
+  removePin: () => void;
+  lockNow: () => void;
+  openSetup: (mode?: "setup" | "change") => void;
+  updateMeta: (patch: Partial<LockMeta>) => void;
 }
 
 const Ctx = createContext<AppLockCtx | null>(null);
@@ -45,10 +42,10 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const uid = user?.id ?? "";
 
-  const [isPinSet,   setIsPinSet]   = useState(false);
-  const [isLocked,   setIsLocked]   = useState(false);
-  const [meta,       setMeta]       = useState<LockMeta>(() => metaStore.read(""));
-  const [setupMode,  setSetupMode]  = useState<"setup" | "change" | null>(null);
+  const [isPinSet, setIsPinSet] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [meta, setMeta] = useState<LockMeta>(() => metaStore.read(""));
+  const [setupMode, setSetupMode] = useState<"setup" | "change" | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   // ── Bootstrap when uid becomes available ──────────────────────────────────
@@ -60,8 +57,8 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const pinHash  = pinStore.read(uid);
-    const m        = metaStore.read(uid);
+    const pinHash = pinStore.read(uid);
+    const m = metaStore.read(uid);
     const pinIsSet = !!pinHash;
 
     setIsPinSet(pinIsSet);
@@ -132,52 +129,67 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
-  const unlock = useCallback(async (pin: string): Promise<boolean> => {
-    if (!uid) return false;
-    const m = metaStore.read(uid);
-    if (m.lockoutUntil > Date.now()) return false;
+  const unlock = useCallback(
+    async (pin: string): Promise<boolean> => {
+      if (!uid) return false;
+      const m = metaStore.read(uid);
+      if (m.lockoutUntil > Date.now()) return false;
 
-    const storedHash = pinStore.read(uid);
-    if (!storedHash) { setIsLocked(false); return true; }
+      const storedHash = pinStore.read(uid);
+      if (!storedHash) {
+        setIsLocked(false);
+        return true;
+      }
 
-    const ok = await verifyPin(uid, pin, storedHash);
-    if (ok) {
-      metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
+      const ok = await verifyPin(uid, pin, storedHash);
+      if (ok) {
+        metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
+        setMeta(metaStore.read(uid));
+        setIsLocked(false);
+        return true;
+      }
+      const newCount = m.failedCount + 1;
+      const lockout = newCount >= 5 ? Date.now() + 30_000 : 0;
+      metaStore.write(uid, { failedCount: newCount, lockoutUntil: lockout });
       setMeta(metaStore.read(uid));
+      return false;
+    },
+    [uid],
+  );
+
+  const setupPin = useCallback(
+    async (pin: string): Promise<void> => {
+      if (!uid) return;
+      const hash = await hashPin(uid, pin);
+      pinStore.write(uid, hash);
+      metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
+      setIsPinSet(true);
       setIsLocked(false);
+      setMeta(metaStore.read(uid));
+    },
+    [uid],
+  );
+
+  const verifyCurrentPin = useCallback(
+    async (pin: string): Promise<boolean> => {
+      if (!uid) return true;
+      const storedHash = pinStore.read(uid);
+      if (!storedHash) return true;
+      return verifyPin(uid, pin, storedHash);
+    },
+    [uid],
+  );
+
+  const changePin = useCallback(
+    async (currentPin: string, newPin: string): Promise<boolean> => {
+      if (!uid) return false;
+      const ok = await verifyCurrentPin(currentPin);
+      if (!ok) return false;
+      await setupPin(newPin);
       return true;
-    }
-    const newCount = m.failedCount + 1;
-    const lockout  = newCount >= 5 ? Date.now() + 30_000 : 0;
-    metaStore.write(uid, { failedCount: newCount, lockoutUntil: lockout });
-    setMeta(metaStore.read(uid));
-    return false;
-  }, [uid]);
-
-  const setupPin = useCallback(async (pin: string): Promise<void> => {
-    if (!uid) return;
-    const hash = await hashPin(uid, pin);
-    pinStore.write(uid, hash);
-    metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
-    setIsPinSet(true);
-    setIsLocked(false);
-    setMeta(metaStore.read(uid));
-  }, [uid]);
-
-  const verifyCurrentPin = useCallback(async (pin: string): Promise<boolean> => {
-    if (!uid) return true;
-    const storedHash = pinStore.read(uid);
-    if (!storedHash) return true;
-    return verifyPin(uid, pin, storedHash);
-  }, [uid]);
-
-  const changePin = useCallback(async (currentPin: string, newPin: string): Promise<boolean> => {
-    if (!uid) return false;
-    const ok = await verifyCurrentPin(currentPin);
-    if (!ok) return false;
-    await setupPin(newPin);
-    return true;
-  }, [uid, verifyCurrentPin, setupPin]);
+    },
+    [uid, verifyCurrentPin, setupPin],
+  );
 
   const removePin = useCallback(() => {
     if (!uid) return;
@@ -194,11 +206,14 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
     setSetupMode(mode);
   }, []);
 
-  const updateMeta = useCallback((patch: Partial<LockMeta>) => {
-    if (!uid) return;
-    metaStore.write(uid, patch);
-    setMeta(metaStore.read(uid));
-  }, [uid]);
+  const updateMeta = useCallback(
+    (patch: Partial<LockMeta>) => {
+      if (!uid) return;
+      metaStore.write(uid, patch);
+      setMeta(metaStore.read(uid));
+    },
+    [uid],
+  );
 
   function handleSetupDone() {
     setSetupMode(null);
@@ -237,7 +252,11 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
 
       {/* Settings-triggered PIN setup/change */}
       {setupMode && !isLocked && (
-        <PinSetupScreen mode={setupMode} onComplete={handleSetupDone} onSkip={() => setSetupMode(null)} />
+        <PinSetupScreen
+          mode={setupMode}
+          onComplete={handleSetupDone}
+          onSkip={() => setSetupMode(null)}
+        />
       )}
 
       {/* Lock screen — no skip, highest z-index */}

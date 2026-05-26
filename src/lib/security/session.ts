@@ -82,10 +82,7 @@ export async function getVerifiedUser() {
  * Use in service functions that receive IDs from client input and need
  * to verify the caller is the owner before mutating.
  */
-export function assertOwnership(
-  currentUserId: string,
-  resourceUserId: string,
-): void {
+export function assertOwnership(currentUserId: string, resourceUserId: string): void {
   if (currentUserId !== resourceUserId) {
     // Intentionally vague — never reveal whether the resource exists
     throw new Error("Access denied");

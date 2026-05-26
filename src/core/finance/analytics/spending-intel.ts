@@ -15,12 +15,7 @@ import type {
 } from "../types";
 import { ANOMALY_Z_THRESHOLDS } from "../constants";
 import { safeDivide, mean, stdDev, zScore } from "../utils/math";
-import {
-  monthKey,
-  buildMonthBuckets,
-  expensesWithinDays,
-  isWeekend,
-} from "../utils/date";
+import { monthKey, buildMonthBuckets, expensesWithinDays, isWeekend } from "../utils/date";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -31,9 +26,7 @@ function trendDirection(changeRatio: number): TrendDirection {
 }
 
 /** Group expenses by categoryName → map of monthKey → total */
-function groupByCategoryMonth(
-  ctx: FinancialEngineContext,
-): Map<string, Map<string, number>> {
+function groupByCategoryMonth(ctx: FinancialEngineContext): Map<string, Map<string, number>> {
   const result = new Map<string, Map<string, number>>();
 
   for (const e of ctx.expenses) {
@@ -78,9 +71,12 @@ function computeCategoryTrends(ctx: FinancialEngineContext): CategoryTrend[] {
     // Annualise: skip categories with negligible spend in both windows
     if (recentTotal === 0 && priorTotal === 0) continue;
 
-    const changeRatio = priorTotal === 0
-      ? (recentTotal > 0 ? 1 : 0)
-      : safeDivide(recentTotal - priorTotal, priorTotal, 0);
+    const changeRatio =
+      priorTotal === 0
+        ? recentTotal > 0
+          ? 1
+          : 0
+        : safeDivide(recentTotal - priorTotal, priorTotal, 0);
 
     trends.push({
       categoryId: catMeta.id,
@@ -126,11 +122,7 @@ function computeAnomalies(
     if (z < ANOMALY_Z_THRESHOLDS.low) continue;
 
     const severity =
-      z >= ANOMALY_Z_THRESHOLDS.high
-        ? "high"
-        : z >= ANOMALY_Z_THRESHOLDS.medium
-          ? "medium"
-          : "low";
+      z >= ANOMALY_Z_THRESHOLDS.high ? "high" : z >= ANOMALY_Z_THRESHOLDS.medium ? "medium" : "low";
 
     const multiple = safeDivide(currentMonthPaced, historicMeanVal, 1);
     const description = `${catName} is tracking ${multiple.toFixed(1)}× your usual monthly spend`;
@@ -148,8 +140,8 @@ function computeAnomalies(
 
   // Sort by severity then z-score
   const severityOrder = { high: 0, medium: 1, low: 2 };
-  return anomalies.sort((a, b) =>
-    severityOrder[a.severity] - severityOrder[b.severity] || b.zScore - a.zScore,
+  return anomalies.sort(
+    (a, b) => severityOrder[a.severity] - severityOrder[b.severity] || b.zScore - a.zScore,
   );
 }
 
@@ -204,12 +196,14 @@ function computeMonthEndConcentration(ctx: FinancialEngineContext): number {
 
 // ─── MoM trajectory ───────────────────────────────────────────────────────────
 
-function computeSpendingTrajectory(
-  ctx: FinancialEngineContext,
-): { trajectory: SpendingIntelligence["spendingTrajectory"]; totalMoMChange: number } {
+function computeSpendingTrajectory(ctx: FinancialEngineContext): {
+  trajectory: SpendingIntelligence["spendingTrajectory"];
+  totalMoMChange: number;
+} {
   const buckets = buildMonthBuckets(ctx.asOf, 4);
   const byMonth = new Map<string, number>();
-  for (const e of ctx.expenses) byMonth.set(monthKey(e.spentAt), (byMonth.get(monthKey(e.spentAt)) ?? 0) + e.amount);
+  for (const e of ctx.expenses)
+    byMonth.set(monthKey(e.spentAt), (byMonth.get(monthKey(e.spentAt)) ?? 0) + e.amount);
 
   const totals = buckets.map((b) => byMonth.get(b.key) ?? 0);
   const [m3, m2, m1, m0] = totals; // oldest → newest (current may be partial)
@@ -251,7 +245,7 @@ export function computeSpendingIntelligence(ctx: FinancialEngineContext): Spendi
     .slice(0, 3);
 
   const highGrowthCategories = categoryTrends
-    .filter((t) => t.changeRatio > 0.20)
+    .filter((t) => t.changeRatio > 0.2)
     .map((t) => t.categoryName);
 
   return {

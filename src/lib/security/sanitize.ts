@@ -23,6 +23,7 @@ const NEW_INSTRUCTIONS_RE =
 const ROLE_PREFIX_RE = /^(system|user|assistant|human|ai)\s*:\s*/gim;
 
 // Non-printable control characters (except \t, \n, \r which are handled separately)
+// eslint-disable-next-line no-control-regex
 const CONTROL_CHARS_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
 
 /**
@@ -62,10 +63,7 @@ export function sanitizeObjectForPrompt<T extends Record<string, unknown>>(
 ): T {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
-    result[key] =
-      typeof value === "string"
-        ? sanitizeForPrompt(value, maxLength)
-        : value;
+    result[key] = typeof value === "string" ? sanitizeForPrompt(value, maxLength) : value;
   }
   return result as T;
 }
@@ -83,9 +81,7 @@ export function sanitizeArrayForPrompt<T extends Record<string, unknown>>(
   maxItems = 50,
   maxLength = 100,
 ): T[] {
-  return arr.slice(0, maxItems).map((item) =>
-    sanitizeObjectForPrompt(item, maxLength),
-  );
+  return arr.slice(0, maxItems).map((item) => sanitizeObjectForPrompt(item, maxLength));
 }
 
 /**

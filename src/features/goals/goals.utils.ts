@@ -28,10 +28,8 @@ export function getDeadlineStatus(
   const remaining = Math.max(0, Number(goal.target_amount) - Number(goal.current_amount));
   const required = monthsLeft > 0 ? remaining / monthsLeft : remaining;
 
-  if (remaining === 0)
-    return { tone: "good", label: "Goal completed" };
-  if (monthsLeft === 0)
-    return { tone: "bad", label: "Deadline reached" };
+  if (remaining === 0) return { tone: "good", label: "Goal completed" };
+  if (monthsLeft === 0) return { tone: "bad", label: "Deadline reached" };
   if (Number(goal.monthly_contribution) >= required)
     return { tone: "good", label: `On track · ${money(convert(required), currency)}/mo needed` };
 
@@ -68,14 +66,13 @@ export function getCoachMessage(
   convert: (n: number) => number = (n) => n,
 ): string {
   const totalMonthly = goals.reduce((s, g) => s + Number(g.monthly_contribution), 0);
-  const completed    = goals.filter((g) => Number(g.current_amount) >= Number(g.target_amount)).length;
-  const behind       = goals.filter((g) => {
+  const completed = goals.filter((g) => Number(g.current_amount) >= Number(g.target_amount)).length;
+  const behind = goals.filter((g) => {
     if (!g.deadline) return false;
     const dl = new Date(g.deadline);
     const monthsLeft = Math.max(
       0,
-      (dl.getFullYear() - new Date().getFullYear()) * 12 +
-        (dl.getMonth() - new Date().getMonth()),
+      (dl.getFullYear() - new Date().getFullYear()) * 12 + (dl.getMonth() - new Date().getMonth()),
     );
     const remaining = Math.max(0, Number(g.target_amount) - Number(g.current_amount));
     return monthsLeft > 0 && Number(g.monthly_contribution) < remaining / monthsLeft;
@@ -101,7 +98,7 @@ export function getContributionToast(
   convert: (n: number) => number = (n) => n,
 ): string {
   if (newPct >= 100) return "🎉 Goal completed! Congratulations!";
-  if (newPct >= 75)  return "Great! 75%+ of your goal!";
-  if (newPct >= 50)  return "Halfway there 💪";
+  if (newPct >= 75) return "Great! 75%+ of your goal!";
+  if (newPct >= 50) return "Halfway there 💪";
   return `+${money(convert(amount), currency)} added`;
 }

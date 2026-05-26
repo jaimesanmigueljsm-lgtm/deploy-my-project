@@ -27,18 +27,15 @@ interface InsightItem {
 // ─── Tone styles ──────────────────────────────────────────────────────────────
 
 const TONE_ICON_CLASS: Record<InsightTone, string> = {
-  warn:   "bg-warn-soft text-warn",
-  sky:    "bg-sky-soft text-sky",
-  mint:   "bg-positive-soft text-positive",
+  warn: "bg-warn-soft text-warn",
+  sky: "bg-sky-soft text-sky",
+  mint: "bg-positive-soft text-positive",
   violet: "bg-violet-soft text-violet",
 };
 
 // ─── Build insight items from engine output ───────────────────────────────────
 
-function buildInsights(
-  intel: SpendingIntelligence,
-  t: (k: string) => string,
-): InsightItem[] {
+function buildInsights(intel: SpendingIntelligence, t: (k: string) => string): InsightItem[] {
   const items: InsightItem[] = [];
 
   for (const anomaly of intel.spendingAnomalies.slice(0, 2)) {
@@ -69,7 +66,10 @@ function buildInsights(
       id: "month-end-concentration",
       tone: "sky",
       icon: <Calendar className="size-4" />,
-      title: t("insights.monthend.title").replace("{pct}", String(Math.round(intel.monthEndConcentration * 100))),
+      title: t("insights.monthend.title").replace(
+        "{pct}",
+        String(Math.round(intel.monthEndConcentration * 100)),
+      ),
       body: t("insights.monthend.body"),
     });
   }
@@ -80,7 +80,10 @@ function buildInsights(
       tone: "warn",
       icon: <TrendingUp className="size-4" />,
       title: t("insights.traj.bad.title"),
-      body: t("insights.traj.bad.body").replace("{pct}", (intel.totalSpendMoMChange * 100).toFixed(1)),
+      body: t("insights.traj.bad.body").replace(
+        "{pct}",
+        (intel.totalSpendMoMChange * 100).toFixed(1),
+      ),
     });
   } else if (intel.spendingTrajectory === "improving") {
     items.push({
@@ -111,7 +114,12 @@ function buildInsights(
 function SmartInsightItem({ item }: { item: InsightItem }) {
   return (
     <div className="flex items-start gap-3 px-4 py-3.5 border-b border-border-subtle last:border-0">
-      <div className={cn("size-8 rounded-xl grid place-items-center shrink-0 mt-0.5", TONE_ICON_CLASS[item.tone])}>
+      <div
+        className={cn(
+          "size-8 rounded-xl grid place-items-center shrink-0 mt-0.5",
+          TONE_ICON_CLASS[item.tone],
+        )}
+      >
         {item.icon}
       </div>
       <div className="min-w-0">
@@ -126,7 +134,10 @@ export function SmartInsightsSkeleton() {
   return (
     <div className="card-flat overflow-hidden">
       {[0, 1].map((i) => (
-        <div key={i} className="flex items-start gap-3 px-4 py-3.5 border-b border-border-subtle last:border-0">
+        <div
+          key={i}
+          className="flex items-start gap-3 px-4 py-3.5 border-b border-border-subtle last:border-0"
+        >
           <Skeleton className="size-8 rounded-xl shrink-0" />
           <div className="flex-1 space-y-1.5 pt-1">
             <Skeleton className="h-3 w-3/4 rounded" />
@@ -138,11 +149,7 @@ export function SmartInsightsSkeleton() {
   );
 }
 
-export function SmartInsightsFeed({
-  intelligence,
-}: {
-  intelligence: SpendingIntelligence;
-}) {
+export function SmartInsightsFeed({ intelligence }: { intelligence: SpendingIntelligence }) {
   const { t } = useT();
   const items = buildInsights(intelligence, t);
   if (items.length === 0) return null;

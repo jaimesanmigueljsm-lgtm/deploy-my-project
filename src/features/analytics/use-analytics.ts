@@ -16,37 +16,37 @@ import {
  */
 export function useAnalyticsData() {
   const { user } = useAuth();
-  const uid       = user?.id ?? "";
+  const uid = user?.id ?? "";
   const windowStart = sixMonthWindowStart();
 
   const results = useQueries({
     queries: [
       {
         queryKey: queryKeys.analytics(uid, windowStart),
-        queryFn:  () => fetchSixMonthExpenses(uid, windowStart),
-        enabled:  !!uid,
+        queryFn: () => fetchSixMonthExpenses(uid, windowStart),
+        enabled: !!uid,
         staleTime: 5 * 60_000,
         placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.categories(uid),
-        queryFn:  () => fetchAnalyticsCategories(uid),
-        enabled:  !!uid,
+        queryFn: () => fetchAnalyticsCategories(uid),
+        enabled: !!uid,
         staleTime: 5 * 60_000,
         placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.profile(uid),
-        queryFn:  () => fetchProfile(uid),
-        enabled:  !!uid,
+        queryFn: () => fetchProfile(uid),
+        enabled: !!uid,
         staleTime: 5 * 60_000,
         select: (p: Awaited<ReturnType<typeof fetchProfile>>) => p?.currency ?? "EUR",
         placeholderData: keepPreviousData,
       },
       {
         queryKey: queryKeys.analyticsIncomes(uid, windowStart),
-        queryFn:  () => fetchSixMonthIncomes(uid, windowStart),
-        enabled:  !!uid,
+        queryFn: () => fetchSixMonthIncomes(uid, windowStart),
+        enabled: !!uid,
         staleTime: 5 * 60_000,
         placeholderData: keepPreviousData,
       },
@@ -56,12 +56,14 @@ export function useAnalyticsData() {
   const [expensesQ, categoriesQ, currencyQ, incomesQ] = results;
 
   return {
-    expenses:   expensesQ.data ?? [],
-    incomes:    (incomesQ.data as { amount: number; received_at: string; source: string }[] | undefined) ?? [],
+    expenses: expensesQ.data ?? [],
+    incomes:
+      (incomesQ.data as { amount: number; received_at: string; source: string }[] | undefined) ??
+      [],
     categories: categoriesQ.data ?? [],
-    currency:   (currencyQ.data as string | undefined) ?? "EUR",
-    isLoading:  results.some((r) => r.isLoading),
-    isError:    results.some((r) => r.isError),
+    currency: (currencyQ.data as string | undefined) ?? "EUR",
+    isLoading: results.some((r) => r.isLoading),
+    isError: results.some((r) => r.isError),
     windowStart,
   };
 }

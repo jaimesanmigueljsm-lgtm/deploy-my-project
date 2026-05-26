@@ -127,9 +127,7 @@ export function previewUsername(firstName: string, lastName1: string): string {
  * Calls the find_user_by_username SECURITY DEFINER RPC.
  * Returns null if not found.
  */
-export async function searchUserByUsername(
-  username: string,
-): Promise<UserSearchResult | null> {
+export async function searchUserByUsername(username: string): Promise<UserSearchResult | null> {
   const normalised = normaliseUsername(username.replace(/^@/, ""));
   if (normalised.length < 3) return null;
 
@@ -143,10 +141,7 @@ export async function searchUserByUsername(
 
 // ─── Invitations — sending ────────────────────────────────────────────────────
 
-export async function sendFamilyInvite(
-  familyId: string,
-  username: string,
-): Promise<string> {
+export async function sendFamilyInvite(familyId: string, username: string): Promise<string> {
   const normalised = normaliseUsername(username.replace(/^@/, ""));
   const { data, error } = await supabase.rpc("send_family_invite", {
     p_family_id: familyId,
@@ -180,9 +175,7 @@ export async function rejectFamilyInvite(invitationId: string): Promise<void> {
 
 // ─── Invitations — owner view ─────────────────────────────────────────────────
 
-export async function getFamilySentInvitations(
-  familyId: string,
-): Promise<SentInvitation[]> {
+export async function getFamilySentInvitations(familyId: string): Promise<SentInvitation[]> {
   const { data, error } = await supabase.rpc("get_family_sent_invitations", {
     p_family_id: familyId,
   });
@@ -192,17 +185,10 @@ export async function getFamilySentInvitations(
 
 // ─── Family data ─────────────────────────────────────────────────────────────
 
-export async function loadFamilyData(
-  familyId: string,
-  currentUserId: string,
-): Promise<FamilyData> {
+export async function loadFamilyData(familyId: string, currentUserId: string): Promise<FamilyData> {
   const [familyRes, membersRes, goalsRes, profilesRes] = await Promise.all([
     supabase.from("families").select("*").eq("id", familyId).single(),
-    supabase
-      .from("family_members")
-      .select("*")
-      .eq("family_id", familyId)
-      .order("created_at"),
+    supabase.from("family_members").select("*").eq("family_id", familyId).order("created_at"),
     supabase
       .from("shared_goals")
       .select("*")
@@ -265,9 +251,7 @@ export async function loadFamilyData(
 
 // ─── Family profile (¿Quiénes somos?) ────────────────────────────────────────
 
-export async function getFamilyMembersProfiles(
-  familyId: string,
-): Promise<FamilyMemberProfile[]> {
+export async function getFamilyMembersProfiles(familyId: string): Promise<FamilyMemberProfile[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc("get_family_members_profiles", {
     p_family_id: familyId,
@@ -276,10 +260,7 @@ export async function getFamilyMembersProfiles(
   return (data ?? []) as FamilyMemberProfile[];
 }
 
-export async function updateFamilyName(
-  familyId: string,
-  name: string,
-): Promise<void> {
+export async function updateFamilyName(familyId: string, name: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).rpc("update_family_name", {
     p_family_id: familyId,
@@ -308,10 +289,7 @@ export async function leaveFamily(_userId: string): Promise<void> {
 
 // ─── Family creation ──────────────────────────────────────────────────────────
 
-export async function createFamily(
-  _userId: string,
-  name: string,
-): Promise<string> {
+export async function createFamily(_userId: string, name: string): Promise<string> {
   // SECURITY DEFINER RPC: atomically inserts into families + family_members +
   // updates profiles.family_id in one transaction. The previous 3-call pattern
   // could leave an orphaned family row if step 2 or 3 failed.
@@ -359,7 +337,7 @@ export async function addGoalContribution(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).rpc("add_shared_goal_contribution", {
     p_goal_id: goalId,
-    p_delta:   delta,
+    p_delta: delta,
   });
   if (error) throw new Error(error.message);
 }

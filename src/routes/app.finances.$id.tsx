@@ -12,8 +12,15 @@ export const Route = createFileRoute("/app/finances/$id")({
 });
 
 type Investment = {
-  id: string; type: string; ticker: string | null; name: string;
-  quantity: number; avg_cost: number; current_price: number; currency: string; notes: string | null;
+  id: string;
+  type: string;
+  ticker: string | null;
+  name: string;
+  quantity: number;
+  avg_cost: number;
+  current_price: number;
+  currency: string;
+  notes: string | null;
 };
 
 function HoldingDetail() {
@@ -36,12 +43,19 @@ function HoldingDetail() {
     })();
   }, [id]);
 
-  if (loading) return <div className="px-4 pt-6"><div className="h-48 rounded-2xl bg-muted animate-pulse" /></div>;
+  if (loading)
+    return (
+      <div className="px-4 pt-6">
+        <div className="h-48 rounded-2xl bg-muted animate-pulse" />
+      </div>
+    );
   if (!inv) {
     return (
       <div className="px-4 pt-6">
         <p className="text-sm text-muted-foreground">Holding not found.</p>
-        <Link to="/app/finances" className="text-sm font-medium underline mt-2 inline-block">Back</Link>
+        <Link to="/app/finances" className="text-sm font-medium underline mt-2 inline-block">
+          Back
+        </Link>
       </div>
     );
   }
@@ -59,7 +73,9 @@ function HoldingDetail() {
           <ArrowLeft className="size-4" />
         </Link>
         <div className="text-center">
-          <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{inv.type}</div>
+          <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+            {inv.type}
+          </div>
           <div className="text-sm font-semibold">{inv.ticker ?? inv.name}</div>
         </div>
         <div className="size-10" />
@@ -67,10 +83,13 @@ function HoldingDetail() {
 
       <div className="card-soft p-5 gradient-net text-background">
         <p className="text-xs opacity-60">{inv.name}</p>
-        <div className="num-display text-[40px] font-semibold mt-0.5">{money(value, inv.currency)}</div>
+        <div className="num-display text-[40px] font-semibold mt-0.5">
+          {money(value, inv.currency)}
+        </div>
         <div className="flex items-center gap-2 mt-1 text-xs">
           <span className={`num font-medium ${pl >= 0 ? "text-positive" : "text-negative"}`}>
-            {pl >= 0 ? "+" : ""}{money(pl, inv.currency)}
+            {pl >= 0 ? "+" : ""}
+            {money(pl, inv.currency)}
           </span>
           <TrendBadge value={plPct} className="!bg-white/10 !text-white" />
         </div>
@@ -87,10 +106,23 @@ function HoldingDetail() {
               <XAxis dataKey="d" hide />
               <Tooltip
                 cursor={chartCursor}
-                contentStyle={{ borderRadius: 12, border: "none", background: "oklch(0.18 0.02 255)", color: "white", fontSize: 11, padding: "6px 10px" }}
+                contentStyle={{
+                  borderRadius: 12,
+                  border: "none",
+                  background: "oklch(0.18 0.02 255)",
+                  color: "white",
+                  fontSize: 11,
+                  padding: "6px 10px",
+                }}
                 formatter={((v: unknown) => money(Number(v), inv.currency)) as never}
               />
-              <Area type="monotone" dataKey="v" stroke={CHART_COLORS[0]} strokeWidth={2} fill="url(#hd)" />
+              <Area
+                type="monotone"
+                dataKey="v"
+                stroke={CHART_COLORS[0]}
+                strokeWidth={2}
+                fill="url(#hd)"
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -102,7 +134,10 @@ function HoldingDetail() {
         <Row label="Current price" value={money(inv.current_price, inv.currency)} />
         <Row label="Cost basis" value={money(cost, inv.currency)} />
         <Row label="Market value" value={money(value, inv.currency)} />
-        <Row label="P/L" value={`${pl >= 0 ? "+" : ""}${money(pl, inv.currency)} · ${pct(plPct, 2)}`} />
+        <Row
+          label="P/L"
+          value={`${pl >= 0 ? "+" : ""}${money(pl, inv.currency)} · ${pct(plPct, 2)}`}
+        />
       </div>
 
       <div className="card-soft p-4 bg-foreground text-background flex gap-3">
@@ -110,7 +145,9 @@ function HoldingDetail() {
           <TrendingUp className="size-4" />
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider opacity-60 font-medium">Position insight</p>
+          <p className="text-[10px] uppercase tracking-wider opacity-60 font-medium">
+            Position insight
+          </p>
           <p className="text-sm mt-0.5 leading-snug">
             {pl >= 0
               ? `If this rate continues, your position could reach ${money(value * 1.1, inv.currency)} in 12 months.`

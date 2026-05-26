@@ -3,11 +3,39 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Bell, Shield, CreditCard, Database, Moon, Sun, LogOut, ChevronRight,
-  Sparkles, Globe, Languages, Check, TrendingUp,
-  Camera, AtSign, Copy, MapPin, User, Loader2, XCircle, CheckCircle2, CalendarDays,
-  Eye, EyeOff, KeyRound, Lock, Timer, Fingerprint, Clock,
-  Tags, Trash2, Plus, RotateCcw,
+  Bell,
+  Shield,
+  CreditCard,
+  Database,
+  Moon,
+  Sun,
+  LogOut,
+  ChevronRight,
+  Sparkles,
+  Globe,
+  Languages,
+  Check,
+  TrendingUp,
+  Camera,
+  AtSign,
+  Copy,
+  MapPin,
+  User,
+  Loader2,
+  XCircle,
+  CheckCircle2,
+  CalendarDays,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Lock,
+  Timer,
+  Fingerprint,
+  Clock,
+  Tags,
+  Trash2,
+  Plus,
+  RotateCcw,
 } from "lucide-react";
 import { useAppLock } from "@/features/app-lock/use-app-lock";
 import { Button } from "@/components/ui/button";
@@ -19,7 +47,10 @@ import { toast } from "sonner";
 import { SectionHeader, CategoryDot } from "@/components/nest";
 import { useT } from "@/i18n";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, useUpdateProfile } from "@/features/profile/use-profile";
@@ -30,8 +61,12 @@ import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { readUserBaseCurrencyOrNull, writeUserBaseCurrency } from "@/lib/exchange-rates";
 import {
-  fetchCategories, addCategory, deleteCategory, resetCategoriesToDefaults,
-  type AddCategoryPayload, type Category,
+  fetchCategories,
+  addCategory,
+  deleteCategory,
+  resetCategoriesToDefaults,
+  type AddCategoryPayload,
+  type Category,
 } from "@/features/budget/budget.service";
 import { CATEGORY_NAME_TO_KEY } from "@/i18n/translations";
 
@@ -40,76 +75,76 @@ export const Route = createFileRoute("/app/settings")({
 });
 
 const CURRENCIES = [
-  { code: "EUR", symbol: "€",  name: "Euro" },
-  { code: "USD", symbol: "$",  name: "US Dollar" },
-  { code: "GBP", symbol: "£",  name: "British Pound" },
+  { code: "EUR", symbol: "€", name: "Euro" },
+  { code: "USD", symbol: "$", name: "US Dollar" },
+  { code: "GBP", symbol: "£", name: "British Pound" },
   { code: "CHF", symbol: "Fr", name: "Swiss Franc" },
-  { code: "JPY", symbol: "¥",  name: "Japanese Yen" },
+  { code: "JPY", symbol: "¥", name: "Japanese Yen" },
   { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
   { code: "AUD", symbol: "A$", name: "Australian Dollar" },
-  { code: "NZD", symbol: "NZ$",name: "New Zealand Dollar" },
+  { code: "NZD", symbol: "NZ$", name: "New Zealand Dollar" },
   { code: "SEK", symbol: "kr", name: "Swedish Krona" },
   { code: "NOK", symbol: "kr", name: "Norwegian Krone" },
   { code: "DKK", symbol: "kr", name: "Danish Krone" },
   { code: "PLN", symbol: "zł", name: "Polish Złoty" },
   { code: "CZK", symbol: "Kč", name: "Czech Koruna" },
   { code: "HUF", symbol: "Ft", name: "Hungarian Forint" },
-  { code: "RON", symbol: "lei",name: "Romanian Leu" },
-  { code: "TRY", symbol: "₺",  name: "Turkish Lira" },
-  { code: "INR", symbol: "₹",  name: "Indian Rupee" },
-  { code: "CNY", symbol: "¥",  name: "Chinese Yuan" },
-  { code: "HKD", symbol: "HK$",name: "Hong Kong Dollar" },
+  { code: "RON", symbol: "lei", name: "Romanian Leu" },
+  { code: "TRY", symbol: "₺", name: "Turkish Lira" },
+  { code: "INR", symbol: "₹", name: "Indian Rupee" },
+  { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
+  { code: "HKD", symbol: "HK$", name: "Hong Kong Dollar" },
   { code: "SGD", symbol: "S$", name: "Singapore Dollar" },
   { code: "BRL", symbol: "R$", name: "Brazilian Real" },
-  { code: "MXN", symbol: "$",  name: "Mexican Peso" },
-  { code: "ARS", symbol: "$",  name: "Argentine Peso" },
-  { code: "ZAR", symbol: "R",  name: "South African Rand" },
-  { code: "AED", symbol: "د.إ",name: "UAE Dirham" },
+  { code: "MXN", symbol: "$", name: "Mexican Peso" },
+  { code: "ARS", symbol: "$", name: "Argentine Peso" },
+  { code: "ZAR", symbol: "R", name: "South African Rand" },
+  { code: "AED", symbol: "د.إ", name: "UAE Dirham" },
 ] as const;
 
 const AUTO_LOCK_OPTIONS = [
-  { value: -1,      labelKey: "settings.appLock.autoLock.immediately" },
-  { value: 60_000,  labelKey: "settings.appLock.autoLock.1min"        },
-  { value: 120_000, labelKey: "settings.appLock.autoLock.2min"        },
-  { value: 300_000, labelKey: "settings.appLock.autoLock.5min"        },
-  { value: 0,       labelKey: "settings.appLock.autoLock.never"       },
+  { value: -1, labelKey: "settings.appLock.autoLock.immediately" },
+  { value: 60_000, labelKey: "settings.appLock.autoLock.1min" },
+  { value: 120_000, labelKey: "settings.appLock.autoLock.2min" },
+  { value: 300_000, labelKey: "settings.appLock.autoLock.5min" },
+  { value: 0, labelKey: "settings.appLock.autoLock.never" },
 ] as const;
 
 const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fixed" }[] = [
-  { nameKey: "fixed.rent",         color: "sky",    kind: "fixed"    },
-  { nameKey: "fixed.mortgage",     color: "sky",    kind: "fixed"    },
-  { nameKey: "fixed.electricity",  color: "warn",   kind: "fixed"    },
-  { nameKey: "fixed.water",        color: "sky",    kind: "fixed"    },
-  { nameKey: "fixed.gas",          color: "warn",   kind: "fixed"    },
-  { nameKey: "fixed.phone",        color: "mint",   kind: "fixed"    },
-  { nameKey: "fixed.gym",          color: "mint",   kind: "fixed"    },
-  { nameKey: "fixed.subscriptions",color: "violet", kind: "fixed"    },
-  { nameKey: "fixed.insurance",    color: "sky",    kind: "fixed"    },
-  { nameKey: "fixed.transport",    color: "sky",    kind: "fixed"    },
-  { nameKey: "fixed.childcare",    color: "mint",   kind: "fixed"    },
-  { nameKey: "variable.others",    color: "mint",   kind: "variable" },
-  { nameKey: "variable.leisure",   color: "violet", kind: "variable" },
-  { nameKey: "variable.beauty",    color: "violet", kind: "variable" },
-  { nameKey: "variable.home",      color: "sky",    kind: "variable" },
-  { nameKey: "variable.health",    color: "mint",   kind: "variable" },
-  { nameKey: "variable.travel",    color: "sky",    kind: "variable" },
-  { nameKey: "variable.finance",   color: "violet", kind: "variable" },
-  { nameKey: "variable.transport", color: "sky",    kind: "variable" },
-  { nameKey: "variable.clothing",  color: "warn",   kind: "variable" },
-  { nameKey: "variable.pets",      color: "mint",   kind: "variable" },
-  { nameKey: "variable.loan",      color: "violet", kind: "variable" },
+  { nameKey: "fixed.rent", color: "sky", kind: "fixed" },
+  { nameKey: "fixed.mortgage", color: "sky", kind: "fixed" },
+  { nameKey: "fixed.electricity", color: "warn", kind: "fixed" },
+  { nameKey: "fixed.water", color: "sky", kind: "fixed" },
+  { nameKey: "fixed.gas", color: "warn", kind: "fixed" },
+  { nameKey: "fixed.phone", color: "mint", kind: "fixed" },
+  { nameKey: "fixed.gym", color: "mint", kind: "fixed" },
+  { nameKey: "fixed.subscriptions", color: "violet", kind: "fixed" },
+  { nameKey: "fixed.insurance", color: "sky", kind: "fixed" },
+  { nameKey: "fixed.transport", color: "sky", kind: "fixed" },
+  { nameKey: "fixed.childcare", color: "mint", kind: "fixed" },
+  { nameKey: "variable.others", color: "mint", kind: "variable" },
+  { nameKey: "variable.leisure", color: "violet", kind: "variable" },
+  { nameKey: "variable.beauty", color: "violet", kind: "variable" },
+  { nameKey: "variable.home", color: "sky", kind: "variable" },
+  { nameKey: "variable.health", color: "mint", kind: "variable" },
+  { nameKey: "variable.travel", color: "sky", kind: "variable" },
+  { nameKey: "variable.finance", color: "violet", kind: "variable" },
+  { nameKey: "variable.transport", color: "sky", kind: "variable" },
+  { nameKey: "variable.clothing", color: "warn", kind: "variable" },
+  { nameKey: "variable.pets", color: "mint", kind: "variable" },
+  { nameKey: "variable.loan", color: "violet", kind: "variable" },
 ];
 
 const CAT_COLORS = [
-  { value: "mint",   cls: "bg-positive" },
-  { value: "sky",    cls: "bg-sky" },
-  { value: "warn",   cls: "bg-warn" },
+  { value: "mint", cls: "bg-positive" },
+  { value: "sky", cls: "bg-sky" },
+  { value: "warn", cls: "bg-warn" },
   { value: "violet", cls: "bg-violet" },
 ];
 
 function relativeTime(ts: number): string {
   const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 60)  return `${diff}s ago`;
+  if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
@@ -121,15 +156,19 @@ function Settings() {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
-  const [openPrivacy,     setOpenPrivacy]     = useState(false);
-  const [openSecurity,    setOpenSecurity]    = useState(false);
-  const [openCategories,  setOpenCategories]  = useState(false);
+  const [openPrivacy, setOpenPrivacy] = useState(false);
+  const [openSecurity, setOpenSecurity] = useState(false);
+  const [openCategories, setOpenCategories] = useState(false);
   const { isPinSet, meta, openSetup, updateMeta } = useAppLock();
 
   function toggleTheme() {
     const next = profile?.theme === "dark" ? "light" : "dark";
     document.documentElement.classList.toggle("dark", next === "dark");
-    try { localStorage.setItem("nest.theme", next); } catch { /* sandboxed */ }
+    try {
+      localStorage.setItem("nest.theme", next);
+    } catch {
+      /* sandboxed */
+    }
     updateProfile.mutate({ theme: next });
   }
 
@@ -146,17 +185,24 @@ function Settings() {
 
   if (isLoading || !profile) return <SettingsSkeleton />;
 
-  const email     = user?.email ?? "";
-  const initials  = (profile.full_name ?? email)
-    .split(/[ @.]/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase()).join("") || "U";
+  const email = user?.email ?? "";
+  const initials =
+    (profile.full_name ?? email)
+      .split(/[ @.]/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s: string) => s[0]?.toUpperCase())
+      .join("") || "U";
 
-  const notifPrefs    = (profile.notification_prefs as Record<string, boolean> | null) ?? {};
+  const notifPrefs = (profile.notification_prefs as Record<string, boolean> | null) ?? {};
   const currentLocale = locales.find((l) => l.code === locale)!;
 
   return (
     <div className="px-4 pt-5 space-y-4 animate-rise">
       <header className="pt-2">
-        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{t("settings.account")}</p>
+        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+          {t("settings.account")}
+        </p>
         <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("settings.you")}</h1>
       </header>
 
@@ -177,23 +223,34 @@ function Settings() {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-base font-semibold truncate">{profile.full_name ?? t("settings.addName")}</div>
+          <div className="text-base font-semibold truncate">
+            {profile.full_name ?? t("settings.addName")}
+          </div>
           <div className="text-xs text-muted-foreground truncate">{email}</div>
           {profile.financial_username?.trim() && (
-            <div className="text-xs text-muted-foreground font-mono mt-0.5">@{profile.financial_username}</div>
+            <div className="text-xs text-muted-foreground font-mono mt-0.5">
+              @{profile.financial_username}
+            </div>
           )}
         </div>
         <ChevronRight className="size-4 text-muted-foreground shrink-0" />
       </button>
 
       {/* Plan */}
-      <div className="card-soft p-5 relative overflow-hidden" style={{ background: "oklch(0.18 0.02 250)", color: "white" }}>
+      <div
+        className="card-soft p-5 relative overflow-hidden"
+        style={{ background: "oklch(0.18 0.02 250)", color: "white" }}
+      >
         <div className="absolute top-0 right-0 size-32 gradient-mint opacity-30 rounded-full blur-3xl -translate-y-12 translate-x-8" />
         <div className="relative flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-60 font-medium">{t("settings.plan")}</p>
+            <p className="text-[10px] uppercase tracking-wider opacity-60 font-medium">
+              {t("settings.plan")}
+            </p>
             <div className="text-lg font-semibold mt-0.5 text-white">NOOLY Premium</div>
-            <p className="text-xs opacity-80 mt-1 text-white">Unlimited insights · Family · Investments</p>
+            <p className="text-xs opacity-80 mt-1 text-white">
+              Unlimited insights · Family · Investments
+            </p>
           </div>
           <Sparkles className="size-6 opacity-90 text-white" />
         </div>
@@ -240,7 +297,8 @@ function Settings() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-muted-foreground font-mono">
-                    {CURRENCIES.find(c => c.code === profile.currency)?.symbol ?? ""} {profile.currency}
+                    {CURRENCIES.find((c) => c.code === profile.currency)?.symbol ?? ""}{" "}
+                    {profile.currency}
                   </span>
                   <ChevronRight className="size-4 text-muted-foreground" />
                 </div>
@@ -266,7 +324,9 @@ function Settings() {
             </DropdownMenuContent>
           </DropdownMenu>
           <RowToggle
-            icon={profile.theme === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+            icon={
+              profile.theme === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />
+            }
             label={t("settings.darkMode")}
             value={profile.theme === "dark"}
             onChange={toggleTheme}
@@ -291,13 +351,25 @@ function Settings() {
       <section>
         <SectionHeader title={t("settings.notifications")} />
         <div className="card-flat divide-y divide-border-subtle">
-          <RowToggle icon={<Bell className="size-4" />} label={t("settings.alerts")}
-            value={notifPrefs.alerts ?? true} onChange={() => togglePref("alerts")} />
-          <RowToggle icon={<CalendarDays className="size-4" />} label={t("settings.monthly")}
+          <RowToggle
+            icon={<Bell className="size-4" />}
+            label={t("settings.alerts")}
+            value={notifPrefs.alerts ?? true}
+            onChange={() => togglePref("alerts")}
+          />
+          <RowToggle
+            icon={<CalendarDays className="size-4" />}
+            label={t("settings.monthly")}
             desc={t("settings.monthly.desc")}
-            value={notifPrefs.monthly ?? true} onChange={() => togglePref("monthly")} />
-          <RowToggle icon={<Sparkles className="size-4" />} label={t("settings.aiInsights")}
-            value={notifPrefs.insights ?? true} onChange={() => togglePref("insights")} />
+            value={notifPrefs.monthly ?? true}
+            onChange={() => togglePref("monthly")}
+          />
+          <RowToggle
+            icon={<Sparkles className="size-4" />}
+            label={t("settings.aiInsights")}
+            value={notifPrefs.insights ?? true}
+            onChange={() => togglePref("insights")}
+          />
         </div>
       </section>
 
@@ -326,7 +398,10 @@ function Settings() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-muted-foreground">
-                      {t(AUTO_LOCK_OPTIONS.find((o) => o.value === meta.autoLockMs)?.labelKey ?? "settings.appLock.autoLock.2min")}
+                      {t(
+                        AUTO_LOCK_OPTIONS.find((o) => o.value === meta.autoLockMs)?.labelKey ??
+                          "settings.appLock.autoLock.2min",
+                      )}
                     </span>
                     <ChevronRight className="size-4 text-muted-foreground" />
                   </div>
@@ -372,8 +447,12 @@ function Settings() {
                 <Clock className="size-4" />
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">{t("settings.appLock.lastUnlock")}</span>
-                <p className="text-[11px] text-muted-foreground">{relativeTime(meta.lastActiveAt)}</p>
+                <span className="text-sm text-muted-foreground">
+                  {t("settings.appLock.lastUnlock")}
+                </span>
+                <p className="text-[11px] text-muted-foreground">
+                  {relativeTime(meta.lastActiveAt)}
+                </p>
               </div>
             </div>
           )}
@@ -384,9 +463,24 @@ function Settings() {
       <section>
         <SectionHeader title={t("settings.security")} />
         <div className="card-flat divide-y divide-border-subtle">
-          <Row icon={<Shield className="size-4" />} label={t("settings.security.label")} value="Email & password" onClick={() => setOpenSecurity(true)} />
-          <Row icon={<CreditCard className="size-4" />} label={t("settings.bankConnections")} value="None" onClick={() => toast("Coming soon")} />
-          <Row icon={<Database className="size-4" />} label={t("settings.privacy")} value={t("settings.privacy.value")} onClick={() => setOpenPrivacy(true)} />
+          <Row
+            icon={<Shield className="size-4" />}
+            label={t("settings.security.label")}
+            value="Email & password"
+            onClick={() => setOpenSecurity(true)}
+          />
+          <Row
+            icon={<CreditCard className="size-4" />}
+            label={t("settings.bankConnections")}
+            value="None"
+            onClick={() => toast("Coming soon")}
+          />
+          <Row
+            icon={<Database className="size-4" />}
+            label={t("settings.privacy")}
+            value={t("settings.privacy.value")}
+            onClick={() => setOpenPrivacy(true)}
+          />
         </div>
       </section>
 
@@ -394,7 +488,9 @@ function Settings() {
         <LogOut className="size-4 mr-2" /> {t("settings.signOut")}
       </Button>
 
-      <p className="text-[10px] text-muted-foreground text-center pt-2">NOOLY · v0.1.0-beta · Closed beta</p>
+      <p className="text-[10px] text-muted-foreground text-center pt-2">
+        NOOLY · v0.1.0-beta · Closed beta
+      </p>
 
       <ProfileEditDialog
         open={openPrivacy}
@@ -420,7 +516,9 @@ function Settings() {
 // ─── CategoriesDialog ─────────────────────────────────────────────────────────
 
 function CategoriesDialog({
-  open, onClose, userId,
+  open,
+  onClose,
+  userId,
 }: {
   open: boolean;
   onClose: () => void;
@@ -435,21 +533,24 @@ function CategoriesDialog({
     enabled: open && !!userId,
   });
 
-  const [addSection, setAddSection]   = useState<"variable" | "fixed" | null>(null);
-  const [addName, setAddName]         = useState("");
-  const [addColor, setAddColor]       = useState("mint");
+  const [addSection, setAddSection] = useState<"variable" | "fixed" | null>(null);
+  const [addName, setAddName] = useState("");
+  const [addColor, setAddColor] = useState("mint");
   const [confirmReset, setConfirmReset] = useState(false);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: queryKeys.categories(userId) });
 
   const addMut = useMutation({
     mutationFn: (payload: AddCategoryPayload) => addCategory(userId, payload),
-    onSuccess: () => { invalidate(); setAddSection(null); setAddName(""); },
-    onError: (err: Error) => toast.error(
-      err.message === "already_exists"
-        ? t("settings.categories.error.duplicate")
-        : err.message
-    ),
+    onSuccess: () => {
+      invalidate();
+      setAddSection(null);
+      setAddName("");
+    },
+    onError: (err: Error) =>
+      toast.error(
+        err.message === "already_exists" ? t("settings.categories.error.duplicate") : err.message,
+      ),
   });
 
   const deleteMut = useMutation({
@@ -460,7 +561,10 @@ function CategoriesDialog({
 
   const resetMut = useMutation({
     mutationFn: (rows: AddCategoryPayload[]) => resetCategoriesToDefaults(userId, rows),
-    onSuccess: () => { invalidate(); setConfirmReset(false); },
+    onSuccess: () => {
+      invalidate();
+      setConfirmReset(false);
+    },
     onError: (err: Error) => toast.error(err.message),
   });
 
@@ -491,19 +595,23 @@ function CategoriesDialog({
   }
 
   const variable = cats.filter((c) => c.kind === "variable");
-  const fixed    = cats.filter((c) => c.kind === "fixed");
+  const fixed = cats.filter((c) => c.kind === "fixed");
 
   function renderSection(items: Category[], section: "variable" | "fixed") {
-    const label = section === "variable"
-      ? t("settings.categories.section.variable")
-      : t("settings.categories.section.fixed");
+    const label =
+      section === "variable"
+        ? t("settings.categories.section.variable")
+        : t("settings.categories.section.fixed");
     return (
       <div className="space-y-0.5">
         <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium px-1 pb-1">
           {label}
         </p>
         {items.map((c) => (
-          <div key={c.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-muted/40 transition">
+          <div
+            key={c.id}
+            className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-muted/40 transition"
+          >
             <div className="flex items-center gap-2.5 min-w-0">
               <CategoryDot color={c.color} size="md" />
               <span className="text-sm truncate">
@@ -539,7 +647,9 @@ function CategoriesDialog({
                   key={cl.value}
                   onClick={() => setAddColor(cl.value)}
                   className={`size-5 rounded-full ${cl.cls} transition-all ${
-                    addColor === cl.value ? "ring-2 ring-offset-1 ring-foreground scale-110" : "opacity-50"
+                    addColor === cl.value
+                      ? "ring-2 ring-offset-1 ring-foreground scale-110"
+                      : "opacity-50"
                   }`}
                 />
               ))}
@@ -555,7 +665,11 @@ function CategoriesDialog({
                 disabled={!addName.trim() || addMut.isPending}
                 className="text-xs font-medium px-3 py-1 rounded-lg bg-foreground text-background disabled:opacity-50 transition"
               >
-                {addMut.isPending ? <Loader2 className="size-3.5 animate-spin" /> : t("settings.categories.save")}
+                {addMut.isPending ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  t("settings.categories.save")
+                )}
               </button>
             </div>
           </div>
@@ -573,7 +687,12 @@ function CategoriesDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) handleClose();
+      }}
+    >
       <DialogContent className="rounded-2xl max-h-[92dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -583,7 +702,9 @@ function CategoriesDialog({
 
         {isLoading ? (
           <div className="space-y-2">
-            {[1, 2, 3].map((i) => <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />)}
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />
+            ))}
           </div>
         ) : (
           <div className="space-y-5">
@@ -600,7 +721,11 @@ function CategoriesDialog({
                 {t("settings.categories.reset.confirm")}
               </p>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 h-9 text-xs" onClick={() => setConfirmReset(false)}>
+                <Button
+                  variant="outline"
+                  className="flex-1 h-9 text-xs"
+                  onClick={() => setConfirmReset(false)}
+                >
                   {t("common.cancel")}
                 </Button>
                 <Button
@@ -608,9 +733,11 @@ function CategoriesDialog({
                   disabled={resetMut.isPending}
                   onClick={doReset}
                 >
-                  {resetMut.isPending
-                    ? <Loader2 className="size-3.5 animate-spin" />
-                    : t("settings.categories.reset")}
+                  {resetMut.isPending ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    t("settings.categories.reset")
+                  )}
                 </Button>
               </div>
             </div>
@@ -632,33 +759,38 @@ function CategoriesDialog({
 // ─── SecurityDialog ───────────────────────────────────────────────────────────
 
 function SecurityDialog({
-  open, onClose, currentEmail,
+  open,
+  onClose,
+  currentEmail,
 }: {
   open: boolean;
   onClose: () => void;
   currentEmail: string;
 }) {
   const { t } = useT();
-  const [tab, setTab]                 = useState<"reset" | "password">("reset");
+  const [tab, setTab] = useState<"reset" | "password">("reset");
 
   // Reset link
   const [resetLoading, setResetLoading] = useState(false);
-  const [resetSent, setResetSent]       = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   // Password change
-  const [currentPwd, setCurrentPwd]       = useState("");
-  const [newPwd, setNewPwd]               = useState("");
-  const [confirmPwd, setConfirmPwd]       = useState("");
+  const [currentPwd, setCurrentPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
   const [showCurrentPwd, setShowCurrentPwd] = useState(false);
-  const [showPwd, setShowPwd]             = useState(false);
-  const [showConfirm, setShowConfirm]     = useState(false);
-  const [pwdLoading, setPwdLoading]       = useState(false);
-  const [pwdDone, setPwdDone]             = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdDone, setPwdDone] = useState(false);
 
   useEffect(() => {
     if (open) {
       setResetSent(false);
-      setCurrentPwd(""); setNewPwd(""); setConfirmPwd(""); setPwdDone(false);
+      setCurrentPwd("");
+      setNewPwd("");
+      setConfirmPwd("");
+      setPwdDone(false);
     }
   }, [open]);
 
@@ -694,7 +826,9 @@ function SecurityDialog({
       const { error } = await supabase.auth.updateUser({ password: newPwd });
       if (error) throw error;
       setPwdDone(true);
-      setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
+      setCurrentPwd("");
+      setNewPwd("");
+      setConfirmPwd("");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -702,12 +836,25 @@ function SecurityDialog({
     }
   }
 
-  const strength = newPwd.length === 0 ? null : newPwd.length < 8 ? "weak" : newPwd.length < 12 ? "good" : "strong";
-  const strengthColor = strength === "weak" ? "bg-negative" : strength === "good" ? "bg-warn" : "bg-positive";
-  const strengthBars  = strength === "weak" ? 1 : strength === "good" ? 2 : 3;
+  const strength =
+    newPwd.length === 0
+      ? null
+      : newPwd.length < 8
+        ? "weak"
+        : newPwd.length < 12
+          ? "good"
+          : "strong";
+  const strengthColor =
+    strength === "weak" ? "bg-negative" : strength === "good" ? "bg-warn" : "bg-positive";
+  const strengthBars = strength === "weak" ? 1 : strength === "good" ? 2 : 3;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="rounded-2xl max-h-[92dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -722,7 +869,9 @@ function SecurityDialog({
               <Shield className="size-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] text-muted-foreground">{t("settings.security.dialog.signedIn")}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {t("settings.security.dialog.signedIn")}
+              </p>
               <p className="text-sm font-medium truncate">{currentEmail}</p>
             </div>
           </div>
@@ -734,17 +883,21 @@ function SecurityDialog({
                 key={tab_}
                 onClick={() => setTab(tab_)}
                 className={`py-2 text-sm font-medium rounded-lg transition ${
-                  tab === tab_ ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  tab === tab_
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tab_ === "reset" ? t("settings.security.tab.reset") : t("settings.security.tab.password")}
+                {tab_ === "reset"
+                  ? t("settings.security.tab.reset")
+                  : t("settings.security.tab.password")}
               </button>
             ))}
           </div>
 
           {/* Reset link tab */}
-          {tab === "reset" && (
-            resetSent ? (
+          {tab === "reset" &&
+            (resetSent ? (
               <div className="text-center py-8 space-y-3">
                 <div className="size-14 rounded-full bg-positive/10 grid place-items-center mx-auto">
                   <CheckCircle2 className="size-7 text-positive" />
@@ -755,7 +908,10 @@ function SecurityDialog({
                     {t("settings.security.reset.sent.desc", { email: currentEmail })}
                   </p>
                 </div>
-                <button onClick={() => setResetSent(false)} className="text-xs text-muted-foreground underline underline-offset-2">
+                <button
+                  onClick={() => setResetSent(false)}
+                  className="text-xs text-muted-foreground underline underline-offset-2"
+                >
                   {t("settings.security.reset.retry")}
                 </button>
               </div>
@@ -770,25 +926,36 @@ function SecurityDialog({
                   className="w-full"
                 >
                   {resetLoading ? (
-                    <><Loader2 className="size-4 mr-2 animate-spin" /> {t("settings.security.reset.sending")}</>
-                  ) : t("settings.security.reset.button")}
+                    <>
+                      <Loader2 className="size-4 mr-2 animate-spin" />{" "}
+                      {t("settings.security.reset.sending")}
+                    </>
+                  ) : (
+                    t("settings.security.reset.button")
+                  )}
                 </Button>
               </div>
-            )
-          )}
+            ))}
 
           {/* Password tab */}
-          {tab === "password" && (
-            pwdDone ? (
+          {tab === "password" &&
+            (pwdDone ? (
               <div className="text-center py-8 space-y-3">
                 <div className="size-14 rounded-full bg-positive/10 grid place-items-center mx-auto">
                   <CheckCircle2 className="size-7 text-positive" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">{t("settings.security.password.done.title")}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{t("settings.security.password.done.desc")}</p>
+                  <p className="text-sm font-semibold">
+                    {t("settings.security.password.done.title")}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("settings.security.password.done.desc")}
+                  </p>
                 </div>
-                <button onClick={() => setPwdDone(false)} className="text-xs text-muted-foreground underline underline-offset-2">
+                <button
+                  onClick={() => setPwdDone(false)}
+                  className="text-xs text-muted-foreground underline underline-offset-2"
+                >
                   {t("settings.security.password.changeAgain")}
                 </button>
               </div>
@@ -849,9 +1016,17 @@ function SecurityDialog({
                           />
                         ))}
                       </div>
-                      <span className={`text-[10px] font-medium capitalize ${
-                        strength === "weak" ? "text-negative" : strength === "good" ? "text-warn" : "text-positive"
-                      }`}>{strength}</span>
+                      <span
+                        className={`text-[10px] font-medium capitalize ${
+                          strength === "weak"
+                            ? "text-negative"
+                            : strength === "good"
+                              ? "text-warn"
+                              : "text-positive"
+                        }`}
+                      >
+                        {strength}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -863,7 +1038,9 @@ function SecurityDialog({
                       type={showConfirm ? "text" : "password"}
                       value={confirmPwd}
                       onChange={(e) => setConfirmPwd(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") void changePassword(); }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void changePassword();
+                      }}
                       placeholder={t("settings.security.password.repeat")}
                       autoComplete="new-password"
                       className="pr-10"
@@ -891,16 +1068,27 @@ function SecurityDialog({
 
                 <Button
                   onClick={() => void changePassword()}
-                  disabled={pwdLoading || !currentPwd || !newPwd || !confirmPwd || newPwd !== confirmPwd || newPwd.length < 8}
+                  disabled={
+                    pwdLoading ||
+                    !currentPwd ||
+                    !newPwd ||
+                    !confirmPwd ||
+                    newPwd !== confirmPwd ||
+                    newPwd.length < 8
+                  }
                   className="w-full"
                 >
                   {pwdLoading ? (
-                    <><Loader2 className="size-4 mr-2 animate-spin" /> {t("settings.security.password.saving")}</>
-                  ) : t("settings.security.password.button")}
+                    <>
+                      <Loader2 className="size-4 mr-2 animate-spin" />{" "}
+                      {t("settings.security.password.saving")}
+                    </>
+                  ) : (
+                    t("settings.security.password.button")
+                  )}
                 </Button>
               </div>
-            )
-          )}
+            ))}
         </div>
       </DialogContent>
     </Dialog>
@@ -912,7 +1100,11 @@ function SecurityDialog({
 type UsernameStatus = "idle" | "own" | "checking" | "available" | "taken" | "invalid";
 
 function ProfileEditDialog({
-  open, onClose, profile, userId, t,
+  open,
+  onClose,
+  profile,
+  userId,
+  t,
 }: {
   open: boolean;
   onClose: () => void;
@@ -921,26 +1113,26 @@ function ProfileEditDialog({
   t: (k: string) => string;
 }) {
   const updateProfile = useUpdateProfile();
-  const qc            = useQueryClient();
-  const fileInputRef  = useRef<HTMLInputElement>(null);
+  const qc = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [firstName,      setFirstName]      = useState("");
-  const [lastName1,      setLastName1]      = useState("");
-  const [lastName2,      setLastName2]      = useState("");
-  const [address,        setAddress]        = useState("");
-  const [localAvatar,    setLocalAvatar]    = useState<string | null>(null);
-  const [localUsername,  setLocalUsername]  = useState("");
-  const [uploading,      setUploading]      = useState(false);
-  const [copied,         setCopied]         = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName1, setLastName1] = useState("");
+  const [lastName2, setLastName2] = useState("");
+  const [address, setAddress] = useState("");
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+  const [localUsername, setLocalUsername] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
 
   // Pre-fill all fields when dialog opens
   useEffect(() => {
     if (open) {
-      setFirstName(profile.first_name  ?? "");
+      setFirstName(profile.first_name ?? "");
       setLastName1(profile.last_name_1 ?? "");
       setLastName2(profile.last_name_2 ?? "");
-      setAddress(profile.address       ?? "");
+      setAddress(profile.address ?? "");
       setLocalAvatar(profile.avatar_url ?? null);
       setLocalUsername(profile.financial_username ?? "");
       setUsernameStatus(profile.financial_username?.trim() ? "own" : "idle");
@@ -950,13 +1142,22 @@ function ProfileEditDialog({
   // Debounced uniqueness check whenever localUsername changes
   useEffect(() => {
     const normalised = localUsername.trim().toLowerCase().replace(/^@/, "");
-    const current    = (profile.financial_username ?? "").trim();
+    const current = (profile.financial_username ?? "").trim();
 
-    if (!normalised) { setUsernameStatus("idle"); return; }
-    if (normalised === current) { setUsernameStatus("own"); return; }
+    if (!normalised) {
+      setUsernameStatus("idle");
+      return;
+    }
+    if (normalised === current) {
+      setUsernameStatus("own");
+      return;
+    }
 
     const fmtCheck = financialUsernameSchema.safeParse(normalised);
-    if (!fmtCheck.success) { setUsernameStatus("invalid"); return; }
+    if (!fmtCheck.success) {
+      setUsernameStatus("invalid");
+      return;
+    }
 
     setUsernameStatus("checking");
     const timer = setTimeout(async () => {
@@ -993,15 +1194,15 @@ function ProfileEditDialog({
     const avatarBase = localAvatar?.split("?")[0] ?? profile.avatar_url ?? undefined;
     const normUsername = localUsername.trim().toLowerCase().replace(/^@/, "");
     const usernameChanged = normUsername !== (profile.financial_username ?? "").trim();
-    const includeUsername = usernameChanged && (usernameStatus === "available") && !!normUsername;
+    const includeUsername = usernameChanged && usernameStatus === "available" && !!normUsername;
 
     try {
       await updateProfile.mutateAsync({
-        first_name:  trimFirst,
+        first_name: trimFirst,
         last_name_1: trimLast1,
         last_name_2: lastName2.trim() || null,
-        full_name:   [trimFirst, trimLast1, lastName2.trim()].filter(Boolean).join(" "),
-        address:     address.trim() || null,
+        full_name: [trimFirst, trimLast1, lastName2.trim()].filter(Boolean).join(" "),
+        address: address.trim() || null,
         ...(avatarBase ? { avatar_url: avatarBase } : {}),
         ...(includeUsername ? { financial_username: normUsername } : {}),
       });
@@ -1011,15 +1212,22 @@ function ProfileEditDialog({
         try {
           await regenerateUsername();
           await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
-        } catch { /* non-critical */ }
+        } catch {
+          /* non-critical */
+        }
       }
 
       onClose();
-    } catch { /* toast shown by useUpdateProfile */ }
+    } catch {
+      /* toast shown by useUpdateProfile */
+    }
   }
 
-  const initials = [firstName[0], lastName1[0]]
-    .filter(Boolean).map((s) => s.toUpperCase()).join("") || "U";
+  const initials =
+    [firstName[0], lastName1[0]]
+      .filter(Boolean)
+      .map((s) => s.toUpperCase())
+      .join("") || "U";
 
   function copyUsername() {
     void navigator.clipboard.writeText(`@${localUsername}`);
@@ -1027,25 +1235,31 @@ function ProfileEditDialog({
     setTimeout(() => setCopied(false), 1500);
   }
 
-  const saveBlocked = usernameStatus === "taken" || usernameStatus === "checking" || usernameStatus === "invalid";
+  const saveBlocked =
+    usernameStatus === "taken" || usernameStatus === "checking" || usernameStatus === "invalid";
 
   const UsernameIcon = () => {
-    if (usernameStatus === "checking") return <Loader2 className="size-3.5 animate-spin text-muted-foreground" />;
-    if (usernameStatus === "taken")    return <XCircle className="size-3.5 text-negative" />;
+    if (usernameStatus === "checking")
+      return <Loader2 className="size-3.5 animate-spin text-muted-foreground" />;
+    if (usernameStatus === "taken") return <XCircle className="size-3.5 text-negative" />;
     if (usernameStatus === "available") return <CheckCircle2 className="size-3.5 text-positive" />;
-    if (usernameStatus === "own")      return <Copy className="size-3.5" />;
+    if (usernameStatus === "own") return <Copy className="size-3.5" />;
     return null;
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="rounded-2xl max-h-[92dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("settings.privacy.dialog.title")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-
           {/* Avatar */}
           <div className="flex flex-col items-center gap-2">
             <button
@@ -1070,7 +1284,13 @@ function ProfileEditDialog({
               )}
             </button>
             <p className="text-[11px] text-muted-foreground">{t("settings.privacy.photo.hint")}</p>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
           </div>
 
           {/* Name */}
@@ -1080,15 +1300,25 @@ function ProfileEditDialog({
                 <User className="size-3 text-muted-foreground" />
                 {t("settings.privacy.firstName")}
               </Label>
-              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} autoCapitalize="words" />
+              <Input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                autoCapitalize="words"
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">{t("settings.privacy.lastName1")}</Label>
-              <Input value={lastName1} onChange={(e) => setLastName1(e.target.value)} autoCapitalize="words" />
+              <Input
+                value={lastName1}
+                onChange={(e) => setLastName1(e.target.value)}
+                autoCapitalize="words"
+              />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{t("settings.privacy.lastName2")}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {t("settings.privacy.lastName2")}
+            </Label>
             <Input
               value={lastName2}
               onChange={(e) => setLastName2(e.target.value)}
@@ -1116,16 +1346,23 @@ function ProfileEditDialog({
               <AtSign className="size-3 text-muted-foreground" />
               {t("settings.privacy.username")}
             </Label>
-            <div className={`flex items-center gap-2 px-3 rounded-xl border transition ${
-              usernameStatus === "taken"   ? "border-negative bg-negative/5" :
-              usernameStatus === "invalid" ? "border-warn/60 bg-warn/5" :
-              usernameStatus === "available" ? "border-positive/60 bg-positive/5" :
-              "border-input bg-background"
-            }`}>
+            <div
+              className={`flex items-center gap-2 px-3 rounded-xl border transition ${
+                usernameStatus === "taken"
+                  ? "border-negative bg-negative/5"
+                  : usernameStatus === "invalid"
+                    ? "border-warn/60 bg-warn/5"
+                    : usernameStatus === "available"
+                      ? "border-positive/60 bg-positive/5"
+                      : "border-input bg-background"
+              }`}
+            >
               <span className="text-sm text-muted-foreground font-mono shrink-0">@</span>
               <input
                 value={localUsername.replace(/^@/, "")}
-                onChange={(e) => setLocalUsername(e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, ""))}
+                onChange={(e) =>
+                  setLocalUsername(e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, ""))
+                }
                 placeholder={t("settings.privacy.username.placeholder")}
                 className="flex-1 py-2.5 text-sm font-mono bg-transparent outline-none"
                 autoCapitalize="none"
@@ -1137,22 +1374,33 @@ function ProfileEditDialog({
                 className="shrink-0 text-muted-foreground hover:text-foreground transition"
                 tabIndex={-1}
               >
-                {usernameStatus === "own" && copied
-                  ? <Check className="size-3.5 text-positive" />
-                  : <UsernameIcon />}
+                {usernameStatus === "own" && copied ? (
+                  <Check className="size-3.5 text-positive" />
+                ) : (
+                  <UsernameIcon />
+                )}
               </button>
             </div>
-            <p className={`text-[11px] leading-snug ${
-              usernameStatus === "taken"    ? "text-negative" :
-              usernameStatus === "invalid"  ? "text-warn" :
-              usernameStatus === "available"? "text-positive" :
-              "text-muted-foreground"
-            }`}>
-              {usernameStatus === "taken"     ? t("settings.privacy.username.taken") :
-               usernameStatus === "invalid"   ? t("settings.privacy.username.invalid") :
-               usernameStatus === "available" ? t("settings.privacy.username.available") :
-               usernameStatus === "idle"      ? t("settings.privacy.username.pending") :
-               t("settings.privacy.username.note")}
+            <p
+              className={`text-[11px] leading-snug ${
+                usernameStatus === "taken"
+                  ? "text-negative"
+                  : usernameStatus === "invalid"
+                    ? "text-warn"
+                    : usernameStatus === "available"
+                      ? "text-positive"
+                      : "text-muted-foreground"
+              }`}
+            >
+              {usernameStatus === "taken"
+                ? t("settings.privacy.username.taken")
+                : usernameStatus === "invalid"
+                  ? t("settings.privacy.username.invalid")
+                  : usernameStatus === "available"
+                    ? t("settings.privacy.username.available")
+                    : usernameStatus === "idle"
+                      ? t("settings.privacy.username.pending")
+                      : t("settings.privacy.username.note")}
             </p>
           </div>
 
@@ -1163,12 +1411,16 @@ function ProfileEditDialog({
             </Button>
             <Button
               onClick={() => void save()}
-              disabled={updateProfile.isPending || uploading || !firstName.trim() || !lastName1.trim() || saveBlocked}
+              disabled={
+                updateProfile.isPending ||
+                uploading ||
+                !firstName.trim() ||
+                !lastName1.trim() ||
+                saveBlocked
+              }
               className="flex-1"
             >
-              {updateProfile.isPending
-                ? t("settings.privacy.saving")
-                : t("settings.privacy.save")}
+              {updateProfile.isPending ? t("settings.privacy.saving") : t("settings.privacy.save")}
             </Button>
           </div>
         </div>
@@ -1180,7 +1432,10 @@ function ProfileEditDialog({
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
 function Row({
-  icon, label, value, onClick,
+  icon,
+  label,
+  value,
+  onClick,
 }: {
   icon: ReactNode;
   label: string;
@@ -1193,7 +1448,9 @@ function Row({
       className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/50 transition text-left"
     >
       <div className="flex items-center gap-3">
-        <div className="size-8 rounded-lg bg-muted grid place-items-center text-foreground">{icon}</div>
+        <div className="size-8 rounded-lg bg-muted grid place-items-center text-foreground">
+          {icon}
+        </div>
         <span className="text-sm font-medium">{label}</span>
       </div>
       <div className="flex items-center gap-1">
@@ -1205,7 +1462,12 @@ function Row({
 }
 
 function RowToggle({
-  icon, label, desc, value, onChange, badge,
+  icon,
+  label,
+  desc,
+  value,
+  onChange,
+  badge,
 }: {
   icon: ReactNode;
   label: string;
@@ -1217,7 +1479,9 @@ function RowToggle({
   return (
     <div className="w-full flex items-center justify-between px-4 py-3 gap-3">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="size-8 rounded-lg bg-muted grid place-items-center text-foreground shrink-0">{icon}</div>
+        <div className="size-8 rounded-lg bg-muted grid place-items-center text-foreground shrink-0">
+          {icon}
+        </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium">{label}</span>
@@ -1230,7 +1494,12 @@ function RowToggle({
           {desc && <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{desc}</p>}
         </div>
       </div>
-      <Switch checked={value} onCheckedChange={onChange} disabled={!!badge} className={badge ? "opacity-40" : ""} />
+      <Switch
+        checked={value}
+        onCheckedChange={onChange}
+        disabled={!!badge}
+        className={badge ? "opacity-40" : ""}
+      />
     </div>
   );
 }

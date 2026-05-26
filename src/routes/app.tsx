@@ -31,11 +31,7 @@ export const Route = createFileRoute("/app")({
     const prof = await queryClient.fetchQuery({
       queryKey: queryKeys.profile(uid),
       queryFn: async () => {
-        const { data: p } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", uid)
-          .maybeSingle();
+        const { data: p } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
         return p ?? null;
       },
       staleTime: 5 * 60_000,

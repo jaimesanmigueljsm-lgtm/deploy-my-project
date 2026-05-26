@@ -1,19 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { computeBudgetForecast } from "@/core/finance/budgeting/forecast";
-import {
-  makeCtx,
-  makeExpense,
-  makeIncome,
-  makeBill,
-  REF_DATE,
-  d,
-} from "@/test/factories";
+import { makeCtx, makeExpense, makeIncome, makeBill, REF_DATE, d } from "@/test/factories";
 
 // REF_DATE = 2026-03-15 — March has 31 days, so day 15 is used.
 // daysElapsed = 15, daysRemaining = 16
 
 const MARCH_15 = REF_DATE; // 2026-03-15
-const MAR_KEY  = "2026-03";
+const MAR_KEY = "2026-03";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,8 +49,8 @@ describe("computeBudgetForecast — current spend", () => {
     const ctx = makeCtx({
       asOf: MARCH_15,
       expenses: [
-        marchExpense(200, 5),          // March — included
-        marchExpense(300, 10),         // March — included
+        marchExpense(200, 5), // March — included
+        marchExpense(300, 10), // March — included
         makeExpense({ amount: 999, spentAt: d("2026-02-20") }), // Feb — excluded
       ],
       incomes: [marchIncome(3000)],
@@ -69,10 +62,7 @@ describe("computeBudgetForecast — current spend", () => {
   it("separates fixed and variable spend correctly", () => {
     const ctx = makeCtx({
       asOf: MARCH_15,
-      expenses: [
-        marchExpense(600, 1, "fixed"),
-        marchExpense(400, 10, "variable"),
-      ],
+      expenses: [marchExpense(600, 1, "fixed"), marchExpense(400, 10, "variable")],
       incomes: [marchIncome(3000)],
     });
     const result = computeBudgetForecast(ctx);
@@ -89,8 +79,8 @@ describe("computeBudgetForecast — pending fixed costs", () => {
     const ctx = makeCtx({
       asOf: MARCH_15,
       bills: [
-        makeBill({ amount: 800, paidThisMonth: false, active: true }),  // pending
-        makeBill({ amount: 500, paidThisMonth: true,  active: true }),  // paid — excluded
+        makeBill({ amount: 800, paidThisMonth: false, active: true }), // pending
+        makeBill({ amount: 500, paidThisMonth: true, active: true }), // paid — excluded
         makeBill({ amount: 300, paidThisMonth: false, active: false }), // inactive — excluded
       ],
       incomes: [marchIncome(3000)],
@@ -119,8 +109,8 @@ describe("computeBudgetForecast — projections", () => {
     const ctx = makeCtx({
       asOf: MARCH_15,
       expenses: [
-        marchExpense(200, 5, "fixed"),    // fixed — not extrapolated
-        marchExpense(600, 10, "variable"),// variable — pace extrapolated
+        marchExpense(200, 5, "fixed"), // fixed — not extrapolated
+        marchExpense(600, 10, "variable"), // variable — pace extrapolated
       ],
       incomes: [marchIncome(3000)],
       bills: [],
@@ -241,16 +231,20 @@ describe("computeBudgetForecast — income fallback", () => {
 
 describe("computeBudgetForecast — safe to spend", () => {
   it("safeToSpendPerDay decreases when more variable spend happens", () => {
-    const lowSpend = computeBudgetForecast(makeCtx({
-      asOf: MARCH_15,
-      expenses: [marchExpense(100, 10, "variable")],
-      incomes: [marchIncome(3000)],
-    }));
-    const highSpend = computeBudgetForecast(makeCtx({
-      asOf: MARCH_15,
-      expenses: [marchExpense(700, 10, "variable")],
-      incomes: [marchIncome(3000)],
-    }));
+    const lowSpend = computeBudgetForecast(
+      makeCtx({
+        asOf: MARCH_15,
+        expenses: [marchExpense(100, 10, "variable")],
+        incomes: [marchIncome(3000)],
+      }),
+    );
+    const highSpend = computeBudgetForecast(
+      makeCtx({
+        asOf: MARCH_15,
+        expenses: [marchExpense(700, 10, "variable")],
+        incomes: [marchIncome(3000)],
+      }),
+    );
     expect(lowSpend.safeToSpendPerDay).toBeGreaterThan(highSpend.safeToSpendPerDay);
   });
 
@@ -281,8 +275,8 @@ describe("computeBudgetForecast — safe to spend", () => {
 describe("computeBudgetForecast — confidence", () => {
   it("confidence increases through the month", () => {
     const early = computeBudgetForecast(makeCtx({ asOf: d("2026-03-03") }));
-    const mid   = computeBudgetForecast(makeCtx({ asOf: MARCH_15 }));
-    const late  = computeBudgetForecast(makeCtx({ asOf: d("2026-03-28") }));
+    const mid = computeBudgetForecast(makeCtx({ asOf: MARCH_15 }));
+    const late = computeBudgetForecast(makeCtx({ asOf: d("2026-03-28") }));
     expect(mid.confidence).toBeGreaterThan(early.confidence);
     expect(late.confidence).toBeGreaterThan(mid.confidence);
   });

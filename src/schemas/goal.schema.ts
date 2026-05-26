@@ -7,7 +7,12 @@ import {
   requiredStringSchema,
   optionalNoteSchema,
 } from "./common.schema";
-import { GOAL_ICONS, GOAL_COLORS, type GoalIconKey, type GoalColorKey } from "@/features/goals/goals.constants";
+import {
+  GOAL_ICONS,
+  GOAL_COLORS,
+  type GoalIconKey,
+  type GoalColorKey,
+} from "@/features/goals/goals.constants";
 
 // ── Enums derived from constants ──────────────────────────────────────────────
 // Deriving from constants ensures the schema stays in sync automatically —

@@ -29,28 +29,28 @@ const SEVERITY_CONFIG: Record<
   { icon: typeof AlertTriangle; iconClass: string; borderClass: string; badgeClass: string }
 > = {
   critical: {
-    icon:        AlertTriangle,
-    iconClass:   "text-negative",
+    icon: AlertTriangle,
+    iconClass: "text-negative",
     borderClass: "border-l-negative",
-    badgeClass:  "bg-negative-soft text-negative",
+    badgeClass: "bg-negative-soft text-negative",
   },
   warning: {
-    icon:        AlertTriangle,
-    iconClass:   "text-warn",
+    icon: AlertTriangle,
+    iconClass: "text-warn",
     borderClass: "border-l-warn",
-    badgeClass:  "bg-warn-soft text-warn",
+    badgeClass: "bg-warn-soft text-warn",
   },
   info: {
-    icon:        Info,
-    iconClass:   "text-sky",
+    icon: Info,
+    iconClass: "text-sky",
     borderClass: "border-l-sky",
-    badgeClass:  "bg-sky/15 text-sky",
+    badgeClass: "bg-sky/15 text-sky",
   },
   positive: {
-    icon:        CheckCircle2,
-    iconClass:   "text-positive",
+    icon: CheckCircle2,
+    iconClass: "text-positive",
     borderClass: "border-l-positive",
-    badgeClass:  "bg-positive-soft text-positive",
+    badgeClass: "bg-positive-soft text-positive",
   },
 };
 
@@ -90,16 +90,17 @@ function RecommendationCard({ rec, currency }: { rec: Recommendation; currency: 
     ? formatParams(rec.params, entry.moneyParams, entry.percentParams, currency, convert)
     : {};
 
-  const title       = entry ? t(entry.titleKey as never, fmtParams)       : rec.id;
+  const title = entry ? t(entry.titleKey as never, fmtParams) : rec.id;
   const explanation = entry ? t(entry.explanationKey as never, fmtParams) : "";
-  const action      = entry ? t(entry.actionKey as never, fmtParams)      : "";
+  const action = entry ? t(entry.actionKey as never, fmtParams) : "";
 
   const severityLabel = t(`rec.severity.${rec.severity}` as never);
 
   const { estimatedAmount, impactKey } = rec.financialImpact;
-  const impactLabel = estimatedAmount != null
-    ? t(impactKey as never, { amount: shortMoney(convert(estimatedAmount), currency) })
-    : t(impactKey as never);
+  const impactLabel =
+    estimatedAmount != null
+      ? t(impactKey as never, { amount: shortMoney(convert(estimatedAmount), currency) })
+      : t(impactKey as never);
 
   return (
     <div className={cn("card-flat overflow-hidden border-l-2", cfg.borderClass)}>
@@ -109,13 +110,23 @@ function RecommendationCard({ rec, currency }: { rec: Recommendation; currency: 
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
       >
-        <div className={cn("size-8 rounded-xl grid place-items-center shrink-0 mt-0.5", cfg.badgeClass)}>
+        <div
+          className={cn(
+            "size-8 rounded-xl grid place-items-center shrink-0 mt-0.5",
+            cfg.badgeClass,
+          )}
+        >
           <Icon className={cn("size-4", cfg.iconClass)} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold leading-snug">{title}</span>
-            <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider", cfg.badgeClass)}>
+            <span
+              className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider",
+                cfg.badgeClass,
+              )}
+            >
               {severityLabel}
             </span>
           </div>

@@ -18,7 +18,10 @@ export function moneyExact(n: number, currency = "EUR") {
 export function shortMoney(n: number, currency = "EUR") {
   if (Math.abs(n) >= 1000) {
     return new Intl.NumberFormat(undefined, {
-      style: "currency", currency, notation: "compact", maximumFractionDigits: 1,
+      style: "currency",
+      currency,
+      notation: "compact",
+      maximumFractionDigits: 1,
     }).format(n);
   }
   return money(n, currency);
@@ -32,8 +35,7 @@ export function pct(n: number, digits = 1) {
 export const monthLabel = (d = new Date()) =>
   d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
-export const shortMonth = (d = new Date()) =>
-  d.toLocaleDateString(undefined, { month: "short" });
+export const shortMonth = (d = new Date()) => d.toLocaleDateString(undefined, { month: "short" });
 
 export const monthRange = (d = new Date()) => {
   const start = new Date(d.getFullYear(), d.getMonth(), 1);

@@ -92,9 +92,7 @@ describe("HEALTH_STATUS_BANDS", () => {
 
   it("bands are in descending order of minScore", () => {
     for (let i = 0; i < HEALTH_STATUS_BANDS.length - 1; i++) {
-      expect(HEALTH_STATUS_BANDS[i].minScore).toBeGreaterThan(
-        HEALTH_STATUS_BANDS[i + 1].minScore,
-      );
+      expect(HEALTH_STATUS_BANDS[i].minScore).toBeGreaterThan(HEALTH_STATUS_BANDS[i + 1].minScore);
     }
   });
 });

@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type ExportData = {
-  expenses:    unknown[];
-  incomes:     unknown[];
+  expenses: unknown[];
+  incomes: unknown[];
   investments: unknown[];
 };
 
@@ -14,8 +14,8 @@ export async function fetchExportData(userId: string): Promise<ExportData> {
   ]);
 
   return {
-    expenses:    exp.data ?? [],
-    incomes:     inc.data ?? [],
+    expenses: exp.data ?? [],
+    incomes: inc.data ?? [],
     investments: inv.data ?? [],
   };
 }

@@ -39,15 +39,15 @@ function Tile({
 }) {
   const toneClasses = {
     positive: "text-positive",
-    warn:     "text-warn",
+    warn: "text-warn",
     negative: "text-negative",
-    neutral:  "text-muted-foreground",
+    neutral: "text-muted-foreground",
   };
   const toneIconBg = {
     positive: "bg-positive-soft text-positive",
-    warn:     "bg-warn-soft text-warn",
+    warn: "bg-warn-soft text-warn",
     negative: "bg-negative-soft text-negative",
-    neutral:  "bg-muted text-muted-foreground",
+    neutral: "bg-muted text-muted-foreground",
   };
   return (
     <div className="card-flat p-3.5 flex flex-col gap-1.5">
@@ -57,7 +57,9 @@ function Tile({
           {icon}
         </span>
       </div>
-      <div className={cn("num text-xl font-semibold tracking-tight leading-none", toneClasses[tone])}>
+      <div
+        className={cn("num text-xl font-semibold tracking-tight leading-none", toneClasses[tone])}
+      >
         {value}
       </div>
       <div className="text-[10px] text-muted-foreground leading-tight">{sublabel}</div>
@@ -81,8 +83,11 @@ export function ForecastWidget({
 
   // Tile 1 — Today's budget
   const spendTone: "positive" | "warn" | "negative" =
-    forecast.safeToSpendPerDay > 0 ? "positive" :
-    forecast.safeToSpendPerDay === 0 ? "warn" : "negative";
+    forecast.safeToSpendPerDay > 0
+      ? "positive"
+      : forecast.safeToSpendPerDay === 0
+        ? "warn"
+        : "negative";
 
   // Tile 2 — Saved this month (actual, not projected)
   const saved = savedSoFar ?? 0;

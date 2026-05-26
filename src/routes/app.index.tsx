@@ -22,12 +22,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import {
-  SectionHeader,
-  InsightCard,
-  TrendBadge,
-  SkeletonBlock,
-} from "@/components/nest";
+import { SectionHeader, InsightCard, TrendBadge, SkeletonBlock } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
 import { useDashboard, useGenerateInsights } from "@/features/dashboard/use-dashboard";
 import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
@@ -136,10 +131,15 @@ function Dashboard() {
             title={t("dashboard.section.forecast")}
             subtitle={t("dashboard.section.forecast.sub")}
           />
-          {engineLoading || !engine
-            ? <ForecastSkeleton />
-            : <ForecastWidget forecast={engine.budgetForecast} currency={currency} savedSoFar={remaining} />
-          }
+          {engineLoading || !engine ? (
+            <ForecastSkeleton />
+          ) : (
+            <ForecastWidget
+              forecast={engine.budgetForecast}
+              currency={currency}
+              savedSoFar={remaining}
+            />
+          )}
         </section>
       )}
 
@@ -150,7 +150,13 @@ function Dashboard() {
             title={t("dashboard.section.spending")}
             subtitle={t("dashboard.section.spending.sub")}
           />
-          <SpendingPieChart dist={dist} totalSpent={totalSpent} currency={currency} convert={convert} totalLabel={t("dashboard.section.spending.total")} />
+          <SpendingPieChart
+            dist={dist}
+            totalSpent={totalSpent}
+            currency={currency}
+            convert={convert}
+            totalLabel={t("dashboard.section.spending.total")}
+          />
         </section>
       )}
 
@@ -232,8 +238,14 @@ function Dashboard() {
 type ConvertFn = (n: number) => number;
 
 const SpendingAreaChart = memo(function SpendingAreaChart({
-  series, currency, convert,
-}: { series: { day: number; cumulative: number }[]; currency: string; convert: ConvertFn }) {
+  series,
+  currency,
+  convert,
+}: {
+  series: { day: number; cumulative: number }[];
+  currency: string;
+  convert: ConvertFn;
+}) {
   return (
     <div className="mt-4 h-20 -mx-1">
       <ResponsiveContainer width="100%" height="100%">
@@ -251,7 +263,13 @@ const SpendingAreaChart = memo(function SpendingAreaChart({
             formatter={((v: unknown) => money(convert(Number(v)), currency)) as never}
             labelFormatter={(l) => `Day ${l}`}
           />
-          <Area type="monotone" dataKey="cumulative" stroke={CHART_COLORS[0]} strokeWidth={2} fill="url(#g)" />
+          <Area
+            type="monotone"
+            dataKey="cumulative"
+            stroke={CHART_COLORS[0]}
+            strokeWidth={2}
+            fill="url(#g)"
+          />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -259,14 +277,31 @@ const SpendingAreaChart = memo(function SpendingAreaChart({
 });
 
 const SpendingPieChart = memo(function SpendingPieChart({
-  dist, totalSpent, currency, convert, totalLabel,
-}: { dist: { name: string; value: number }[]; totalSpent: number; currency: string; convert: ConvertFn; totalLabel: string }) {
+  dist,
+  totalSpent,
+  currency,
+  convert,
+  totalLabel,
+}: {
+  dist: { name: string; value: number }[];
+  totalSpent: number;
+  currency: string;
+  convert: ConvertFn;
+  totalLabel: string;
+}) {
   return (
     <div className="card-flat p-5 flex items-center gap-5">
       <div className="relative shrink-0">
         <ResponsiveContainer width={104} height={104}>
           <PieChart>
-            <Pie data={dist} dataKey="value" innerRadius={36} outerRadius={50} paddingAngle={2} stroke="none">
+            <Pie
+              data={dist}
+              dataKey="value"
+              innerRadius={36}
+              outerRadius={50}
+              paddingAngle={2}
+              stroke="none"
+            >
               {dist.map((_d, i) => (
                 <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
               ))}
@@ -274,15 +309,22 @@ const SpendingPieChart = memo(function SpendingPieChart({
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-[9px] text-muted-foreground uppercase tracking-wider">{totalLabel}</div>
-          <div className="text-sm font-semibold num">{shortMoney(convert(totalSpent), currency)}</div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wider">
+            {totalLabel}
+          </div>
+          <div className="text-sm font-semibold num">
+            {shortMoney(convert(totalSpent), currency)}
+          </div>
         </div>
       </div>
       <div className="flex-1 space-y-2 min-w-0">
         {dist.slice(0, 4).map((d, i) => (
           <div key={d.name} className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="size-2 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+              <span
+                className="size-2 rounded-full shrink-0"
+                style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
+              />
               <span className="truncate">{d.name}</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">

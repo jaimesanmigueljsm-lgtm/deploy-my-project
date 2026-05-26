@@ -18,10 +18,10 @@ export type FeatureFlag =
 
 // Env-driven defaults — override with VITE_FLAG_<SCREAMING_SNAKE> env vars
 const ENV_DEFAULTS: Record<FeatureFlag, boolean> = {
-  investment_mode:      import.meta.env.VITE_FLAG_INVESTMENT_MODE === "true",
-  family_invitations:   import.meta.env.VITE_FLAG_FAMILY_INVITATIONS !== "false",
-  ai_insights:          import.meta.env.VITE_FLAG_AI_INSIGHTS !== "false",
-  pwa_install_prompt:   import.meta.env.VITE_FLAG_PWA_INSTALL_PROMPT !== "false",
+  investment_mode: import.meta.env.VITE_FLAG_INVESTMENT_MODE === "true",
+  family_invitations: import.meta.env.VITE_FLAG_FAMILY_INVITATIONS !== "false",
+  ai_insights: import.meta.env.VITE_FLAG_AI_INSIGHTS !== "false",
+  pwa_install_prompt: import.meta.env.VITE_FLAG_PWA_INSTALL_PROMPT !== "false",
 };
 
 /**

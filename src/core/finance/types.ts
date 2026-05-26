@@ -180,12 +180,12 @@ export interface HealthScore {
    */
   explanationKey: string;
   subScores: {
-    savingsConsistency:   SubScore;
-    emergencyReadiness:   SubScore;
+    savingsConsistency: SubScore;
+    emergencyReadiness: SubScore;
     fixedExpensePressure: SubScore;
-    spendingStability:    SubScore;
-    goalConsistency:      SubScore;
-    incomeReliability:    SubScore;
+    spendingStability: SubScore;
+    goalConsistency: SubScore;
+    incomeReliability: SubScore;
   };
   /** Active risk signals for the recommendation engine */
   risks: RiskIndicator[];

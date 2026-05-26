@@ -26,14 +26,7 @@ import {
   HEALTH_STATUS_BANDS,
   ESSENTIAL_CATEGORY_KEYWORDS,
 } from "../constants";
-import {
-  safeDivide,
-  clamp,
-  mean,
-  cv,
-  weightedSum,
-  lookupThreshold,
-} from "../utils/math";
+import { safeDivide, clamp, mean, cv, weightedSum, lookupThreshold } from "../utils/math";
 import {
   groupExpensesByMonth,
   groupIncomesByMonth,
@@ -69,13 +62,8 @@ function monthlyTotals(
  * This is used to measure emergency readiness against real survival costs,
  * not inflated total spending that includes leisure or discretionary items.
  */
-function computeEssentialExpenses(
-  ctx: FinancialEngineContext,
-  avgMonthlyExpenses: number,
-): number {
-  const monthlyBills = ctx.bills
-    .filter((b) => b.active)
-    .reduce((s, b) => s + b.amount, 0);
+function computeEssentialExpenses(ctx: FinancialEngineContext, avgMonthlyExpenses: number): number {
+  const monthlyBills = ctx.bills.filter((b) => b.active).reduce((s, b) => s + b.amount, 0);
 
   const thirtyDaysAgo = new Date(ctx.asOf.getTime() - 30 * 24 * 60_000 * 60);
   const essentialKeywordsLower = ESSENTIAL_CATEGORY_KEYWORDS.map((k) => k.toLowerCase());
@@ -89,7 +77,7 @@ function computeEssentialExpenses(
     .reduce((s, e) => s + e.amount, 0);
 
   // Floor: never go below half of avg spending (keeps metric meaningful without data)
-  const floor = avgMonthlyExpenses * 0.50;
+  const floor = avgMonthlyExpenses * 0.5;
   return Math.max(monthlyBills + recentEssential, floor);
 }
 
@@ -98,13 +86,7 @@ function computeEssentialExpenses(
 function scoreSavingsConsistency(avgIncome: number, avgExpenses: number): SubScore {
   const rate = safeDivide(avgIncome - avgExpenses, avgIncome, -1);
   const entry = lookupThreshold(SAVINGS_RATE_THRESHOLDS, "maxRate", rate);
-  return makeSubScore(
-    entry.score,
-    HEALTH_SCORE_WEIGHTS.savingsConsistency,
-    entry.label,
-    rate,
-    "%",
-  );
+  return makeSubScore(entry.score, HEALTH_SCORE_WEIGHTS.savingsConsistency, entry.label, rate, "%");
 }
 
 function scoreEmergencyReadiness(
@@ -119,8 +101,7 @@ function scoreEmergencyReadiness(
   // Secondary: emergency-tagged savings goals
   const emergencyGoals = ctx.goals.filter(
     (g) =>
-      g.name.toLowerCase().includes("emergency") ||
-      g.category.toLowerCase().includes("emergency"),
+      g.name.toLowerCase().includes("emergency") || g.category.toLowerCase().includes("emergency"),
   );
   const goalBalance = emergencyGoals.reduce((s, g) => s + g.currentAmount, 0);
 
@@ -188,10 +169,7 @@ function scoreSpendingStability(
   );
 }
 
-function scoreGoalConsistency(
-  ctx: FinancialEngineContext,
-  avgMonthlyIncome: number,
-): SubScore {
+function scoreGoalConsistency(ctx: FinancialEngineContext, avgMonthlyIncome: number): SubScore {
   if (ctx.goals.length === 0) {
     return makeSubScore(50, HEALTH_SCORE_WEIGHTS.goalConsistency, "No goals set", 0, "%");
   }
@@ -217,9 +195,9 @@ function scoreGoalConsistency(
   const label =
     avgCompletion >= 0.75
       ? "On track"
-      : avgCompletion >= 0.40
+      : avgCompletion >= 0.4
         ? "In progress"
-        : avgCompletion >= 0.10
+        : avgCompletion >= 0.1
           ? "Early stage"
           : "Not started";
 
@@ -255,11 +233,7 @@ function buildRiskIndicators(
 ): RiskIndicator[] {
   const risks: RiskIndicator[] = [];
 
-  const savingsRate = safeDivide(
-    avgMonthlyIncome - avgMonthlyExpenses,
-    avgMonthlyIncome,
-    -1,
-  );
+  const savingsRate = safeDivide(avgMonthlyIncome - avgMonthlyExpenses, avgMonthlyIncome, -1);
 
   if (savingsRate < 0) {
     risks.push({
@@ -267,7 +241,7 @@ function buildRiskIndicators(
       severity: "critical",
       description: `Your expenses exceed your income by ${Math.round(Math.abs(avgMonthlyExpenses - avgMonthlyIncome))} per month.`,
     });
-  } else if (savingsRate < 0.10) {
+  } else if (savingsRate < 0.1) {
     risks.push({
       code: "SAVINGS_LOW",
       severity: "warning",
@@ -281,8 +255,7 @@ function buildRiskIndicators(
     .reduce((s, a) => s + a.balance, 0);
   const emergencyGoals = ctx.goals.filter(
     (g) =>
-      g.name.toLowerCase().includes("emergency") ||
-      g.category.toLowerCase().includes("emergency"),
+      g.name.toLowerCase().includes("emergency") || g.category.toLowerCase().includes("emergency"),
   );
   const emergencyBalance =
     emergencyAccountBalance +
@@ -296,7 +269,8 @@ function buildRiskIndicators(
     risks.push({
       code: "EMERGENCY_FUND_CRITICAL",
       severity: "critical",
-      description: "Your safety net covers less than 1 month of essential costs — a single unexpected event could destabilise your finances.",
+      description:
+        "Your safety net covers less than 1 month of essential costs — a single unexpected event could destabilise your finances.",
     });
   } else if (emergencyMonths < 3) {
     risks.push({
@@ -307,7 +281,7 @@ function buildRiskIndicators(
   }
 
   // Fixed expense pressure (ratio passed in from scoreFixedExpensePressure — single source of truth)
-  if (fixedRatio > 0.70) {
+  if (fixedRatio > 0.7) {
     risks.push({
       code: "FIXED_PRESSURE_CRITICAL",
       severity: "critical",
@@ -332,14 +306,14 @@ function pickExplanationKey(
   fixedRatio: number,
   total: number,
 ): string {
-  if (savingsRate < 0)          return "health.explain.overspending";
-  if (emergencyMonths < 1)      return "health.explain.noEmergencyFund";
-  if (fixedRatio > 0.70)        return "health.explain.fixedCritical";
-  if (savingsRate < 0.10)       return "health.explain.savingsLow";
-  if (emergencyMonths < 3)      return "health.explain.emergencyLow";
-  if (fixedRatio > 0.55)        return "health.explain.fixedHigh";
-  if (total >= 850)             return "health.explain.excellent";
-  if (total >= 700)             return "health.explain.strong";
+  if (savingsRate < 0) return "health.explain.overspending";
+  if (emergencyMonths < 1) return "health.explain.noEmergencyFund";
+  if (fixedRatio > 0.7) return "health.explain.fixedCritical";
+  if (savingsRate < 0.1) return "health.explain.savingsLow";
+  if (emergencyMonths < 3) return "health.explain.emergencyLow";
+  if (fixedRatio > 0.55) return "health.explain.fixedHigh";
+  if (total >= 850) return "health.explain.excellent";
+  if (total >= 700) return "health.explain.strong";
   return "health.explain.healthy";
 }
 
@@ -348,34 +322,34 @@ function pickExplanationKey(
 export function computeHealthScore(ctx: FinancialEngineContext): HealthScore {
   const buckets = buildMonthBuckets(ctx.asOf, 6);
   const expensesByMonth = groupExpensesByMonth(ctx.expenses);
-  const incomesByMonth  = groupIncomesByMonth(ctx.incomes);
+  const incomesByMonth = groupIncomesByMonth(ctx.incomes);
 
   const expenseTotals = buckets.map((b) => expensesByMonth.get(b.key) ?? 0);
-  const incomeTotals  = buckets.map((b) => incomesByMonth.get(b.key) ?? 0);
+  const incomeTotals = buckets.map((b) => incomesByMonth.get(b.key) ?? 0);
 
   const nonZeroExpenses = expenseTotals.filter((v) => v > 0);
-  const nonZeroIncomes  = incomeTotals.filter((v) => v > 0);
+  const nonZeroIncomes = incomeTotals.filter((v) => v > 0);
 
   const avgMonthlyExpenses = nonZeroExpenses.length > 0 ? mean(nonZeroExpenses) : 0;
-  const avgMonthlyIncome   = nonZeroIncomes.length > 0  ? mean(nonZeroIncomes)  : 0;
+  const avgMonthlyIncome = nonZeroIncomes.length > 0 ? mean(nonZeroIncomes) : 0;
 
   const essentialMonthlyExpenses = computeEssentialExpenses(ctx, avgMonthlyExpenses);
 
-  const savingsConsistency   = scoreSavingsConsistency(avgMonthlyIncome, avgMonthlyExpenses);
-  const emergencyReadiness   = scoreEmergencyReadiness(ctx, essentialMonthlyExpenses);
+  const savingsConsistency = scoreSavingsConsistency(avgMonthlyIncome, avgMonthlyExpenses);
+  const emergencyReadiness = scoreEmergencyReadiness(ctx, essentialMonthlyExpenses);
   const fixedExpensePressure = scoreFixedExpensePressure(ctx, avgMonthlyIncome, buckets);
-  const spendingStability    = scoreSpendingStability(expensesByMonth, buckets);
-  const goalConsistency      = scoreGoalConsistency(ctx, avgMonthlyIncome);
-  const incomeReliability    = scoreIncomeReliability(incomesByMonth, buckets);
+  const spendingStability = scoreSpendingStability(expensesByMonth, buckets);
+  const goalConsistency = scoreGoalConsistency(ctx, avgMonthlyIncome);
+  const incomeReliability = scoreIncomeReliability(incomesByMonth, buckets);
 
   // Composite 0–100, then scaled ×10 → 0–1000
   const rawComposite = weightedSum([
-    { score: savingsConsistency.value,   weight: savingsConsistency.weight },
-    { score: emergencyReadiness.value,   weight: emergencyReadiness.weight },
+    { score: savingsConsistency.value, weight: savingsConsistency.weight },
+    { score: emergencyReadiness.value, weight: emergencyReadiness.weight },
     { score: fixedExpensePressure.value, weight: fixedExpensePressure.weight },
-    { score: spendingStability.value,    weight: spendingStability.weight },
-    { score: goalConsistency.value,      weight: goalConsistency.weight },
-    { score: incomeReliability.value,    weight: incomeReliability.weight },
+    { score: spendingStability.value, weight: spendingStability.weight },
+    { score: goalConsistency.value, weight: goalConsistency.weight },
+    { score: incomeReliability.value, weight: incomeReliability.weight },
   ]);
 
   const total = clamp(Math.round(rawComposite * 10), 0, 1000);
@@ -385,7 +359,7 @@ export function computeHealthScore(ctx: FinancialEngineContext): HealthScore {
     HEALTH_STATUS_BANDS[HEALTH_STATUS_BANDS.length - 1];
 
   const savingsRate = safeDivide(avgMonthlyIncome - avgMonthlyExpenses, avgMonthlyIncome, -1);
-  const fixedRatio  = fixedExpensePressure.rawValue;
+  const fixedRatio = fixedExpensePressure.rawValue;
   const emergencyMonths = emergencyReadiness.rawValue;
 
   const risks = buildRiskIndicators(

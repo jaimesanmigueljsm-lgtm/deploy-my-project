@@ -20,7 +20,11 @@ import type {
   RecommendationCategory,
   RecommendationSeverity,
 } from "../types";
-import { RECOMMENDATION_THRESHOLDS, CRYPTO_EXPOSURE_WARNING, POSITION_CONCENTRATION_WARNING } from "../constants";
+import {
+  RECOMMENDATION_THRESHOLDS,
+  CRYPTO_EXPOSURE_WARNING,
+  POSITION_CONCENTRATION_WARNING,
+} from "../constants";
 import { safeDivide } from "../utils/math";
 
 // ─── Internal rule shape ───────────────────────────────────────────────────────
@@ -67,7 +71,7 @@ function* savingsRules(ctx: FinancialEngineContext, hs: HealthScore): Generator<
         estimatedAmount: gap * 12,
         impactKey: "rec.impact.annualSavings",
       },
-      confidence: 0.90,
+      confidence: 0.9,
       priority: 2,
     };
   } else if (rate >= RECOMMENDATION_THRESHOLDS.savingsRatePositive) {
@@ -81,7 +85,7 @@ function* savingsRules(ctx: FinancialEngineContext, hs: HealthScore): Generator<
         estimatedAmount: null,
         impactKey: "rec.impact.opportunity",
       },
-      confidence: 0.80,
+      confidence: 0.8,
       priority: 20,
     };
   }
@@ -121,7 +125,7 @@ function* emergencyFundRules(ctx: FinancialEngineContext, hs: HealthScore): Gene
         estimatedAmount: gap,
         impactKey: "rec.impact.riskReduction",
       },
-      confidence: 0.90,
+      confidence: 0.9,
       priority: 3,
     };
   }
@@ -129,7 +133,10 @@ function* emergencyFundRules(ctx: FinancialEngineContext, hs: HealthScore): Gene
 
 // ─── Recurring pressure rules ─────────────────────────────────────────────────
 
-function* recurringPressureRules(ctx: FinancialEngineContext, hs: HealthScore): Generator<RuleResult> {
+function* recurringPressureRules(
+  ctx: FinancialEngineContext,
+  hs: HealthScore,
+): Generator<RuleResult> {
   const ratio = hs.subScores.fixedExpensePressure.rawValue;
 
   if (ratio > RECOMMENDATION_THRESHOLDS.recurringPressureCritical) {
@@ -139,11 +146,11 @@ function* recurringPressureRules(ctx: FinancialEngineContext, hs: HealthScore): 
       category: "spending",
       params: {
         ratio: Math.round(ratio * 100),
-        potential: Math.round((ratio - 0.50) * hs.avgMonthlyIncome),
+        potential: Math.round((ratio - 0.5) * hs.avgMonthlyIncome),
       },
       financialImpact: {
         type: "monthly_savings",
-        estimatedAmount: (ratio - 0.50) * hs.avgMonthlyIncome,
+        estimatedAmount: (ratio - 0.5) * hs.avgMonthlyIncome,
         impactKey: "rec.impact.monthlySavings",
       },
       confidence: 0.85,
@@ -160,7 +167,7 @@ function* recurringPressureRules(ctx: FinancialEngineContext, hs: HealthScore): 
         estimatedAmount: null,
         impactKey: "rec.impact.opportunityFlexibility",
       },
-      confidence: 0.80,
+      confidence: 0.8,
       priority: 5,
     };
   }
@@ -168,7 +175,10 @@ function* recurringPressureRules(ctx: FinancialEngineContext, hs: HealthScore): 
 
 // ─── Portfolio rules ──────────────────────────────────────────────────────────
 
-function* portfolioRules(ctx: FinancialEngineContext, pa: PortfolioAnalytics): Generator<RuleResult> {
+function* portfolioRules(
+  ctx: FinancialEngineContext,
+  pa: PortfolioAnalytics,
+): Generator<RuleResult> {
   if (pa.isEmpty) {
     yield {
       id: "portfolio-empty",
@@ -180,7 +190,7 @@ function* portfolioRules(ctx: FinancialEngineContext, pa: PortfolioAnalytics): G
         estimatedAmount: null,
         impactKey: "rec.impact.opportunityPortfolio",
       },
-      confidence: 0.70,
+      confidence: 0.7,
       priority: 15,
     };
     return;
@@ -216,7 +226,7 @@ function* portfolioRules(ctx: FinancialEngineContext, pa: PortfolioAnalytics): G
         estimatedAmount: null,
         impactKey: "rec.impact.riskReductionGeneral",
       },
-      confidence: 0.80,
+      confidence: 0.8,
       priority: 8,
     };
   }
@@ -265,7 +275,7 @@ function* goalRules(ctx: FinancialEngineContext, hs: HealthScore): Generator<Rul
     const msRemaining = g.deadline.getTime() - ctx.asOf.getTime();
     const monthsRemaining = msRemaining / (1000 * 60 * 60 * 24 * 30.44);
     const completion = safeDivide(g.currentAmount, g.targetAmount, 0);
-    if (monthsRemaining > 0 && monthsRemaining <= 6 && completion < 0.50) {
+    if (monthsRemaining > 0 && monthsRemaining <= 6 && completion < 0.5) {
       const shortfall = g.targetAmount - g.currentAmount;
       const requiredMonthly = safeDivide(shortfall, monthsRemaining, shortfall);
       yield {
@@ -292,7 +302,10 @@ function* goalRules(ctx: FinancialEngineContext, hs: HealthScore): Generator<Rul
 
 // ─── Budget rules ─────────────────────────────────────────────────────────────
 
-function* budgetRules(ctx: FinancialEngineContext, forecast: BudgetForecast): Generator<RuleResult> {
+function* budgetRules(
+  ctx: FinancialEngineContext,
+  forecast: BudgetForecast,
+): Generator<RuleResult> {
   if (forecast.projectedOverrun && forecast.confidence > 0.5) {
     const overrun = forecast.projectedTotalWithFixed - forecast.expectedMonthlyIncome;
     yield {
@@ -342,9 +355,7 @@ export function computeRecommendations(
 
   return rules
     .sort(
-      (a, b) =>
-        SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] ||
-        a.priority - b.priority,
+      (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || a.priority - b.priority,
     )
     .map((r) => ({ ...r }));
 }

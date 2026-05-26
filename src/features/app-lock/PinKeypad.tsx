@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Delete } from "lucide-react";
 
 interface PinKeypadProps {
-  onDigit:  (d: string) => void;
+  onDigit: (d: string) => void;
   onDelete: () => void;
   disabled?: boolean;
   /** "dark" = lock screen (white on dark), "light" = setup screen (foreground on bg) */
@@ -14,13 +14,16 @@ const ROWS = [
   ["1", "2", "3"],
   ["4", "5", "6"],
   ["7", "8", "9"],
-  ["",  "0", "del"],
+  ["", "0", "del"],
 ] as const;
 
 const SPRING = { type: "spring" as const, stiffness: 600, damping: 30 };
 
 export const PinKeypad = memo(function PinKeypad({
-  onDigit, onDelete, disabled, variant = "dark",
+  onDigit,
+  onDelete,
+  disabled,
+  variant = "dark",
 }: PinKeypadProps) {
   const isDark = variant === "dark";
 
@@ -37,7 +40,10 @@ export const PinKeypad = memo(function PinKeypad({
                   key={ki}
                   whileTap={{ scale: 0.88 }}
                   transition={SPRING}
-                  onPointerDown={(e) => { e.preventDefault(); if (!disabled) onDelete(); }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    if (!disabled) onDelete();
+                  }}
                   disabled={disabled}
                   className="h-[66px] rounded-2xl flex items-center justify-center disabled:opacity-30 touch-manipulation select-none"
                   style={
@@ -57,7 +63,10 @@ export const PinKeypad = memo(function PinKeypad({
                 key={ki}
                 whileTap={{ scale: 0.88 }}
                 transition={SPRING}
-                onPointerDown={(e) => { e.preventDefault(); if (!disabled) onDigit(key); }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  if (!disabled) onDigit(key);
+                }}
                 disabled={disabled}
                 className="h-[66px] rounded-2xl text-[24px] font-semibold flex items-center justify-center disabled:opacity-30 touch-manipulation select-none"
                 style={

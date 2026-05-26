@@ -9,21 +9,21 @@ const OOLY = ["O", "O", "L", "Y"];
 // ─── Ambient particles ────────────────────────────────────────────────────────
 
 const PARTICLES = [
-  { w: 2,   x: "17%", y: "74%", delay: 0.5,  dur: 3.5 },
-  { w: 3,   x: "80%", y: "67%", delay: 1.0,  dur: 4.2 },
-  { w: 1.5, x: "36%", y: "82%", delay: 0.3,  dur: 3.8 },
-  { w: 2,   x: "63%", y: "79%", delay: 1.3,  dur: 3.0 },
-  { w: 1.5, x: "87%", y: "72%", delay: 0.7,  dur: 3.6 },
-  { w: 2.5, x: "9%",  y: "62%", delay: 1.1,  dur: 4.5 },
-  { w: 1.5, x: "54%", y: "85%", delay: 0.8,  dur: 3.2 },
+  { w: 2, x: "17%", y: "74%", delay: 0.5, dur: 3.5 },
+  { w: 3, x: "80%", y: "67%", delay: 1.0, dur: 4.2 },
+  { w: 1.5, x: "36%", y: "82%", delay: 0.3, dur: 3.8 },
+  { w: 2, x: "63%", y: "79%", delay: 1.3, dur: 3.0 },
+  { w: 1.5, x: "87%", y: "72%", delay: 0.7, dur: 3.6 },
+  { w: 2.5, x: "9%", y: "62%", delay: 1.1, dur: 4.5 },
+  { w: 1.5, x: "54%", y: "85%", delay: 0.8, dur: 3.2 },
 ];
 
 // ─── Animated N path (drawn via pathLength) ───────────────────────────────────
 
 function AnimatedN({ onDrawn }: { onDrawn: () => void }) {
-  const uid  = useId().replace(/:/g, "s");
-  const gid  = `sg-${uid}`;
-  const fid  = `sf-${uid}`;
+  const uid = useId().replace(/:/g, "s");
+  const gid = `sg-${uid}`;
+  const fid = `sf-${uid}`;
 
   const [scope, animate] = useAnimate();
 
@@ -31,10 +31,14 @@ function AnimatedN({ onDrawn }: { onDrawn: () => void }) {
     void animate(
       scope.current,
       { pathLength: 1, opacity: 1 },
-      { delay: 0.36, duration: 0.72, ease: "easeOut" }
+      { delay: 0.36, duration: 0.72, ease: "easeOut" },
     ).then(() => {
       // brief glow pulse, then signal done
-      void animate(scope.current, { filter: [`drop-shadow(0 0 12px ${N_GRAD_MID})`, `drop-shadow(0 0 4px ${N_GRAD_MID})`] }, { duration: 0.4 });
+      void animate(
+        scope.current,
+        { filter: [`drop-shadow(0 0 12px ${N_GRAD_MID})`, `drop-shadow(0 0 4px ${N_GRAD_MID})`] },
+        { duration: 0.4 },
+      );
       setTimeout(onDrawn, 180);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -50,9 +54,9 @@ function AnimatedN({ onDrawn }: { onDrawn: () => void }) {
     >
       <defs>
         <linearGradient id={gid} x1="220" y1="28" x2="40" y2="234" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor={N_GRAD_START} />
-          <stop offset="42%"  stopColor={N_GRAD_MID}   />
-          <stop offset="100%" stopColor={N_GRAD_END}    />
+          <stop offset="0%" stopColor={N_GRAD_START} />
+          <stop offset="42%" stopColor={N_GRAD_MID} />
+          <stop offset="100%" stopColor={N_GRAD_END} />
         </linearGradient>
         <filter id={fid} x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur" />
@@ -82,8 +86,8 @@ function AnimatedN({ onDrawn }: { onDrawn: () => void }) {
 // ─── Splash component ─────────────────────────────────────────────────────────
 
 export function NoolySplash({ onDone }: { onDone: () => void }) {
-  const [visible,    setVisible]    = useState(true);
-  const [nDrawn,     setNDrawn]     = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [nDrawn, setNDrawn] = useState(false);
   const [showTagline, setShowTagline] = useState(false);
 
   useEffect(() => {
@@ -167,12 +171,11 @@ export function NoolySplash({ onDone }: { onDone: () => void }) {
             }}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: [0, 1.4, 0], opacity: [0, 1, 0] }}
-            transition={{ delay: 0.30, duration: 0.28, ease: "easeOut" }}
+            transition={{ delay: 0.3, duration: 0.28, ease: "easeOut" }}
           />
 
           {/* ── Phase 2 + 3: N draws, then OOLY appears ──────────────── */}
           <div className="relative flex items-center" style={{ gap: "0.06em" }}>
-
             {/* Animated N ribbon */}
             <AnimatedN onDrawn={() => setNDrawn(true)} />
 
@@ -227,7 +230,13 @@ export function NoolySplash({ onDone }: { onDone: () => void }) {
             <motion.div
               key={i}
               className="absolute rounded-full pointer-events-none"
-              style={{ width: p.w, height: p.w, left: p.x, top: p.y, background: `${N_GRAD_MID}88` }}
+              style={{
+                width: p.w,
+                height: p.w,
+                left: p.x,
+                top: p.y,
+                background: `${N_GRAD_MID}88`,
+              }}
               initial={{ opacity: 0, y: 0 }}
               animate={{ opacity: [0, 0.7, 0.4, 0], y: -32 }}
               transition={{ delay: p.delay, duration: p.dur, repeat: Infinity, ease: "easeOut" }}

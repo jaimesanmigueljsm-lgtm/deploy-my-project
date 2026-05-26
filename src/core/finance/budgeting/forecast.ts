@@ -31,8 +31,12 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
   // ── Current month spend ───────────────────────────────────────────────────
   const thisMonthExpenses = ctx.expenses.filter((e) => monthKey(e.spentAt) === currentMonthKey);
   const currentSpend = thisMonthExpenses.reduce((s, e) => s + e.amount, 0);
-  const currentFixedSpend = thisMonthExpenses.filter((e) => e.kind === "fixed").reduce((s, e) => s + e.amount, 0);
-  const currentVariableSpend = thisMonthExpenses.filter((e) => e.kind === "variable").reduce((s, e) => s + e.amount, 0);
+  const currentFixedSpend = thisMonthExpenses
+    .filter((e) => e.kind === "fixed")
+    .reduce((s, e) => s + e.amount, 0);
+  const currentVariableSpend = thisMonthExpenses
+    .filter((e) => e.kind === "variable")
+    .reduce((s, e) => s + e.amount, 0);
 
   // ── Pending fixed costs (bills not yet paid this month) ───────────────────
   const pendingFixedCosts = ctx.bills
@@ -68,9 +72,8 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
   // Simple sigmoid-based probability from how far projected exceeds income
   // 0 = well under budget, 0.5 = at breakeven, 1 = significantly over
   const overrunRatio = safeDivide(projectedTotalWithFixed, expectedMonthlyIncome, 1);
-  const overrunProbability = expectedMonthlyIncome === 0
-    ? 0.5
-    : clamp(1 / (1 + Math.exp(-10 * (overrunRatio - 1))), 0, 1);
+  const overrunProbability =
+    expectedMonthlyIncome === 0 ? 0.5 : clamp(1 / (1 + Math.exp(-10 * (overrunRatio - 1))), 0, 1);
 
   // ── Safe-to-spend calculation ─────────────────────────────────────────────
   // Variable budget = 50/30/20 → "needs" (fixed) gets 50%, "wants" (variable) gets 30%
@@ -79,9 +82,8 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
   const variableBudgetTarget = expectedMonthlyIncome * BUDGET_RATIOS.wants;
   const variableBudgetRemaining = Math.max(0, variableBudgetTarget - currentVariableSpend);
 
-  const safeToSpendPerDay = daysRemaining > 0
-    ? safeDivide(variableBudgetRemaining, daysRemaining, 0)
-    : 0;
+  const safeToSpendPerDay =
+    daysRemaining > 0 ? safeDivide(variableBudgetRemaining, daysRemaining, 0) : 0;
   const safeToSpendToday = safeToSpendPerDay;
 
   // ── Improved closing balance (Task 6) ────────────────────────────────────
@@ -89,9 +91,10 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
   const projectedClosingBalance = expectedMonthlyIncome - currentSpend - pendingFixedCosts;
 
   // ── Confidence based on elapsed days ─────────────────────────────────────
-  const confidence = daysElapsed < MIN_DAYS_FOR_CONFIDENT_FORECAST
-    ? clamp(daysElapsed / MIN_DAYS_FOR_CONFIDENT_FORECAST, 0, 1) * 0.5
-    : clamp(daysElapsed / totalDays, 0, 1);
+  const confidence =
+    daysElapsed < MIN_DAYS_FOR_CONFIDENT_FORECAST
+      ? clamp(daysElapsed / MIN_DAYS_FOR_CONFIDENT_FORECAST, 0, 1) * 0.5
+      : clamp(daysElapsed / totalDays, 0, 1);
 
   return {
     daysElapsed,

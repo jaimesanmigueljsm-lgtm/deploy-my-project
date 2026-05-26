@@ -23,9 +23,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          That page drifted off the budget.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">That page drifted off the budget.</p>
         <div className="mt-6">
           <Link
             to="/"
@@ -50,8 +48,7 @@ function getSafeErrorContent(error: Error): { headline: string; detail: string; 
   if (msg.includes("Missing Supabase environment variable")) {
     return {
       headline: "Configuration missing",
-      detail:
-        "Supabase credentials are not configured. The app cannot start without them.",
+      detail: "Supabase credentials are not configured. The app cannot start without them.",
       hint: msg, // Show the exact missing variables — invaluable for diagnosis
     };
   }
@@ -64,7 +61,11 @@ function getSafeErrorContent(error: Error): { headline: string; detail: string; 
   if (msg.includes("Validation failed")) {
     return { headline: "Invalid data", detail: "Some data was invalid. Please check your inputs." };
   }
-  if (msg.includes("NetworkError") || msg.includes("Failed to fetch") || msg.includes("fetch failed")) {
+  if (
+    msg.includes("NetworkError") ||
+    msg.includes("Failed to fetch") ||
+    msg.includes("fetch failed")
+  ) {
     return {
       headline: "Network issue",
       detail: "Check your connection and try again.",
@@ -94,12 +95,17 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         )}
         <div className="mt-6 flex justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground"
           >
             Try again
           </button>
-          <a href="/" className="rounded-full border border-input px-4 py-2 text-sm">Home</a>
+          <a href="/" className="rounded-full border border-input px-4 py-2 text-sm">
+            Home
+          </a>
         </div>
       </div>
     </div>
@@ -118,26 +124,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#070c18", media: "(prefers-color-scheme: dark)" },
 
       // PWA / iOS home screen
-      { name: "mobile-web-app-capable",             content: "yes" },
-      { name: "apple-mobile-web-app-capable",        content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title",          content: "NOOLY" },
+      { name: "apple-mobile-web-app-title", content: "NOOLY" },
 
       // SEO & social
       { title: "NOOLY — Family financial copilot" },
-      { name: "description", content: "An AI-powered family copilot to track income, expenses and savings goals with calm, beautiful clarity." },
-      { property: "og:title",       content: "NOOLY — Family financial copilot" },
-      { property: "og:description", content: "Track income, expenses and savings goals with AI-powered insight." },
-      { property: "og:type",        content: "website" },
-      { name: "twitter:card",       content: "summary" },
+      {
+        name: "description",
+        content:
+          "An AI-powered family copilot to track income, expenses and savings goals with calm, beautiful clarity.",
+      },
+      { property: "og:title", content: "NOOLY — Family financial copilot" },
+      {
+        property: "og:description",
+        content: "Track income, expenses and savings goals with AI-powered insight.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
 
       // Prevent phone/date auto-detection on iOS (fintech apps must own formatting)
       { name: "format-detection", content: "telephone=no, date=no, address=no" },
     ],
     links: [
-      { rel: "stylesheet",   href: appCss },
+      { rel: "stylesheet", href: appCss },
       // PWA manifest
-      { rel: "manifest",     href: "/manifest.json" },
+      { rel: "manifest", href: "/manifest.json" },
       // Apple touch icon (iOS home screen)
       { rel: "apple-touch-icon", href: "/icon.svg" },
       // Favicon
@@ -145,7 +158,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // Font preconnects
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
-      { rel: "stylesheet",   href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -157,7 +173,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head><HeadContent /></head>
+      <head>
+        <HeadContent />
+      </head>
       <body>
         {children}
         <Scripts />

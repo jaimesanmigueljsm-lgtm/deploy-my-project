@@ -85,10 +85,7 @@ export const currencyCodeSchema = z
   .string({ required_error: "Currency is required" })
   .trim()
   .transform((s) => s.toUpperCase())
-  .refine(
-    (s) => /^[A-Z]{3}$/.test(s),
-    "Currency must be a 3-letter ISO code (e.g. EUR, USD, GBP)",
-  );
+  .refine((s) => /^[A-Z]{3}$/.test(s), "Currency must be a 3-letter ISO code (e.g. EUR, USD, GBP)");
 
 // ── UUID ──────────────────────────────────────────────────────────────────────
 export const uuidSchema = z
@@ -120,9 +117,7 @@ export const optionalNoteSchema = z.preprocess(
 
 export function formatZodError(error: z.ZodError): string {
   return error.errors
-    .map((e) =>
-      e.path.length > 0 ? `${e.path.join(".")}: ${e.message}` : e.message,
-    )
+    .map((e) => (e.path.length > 0 ? `${e.path.join(".")}: ${e.message}` : e.message))
     .join("; ");
 }
 
@@ -167,9 +162,7 @@ export function parseOrThrow<S extends z.ZodTypeAny>(
 export function coerceToAmount(raw: unknown): number {
   const n = typeof raw === "string" ? parseFloat(raw) : Number(raw);
   if (!Number.isFinite(n) || Number.isNaN(n)) {
-    throw new Error(
-      `Cannot coerce "${String(raw)}" to a valid monetary amount`,
-    );
+    throw new Error(`Cannot coerce "${String(raw)}" to a valid monetary amount`);
   }
   return Math.round(n * 100) / 100;
 }

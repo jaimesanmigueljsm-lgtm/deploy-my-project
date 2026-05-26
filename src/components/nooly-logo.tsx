@@ -21,23 +21,23 @@ interface NRibbonProps {
 // ─── Shared gradient constants ────────────────────────────────────────────────
 
 export const N_GRAD_START = "#c2ede0";
-export const N_GRAD_MID   = "#5fb8a8";
-export const N_GRAD_END   = "#74b8d0";
+export const N_GRAD_MID = "#5fb8a8";
+export const N_GRAD_END = "#74b8d0";
 
 // ─── NRibbon — just the ribbon path (no background) ──────────────────────────
 // Used inside NLogo and by NoolySplash for the animated draw.
 
 export function NRibbon({ pathLength: pl, vSize = 260 }: NRibbonProps) {
-  const uid  = useId().replace(/:/g, "n");
-  const gid  = `ng-${uid}`;
-  const fid  = `gf-${uid}`;
+  const uid = useId().replace(/:/g, "n");
+  const gid = `ng-${uid}`;
+  const fid = `gf-${uid}`;
 
   // Path within a vSize×vSize viewBox — proportional N
-  const pad  = Math.round(vSize * 0.154);   // ~40 in 260
-  const mid  = Math.round(vSize * 0.846);   // ~220 in 260
-  const top  = Math.round(vSize * 0.11);    // ~28
-  const bot  = Math.round(vSize * 0.90);    // ~234
-  const sw   = Math.round(vSize * 0.22);    // stroke width ~57
+  const pad = Math.round(vSize * 0.154); // ~40 in 260
+  const mid = Math.round(vSize * 0.846); // ~220 in 260
+  const top = Math.round(vSize * 0.11); // ~28
+  const bot = Math.round(vSize * 0.9); // ~234
+  const sw = Math.round(vSize * 0.22); // stroke width ~57
 
   const d = `M ${pad},${bot} L ${pad},${top} L ${mid},${bot} L ${mid},${top}`;
 
@@ -51,15 +51,10 @@ export function NRibbon({ pathLength: pl, vSize = 260 }: NRibbonProps) {
       style={{ overflow: "visible" }}
     >
       <defs>
-        <linearGradient
-          id={gid}
-          x1={mid} y1={top}
-          x2={pad} y2={bot}
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0%"   stopColor={N_GRAD_START} />
-          <stop offset="42%"  stopColor={N_GRAD_MID}   />
-          <stop offset="100%" stopColor={N_GRAD_END}    />
+        <linearGradient id={gid} x1={mid} y1={top} x2={pad} y2={bot} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={N_GRAD_START} />
+          <stop offset="42%" stopColor={N_GRAD_MID} />
+          <stop offset="100%" stopColor={N_GRAD_END} />
         </linearGradient>
 
         <filter id={fid} x="-25%" y="-25%" width="150%" height="150%">
@@ -103,12 +98,12 @@ export function NRibbon({ pathLength: pl, vSize = 260 }: NRibbonProps) {
 // ─── NLogo — ribbon N inside a dark rounded-square card ──────────────────────
 
 export function NLogo({ size = 64, showBackground = true, className = "" }: NLogoProps) {
-  const uid   = useId().replace(/:/g, "n");
-  const bgId  = `nlbg-${uid}`;
-  const glId  = `nlgl-${uid}`;
+  const uid = useId().replace(/:/g, "n");
+  const bgId = `nlbg-${uid}`;
+  const glId = `nlgl-${uid}`;
 
-  const rx    = Math.round(size * 0.218);   // border-radius ~14 at 64px
-  const pad   = size * 0.155;               // padding from edge
+  const rx = Math.round(size * 0.218); // border-radius ~14 at 64px
+  const pad = size * 0.155; // padding from edge
   const inner = size - pad * 2;
 
   if (!showBackground) {
@@ -130,12 +125,12 @@ export function NLogo({ size = 64, showBackground = true, className = "" }: NLog
     >
       <defs>
         <linearGradient id={bgId} x1="0.5" y1="0" x2="0.5" y2="1">
-          <stop offset="0%"   stopColor="#111B27" />
+          <stop offset="0%" stopColor="#111B27" />
           <stop offset="100%" stopColor="#0B0F19" />
         </linearGradient>
         <radialGradient id={glId} cx="55%" cy="30%" r="55%">
-          <stop offset="0%"   stopColor={N_GRAD_MID} stopOpacity="0.18" />
-          <stop offset="100%" stopColor={N_GRAD_MID} stopOpacity="0"    />
+          <stop offset="0%" stopColor={N_GRAD_MID} stopOpacity="0.18" />
+          <stop offset="100%" stopColor={N_GRAD_MID} stopOpacity="0" />
         </radialGradient>
       </defs>
 

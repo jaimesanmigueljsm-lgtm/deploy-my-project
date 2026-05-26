@@ -56,7 +56,13 @@ export async function addCategory(userId: string, payload: AddCategoryPayload): 
 
   const { data, error } = await supabase
     .from("categories")
-    .insert({ name: payload.name, color: payload.color, kind: payload.kind, icon: payload.icon ?? "tag", user_id: userId })
+    .insert({
+      name: payload.name,
+      color: payload.color,
+      kind: payload.kind,
+      icon: payload.icon ?? "tag",
+      user_id: userId,
+    })
     .select("id, name, color, kind")
     .single();
   if (error) throw new Error(error.message);
@@ -75,9 +81,15 @@ export async function resetCategoriesToDefaults(
   const { error: delErr } = await supabase.from("categories").delete().eq("user_id", userId);
   if (delErr) throw new Error(delErr.message);
   if (rows.length === 0) return;
-  const { error: insErr } = await supabase
-    .from("categories")
-    .insert(rows.map((r) => ({ name: r.name, color: r.color, kind: r.kind, icon: r.icon ?? "tag", user_id: userId })));
+  const { error: insErr } = await supabase.from("categories").insert(
+    rows.map((r) => ({
+      name: r.name,
+      color: r.color,
+      kind: r.kind,
+      icon: r.icon ?? "tag",
+      user_id: userId,
+    })),
+  );
   if (insErr) throw new Error(insErr.message);
 }
 

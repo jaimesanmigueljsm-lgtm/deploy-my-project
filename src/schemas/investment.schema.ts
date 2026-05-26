@@ -12,9 +12,10 @@ import type { InvestmentType } from "@/types/finance";
 
 // ── Enum derived from constants ───────────────────────────────────────────────
 
-const investmentTypeKeys = Object.keys(
-  INVESTMENT_TYPE_META,
-) as [InvestmentType, ...InvestmentType[]];
+const investmentTypeKeys = Object.keys(INVESTMENT_TYPE_META) as [
+  InvestmentType,
+  ...InvestmentType[],
+];
 
 export const InvestmentTypeSchema = z.enum(investmentTypeKeys, {
   errorMap: () => ({
@@ -54,10 +55,7 @@ export const AddInvestmentSchema = z
   .superRefine((data, ctx) => {
     // Stocks and ETFs are expected to have a ticker — warn but don't block.
     // Crypto often has short tickers — allow null only for savings/other.
-    if (
-      data.ticker === null &&
-      (data.type === "stock" || data.type === "etf")
-    ) {
+    if (data.ticker === null && (data.type === "stock" || data.type === "etf")) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Stocks and ETFs typically require a ticker symbol",

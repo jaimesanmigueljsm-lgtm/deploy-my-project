@@ -25,7 +25,8 @@ export const chartTooltipStyle: CSSProperties = {
 
 /** Dark-mode-aware tooltip (check document.documentElement.classList for .dark) */
 export function getChartTooltipStyle(): CSSProperties {
-  const dark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+  const dark =
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark");
   return dark
     ? {
         ...chartTooltipStyle,
@@ -52,17 +53,17 @@ export const chartAxisStyle: CSSProperties = {
 
 /** 5-color palette — mirrors CSS chart tokens */
 export const CHART_COLORS = [
-  "oklch(0.62 0.14 158)",  // mint
-  "oklch(0.58 0.10 235)",  // sky
-  "oklch(0.72 0.16 65)",   // warn/amber
-  "oklch(0.55 0.16 290)",  // violet
-  "oklch(0.55 0.04 255)",  // neutral
+  "oklch(0.62 0.14 158)", // mint
+  "oklch(0.58 0.10 235)", // sky
+  "oklch(0.72 0.16 65)", // warn/amber
+  "oklch(0.55 0.16 290)", // violet
+  "oklch(0.55 0.04 255)", // neutral
 ] as const;
 
 /** Gradient stop definitions for area charts */
 export const CHART_GRADIENT_STOPS = {
-  mint:   { top: "oklch(0.62 0.14 158 / 0.30)", bottom: "oklch(0.62 0.14 158 / 0)" },
-  sky:    { top: "oklch(0.58 0.10 235 / 0.30)", bottom: "oklch(0.58 0.10 235 / 0)" },
+  mint: { top: "oklch(0.62 0.14 158 / 0.30)", bottom: "oklch(0.62 0.14 158 / 0)" },
+  sky: { top: "oklch(0.58 0.10 235 / 0.30)", bottom: "oklch(0.58 0.10 235 / 0)" },
   violet: { top: "oklch(0.55 0.16 290 / 0.30)", bottom: "oklch(0.55 0.16 290 / 0)" },
-  warn:   { top: "oklch(0.72 0.16 65  / 0.30)", bottom: "oklch(0.72 0.16 65  / 0)" },
+  warn: { top: "oklch(0.72 0.16 65  / 0.30)", bottom: "oklch(0.72 0.16 65  / 0)" },
 } as const;

@@ -10,7 +10,13 @@ export type DashboardProfile = Pick<
 
 export type DashboardGoal = Pick<
   Tables<"savings_goals">,
-  "id" | "name" | "target_amount" | "current_amount" | "monthly_contribution" | "deadline" | "priority"
+  | "id"
+  | "name"
+  | "target_amount"
+  | "current_amount"
+  | "monthly_contribution"
+  | "deadline"
+  | "priority"
 >;
 
 export type DashboardRecommendation = Pick<
@@ -20,9 +26,7 @@ export type DashboardRecommendation = Pick<
 
 // ─── Fetch functions (called by useQueries in use-dashboard.ts) ───────────────
 
-export async function fetchDashboardProfile(
-  userId: string,
-): Promise<DashboardProfile | null> {
+export async function fetchDashboardProfile(userId: string): Promise<DashboardProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
     .select("full_name, currency, monthly_savings_target, health_score, priorities")
@@ -64,9 +68,7 @@ export async function fetchDashboardGoals(userId: string): Promise<DashboardGoal
   })) as DashboardGoal[];
 }
 
-export async function fetchRecommendations(
-  userId: string,
-): Promise<DashboardRecommendation[]> {
+export async function fetchRecommendations(userId: string): Promise<DashboardRecommendation[]> {
   const { data, error } = await supabase
     .from("recommendations")
     .select("id, title, body, severity, created_at")

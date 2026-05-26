@@ -33,7 +33,9 @@ export function SkeletonBlock({ className }: { className?: string }) {
 // ─── TrendBadge ──────────────────────────────────────────────────────────────
 
 export function TrendBadge({
-  value, suffix = "%", className,
+  value,
+  suffix = "%",
+  className,
 }: {
   value: number;
   suffix?: string;
@@ -50,7 +52,9 @@ export function TrendBadge({
       )}
     >
       <Icon className="size-3" strokeWidth={2.5} />
-      {positive ? "+" : ""}{value.toFixed(value % 1 === 0 ? 0 : 1)}{suffix}
+      {positive ? "+" : ""}
+      {value.toFixed(value % 1 === 0 ? 0 : 1)}
+      {suffix}
     </span>
   );
 }
@@ -58,7 +62,9 @@ export function TrendBadge({
 // ─── SectionHeader ────────────────────────────────────────────────────────────
 
 export function SectionHeader({
-  title, subtitle, action,
+  title,
+  subtitle,
+  action,
 }: {
   title: string;
   subtitle?: string;
@@ -80,7 +86,12 @@ export function SectionHeader({
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 
 export function StatCard({
-  label, value, suffix, icon, tone = "neutral", children,
+  label,
+  value,
+  suffix,
+  icon,
+  tone = "neutral",
+  children,
 }: {
   label: string;
   value: string;
@@ -90,10 +101,10 @@ export function StatCard({
   children?: ReactNode;
 }) {
   const iconStyles: Record<string, string> = {
-    mint:    "bg-positive-soft text-positive",
-    sky:     "bg-sky-soft text-sky",
-    warn:    "bg-warn-soft text-warn",
-    violet:  "bg-violet-soft text-violet",
+    mint: "bg-positive-soft text-positive",
+    sky: "bg-sky-soft text-sky",
+    warn: "bg-warn-soft text-warn",
+    violet: "bg-violet-soft text-violet",
     neutral: "bg-neutral-soft text-foreground",
   };
   return (
@@ -101,7 +112,9 @@ export function StatCard({
       <div className="flex items-center justify-between">
         <span className="label-overline">{label}</span>
         {icon && (
-          <span className={cn("size-7 rounded-full grid place-items-center shrink-0", iconStyles[tone])}>
+          <span
+            className={cn("size-7 rounded-full grid place-items-center shrink-0", iconStyles[tone])}
+          >
             {icon}
           </span>
         )}
@@ -118,7 +131,12 @@ export function StatCard({
 // Uses row-hover and press-scale utilities defined in styles.css.
 
 export function MetricRow({
-  label, value, sublabel, trend, leading, onClick,
+  label,
+  value,
+  sublabel,
+  trend,
+  leading,
+  onClick,
 }: {
   label: string;
   value: string;
@@ -158,7 +176,13 @@ export function MetricRow({
 // Optional glow for excellent scores (≥ 85).
 
 export function ProgressRing({
-  value, size = 72, stroke = 6, label, sublabel, color = "var(--positive)", glow,
+  value,
+  size = 72,
+  stroke = 6,
+  label,
+  sublabel,
+  color = "var(--positive)",
+  glow,
 }: {
   value: number;
   size?: number;
@@ -181,7 +205,9 @@ export function ProgressRing({
       <svg width={size} height={size} className="-rotate-90">
         {/* Track */}
         <circle
-          cx={size / 2} cy={size / 2} r={r}
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
           strokeWidth={stroke}
           stroke="var(--color-border)"
           fill="none"
@@ -200,7 +226,9 @@ export function ProgressRing({
         )}
         {/* Progress arc */}
         <circle
-          cx={size / 2} cy={size / 2} r={r}
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
           strokeWidth={stroke}
           stroke={color}
           fill="none"
@@ -229,7 +257,10 @@ export function ProgressRing({
 // ─── EmptyState ───────────────────────────────────────────────────────────────
 
 export function EmptyState({
-  icon, title, description, action,
+  icon,
+  title,
+  description,
+  action,
 }: {
   icon: ReactNode;
   title: string;
@@ -262,7 +293,10 @@ export function EmptyState({
 // Slightly elevated hover — communicates that insights are discrete items.
 
 export function InsightCard({
-  tone = "mint", icon, title, body,
+  tone = "mint",
+  icon,
+  title,
+  body,
 }: {
   tone?: "mint" | "sky" | "warn" | "violet";
   icon: ReactNode;
@@ -270,14 +304,19 @@ export function InsightCard({
   body: string;
 }) {
   const iconStyles: Record<string, string> = {
-    mint:   "bg-positive-soft text-positive",
-    sky:    "bg-sky-soft text-sky",
-    warn:   "bg-warn-soft text-warn",
+    mint: "bg-positive-soft text-positive",
+    sky: "bg-sky-soft text-sky",
+    warn: "bg-warn-soft text-warn",
     violet: "bg-violet-soft text-violet",
   };
   return (
     <div className="card-flat p-4 flex gap-3">
-      <div className={cn("size-9 rounded-xl grid place-items-center shrink-0 mt-0.5", iconStyles[tone])}>
+      <div
+        className={cn(
+          "size-9 rounded-xl grid place-items-center shrink-0 mt-0.5",
+          iconStyles[tone],
+        )}
+      >
         {icon}
       </div>
       <div className="min-w-0">
@@ -291,22 +330,31 @@ export function InsightCard({
 // ─── CategoryDot ─────────────────────────────────────────────────────────────
 
 export function CategoryDot({
-  color = "mint", size = "sm", className,
+  color = "mint",
+  size = "sm",
+  className,
 }: {
   color?: string;
   size?: "sm" | "md";
   className?: string;
 }) {
   const colorMap: Record<string, string> = {
-    mint:    "bg-positive",
-    sky:     "bg-sky",
-    warn:    "bg-warn",
-    violet:  "bg-violet",
+    mint: "bg-positive",
+    sky: "bg-sky",
+    warn: "bg-warn",
+    violet: "bg-violet",
     neutral: "bg-muted-foreground",
   };
   const sizeClass = size === "md" ? "size-2.5" : "size-2";
   return (
-    <span className={cn("rounded-full shrink-0", sizeClass, colorMap[color] ?? "bg-muted-foreground", className)} />
+    <span
+      className={cn(
+        "rounded-full shrink-0",
+        sizeClass,
+        colorMap[color] ?? "bg-muted-foreground",
+        className,
+      )}
+    />
   );
 }
 
@@ -315,17 +363,22 @@ export function CategoryDot({
 // Bar width transitions smoothly after mount via CSS transition.
 
 export function SubScoreBar({
-  label, value, score,
+  label,
+  value,
+  score,
 }: {
   label: string;
   value: string;
   score: number;
 }) {
   const color =
-    score >= 80 ? "var(--positive)" :
-    score >= 60 ? "var(--sky)" :
-    score >= 40 ? "var(--warn)" :
-    "var(--negative)";
+    score >= 80
+      ? "var(--positive)"
+      : score >= 60
+        ? "var(--sky)"
+        : score >= 40
+          ? "var(--warn)"
+          : "var(--negative)";
 
   return (
     <div className="flex items-center gap-2.5">
@@ -357,26 +410,20 @@ export function SubScoreBar({
 
 type HealthStatus = "excellent" | "strong" | "healthy" | "improving" | "unstable";
 
-export function HealthStatusBadge({
-  status,
-  label,
-}: {
-  status: HealthStatus;
-  label?: string;
-}) {
+export function HealthStatusBadge({ status, label }: { status: HealthStatus; label?: string }) {
   const styles: Record<HealthStatus, string> = {
     excellent: "bg-positive-soft text-positive",
-    strong:    "bg-sky-soft text-sky",
-    healthy:   "bg-sky-soft text-sky",
+    strong: "bg-sky-soft text-sky",
+    healthy: "bg-sky-soft text-sky",
     improving: "bg-warn-soft text-warn",
-    unstable:  "bg-negative-soft text-negative",
+    unstable: "bg-negative-soft text-negative",
   };
   const fallbackLabels: Record<HealthStatus, string> = {
     excellent: "Excellent",
-    strong:    "Strong",
-    healthy:   "Healthy",
+    strong: "Strong",
+    healthy: "Healthy",
     improving: "Improving",
-    unstable:  "Unstable",
+    unstable: "Unstable",
   };
   return (
     <span
@@ -407,19 +454,20 @@ type Severity = "critical" | "warning" | "info" | "positive";
 export function SeverityDot({ severity }: { severity: Severity }) {
   const colors: Record<Severity, string> = {
     critical: "bg-negative",
-    warning:  "bg-warn",
-    info:     "bg-sky",
+    warning: "bg-warn",
+    info: "bg-sky",
     positive: "bg-positive",
   };
-  return (
-    <span className={cn("size-1.5 rounded-full shrink-0 mt-1.5", colors[severity])} />
-  );
+  return <span className={cn("size-1.5 rounded-full shrink-0 mt-1.5", colors[severity])} />;
 }
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
 
 export function Sparkline({
-  values, width = 80, height = 28, color = "var(--positive)",
+  values,
+  width = 80,
+  height = 28,
+  color = "var(--positive)",
 }: {
   values: number[];
   width?: number;

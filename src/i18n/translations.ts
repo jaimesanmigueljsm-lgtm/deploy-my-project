@@ -46,7 +46,8 @@ const en: Dict = {
   "auth.name.required": "Please enter your first name and surname.",
   "auth.email.required": "Please enter your email address.",
   "auth.password.minlength": "Password must be at least 6 characters.",
-  "auth.error.emailNotConfirmed": "Please confirm your email first — check your inbox for the confirmation link.",
+  "auth.error.emailNotConfirmed":
+    "Please confirm your email first — check your inbox for the confirmation link.",
   "auth.signup.success.title": "Account created!",
 
   // ── Nav ───────────────────────────────────────────────────────────────────
@@ -92,7 +93,8 @@ const en: Dict = {
   "onboarding.step5.title": "What matters most to you right now?",
   "onboarding.step5.subtitle": "We'll tailor advice and insights around your goals.",
   "onboarding.step3b.title": "Roughly how much are they?",
-  "onboarding.step3b.subtitle": "Enter an estimated monthly amount for each. You can skip any you're unsure about.",
+  "onboarding.step3b.subtitle":
+    "Enter an estimated monthly amount for each. You can skip any you're unsure about.",
   "onboarding.step3b.empty": "No fixed expenses selected — tap Continue.",
   "onboarding.cta.enter": "Enter NOOLY",
   "onboarding.toast.success": "All set",
@@ -199,15 +201,23 @@ const en: Dict = {
   "health.status.healthy": "Healthy",
   "health.status.improving": "Improving",
   "health.status.unstable": "Unstable",
-  "health.explain.overspending": "You're spending more than you earn. Even small cuts make a real difference.",
-  "health.explain.noEmergencyFund": "Building even one month of reserves changes everything — it's your financial safety net.",
-  "health.explain.fixedCritical": "Your fixed costs are consuming most of your income. Reducing them would free up room to breathe.",
-  "health.explain.savingsLow": "Saving consistently — even a small amount — builds lasting stability over time.",
-  "health.explain.emergencyLow": "A little more in your safety net will give you real peace of mind.",
-  "health.explain.fixedHigh": "Trimming fixed costs would give you more freedom and savings capacity.",
-  "health.explain.excellent": "Your finances are thriving. You're building real, lasting stability.",
+  "health.explain.overspending":
+    "You're spending more than you earn. Even small cuts make a real difference.",
+  "health.explain.noEmergencyFund":
+    "Building even one month of reserves changes everything — it's your financial safety net.",
+  "health.explain.fixedCritical":
+    "Your fixed costs are consuming most of your income. Reducing them would free up room to breathe.",
+  "health.explain.savingsLow":
+    "Saving consistently — even a small amount — builds lasting stability over time.",
+  "health.explain.emergencyLow":
+    "A little more in your safety net will give you real peace of mind.",
+  "health.explain.fixedHigh":
+    "Trimming fixed costs would give you more freedom and savings capacity.",
+  "health.explain.excellent":
+    "Your finances are thriving. You're building real, lasting stability.",
   "health.explain.strong": "You're managing your money well. Keep this momentum going.",
-  "health.explain.healthy": "Your finances are in a good rhythm. Small improvements will take you further.",
+  "health.explain.healthy":
+    "Your finances are in a good rhythm. Small improvements will take you further.",
   "health.sub.savingsRate": "Savings",
   "health.sub.emergencyFund": "Safety net",
   "health.sub.recurringPressure": "Fixed costs",
@@ -274,13 +284,15 @@ const en: Dict = {
   "budget.dialog.bill.name.placeholder": "Rent, Netflix…",
   "budget.dialog.bill.dueday": "Day of month it's charged (1–31)",
   "budget.dialog.expense.fixed.info.title": "Recurring monthly bill",
-  "budget.dialog.expense.fixed.info.body": "This will be saved as a recurring bill. You won't need to add it again each month.",
+  "budget.dialog.expense.fixed.info.body":
+    "This will be saved as a recurring bill. You won't need to add it again each month.",
   "budget.dialog.expense.fixed.cta": "Save as bill",
   "budget.expense.recurring": "recurring",
   "budget.section.bills": "Recurring bills",
   "budget.section.bills.sub": "Monthly fixed costs",
   "budget.empty.bills.title": "No recurring bills",
-  "budget.empty.bills.desc": "Add rent, utilities and subscriptions so they appear in your forecast.",
+  "budget.empty.bills.desc":
+    "Add rent, utilities and subscriptions so they appear in your forecast.",
   "budget.add.bill": "Add bill",
   "budget.bill.paid": "Paid",
   "budget.bill.pending": "Pending",
@@ -357,7 +369,7 @@ const en: Dict = {
   "goals.card.set_monthly": "Set a monthly amount to project completion",
   "goals.card.next": "Next: {pct}% ({amount} away)",
   "goals.card.last_deposit": "Last deposit: +{amount} on {date}",
-  "goals.confirm.delete": "Delete \"{name}\"?",
+  "goals.confirm.delete": 'Delete "{name}"?',
   "goals.kpi.pct_income": "{pct}% of income",
   "goals.kpi.set_plan": "set up plan",
   "goals.kpi.months_left": "~{n} mo",
@@ -371,13 +383,15 @@ const en: Dict = {
   "insights.weekend.title": "Weekend spending {ratio}× weekday average",
   "insights.weekend.body": "Discretionary spending rises on weekends. A weekend budget can help.",
   "insights.monthend.title": "{pct}% of this month's spend in the last 7 days",
-  "insights.monthend.body": "End-of-month spikes can strain your budget. Try spreading purchases more evenly.",
+  "insights.monthend.body":
+    "End-of-month spikes can strain your budget. Try spreading purchases more evenly.",
   "insights.traj.bad.title": "Spending is trending above your 3-month average",
   "insights.traj.bad.body": "Month-over-month change: +{pct}%. Review your top growing categories.",
   "insights.traj.good.title": "Spending is below your 3-month average — great momentum",
   "insights.traj.good.body": "Keep it up. Consistent lower spending adds up to real savings.",
   "insights.highgrowth.title": "{cats} spending grew 20%+ vs last month",
-  "insights.highgrowth.body": "These categories are growing faster than usual. Check if these are spikes or a new trend.",
+  "insights.highgrowth.body":
+    "These categories are growing faster than usual. Check if these are spikes or a new trend.",
 
   // ── Family ────────────────────────────────────────────────────────────────
   "family.title": "Family",
@@ -391,7 +405,8 @@ const en: Dict = {
   "family.section.members": "Members",
   "family.section.goals": "Shared goals",
   "family.empty.title": "Plan your money together",
-  "family.empty.desc": "Create a family group to share savings goals, track shared expenses and stay aligned.",
+  "family.empty.desc":
+    "Create a family group to share savings goals, track shared expenses and stay aligned.",
   "family.create.button": "Create family",
   "family.goal.empty.title": "No shared goals yet",
   "family.goal.empty.desc": "A trip, an emergency fund, a house deposit — start one together.",
@@ -400,7 +415,8 @@ const en: Dict = {
   "family.role.member": "member",
   "family.role.child": "child",
   "family.you.label": "(you)",
-  "family.invite.notice": "Real invites by email coming soon. Members appear in your group locally for now.",
+  "family.invite.notice":
+    "Real invites by email coming soon. Members appear in your group locally for now.",
   "family.dialog.create.title": "Create your family group",
   "family.dialog.create.name.label": "Family name",
   "family.dialog.create.name.placeholder": "The Garcias",
@@ -460,11 +476,11 @@ const en: Dict = {
   "family.notif.joined.title": "New family member",
   "family.notif.joined.body": "{name} joined your family group",
   "family.notif.goal.created.title": "New shared goal",
-  "family.notif.goal.created.body": "{name} created the goal \"{goal}\"",
+  "family.notif.goal.created.body": '{name} created the goal "{goal}"',
   "family.notif.goal.updated.title": "Goal updated",
-  "family.notif.goal.updated.body": "{name} updated the goal \"{goal}\"",
+  "family.notif.goal.updated.body": '{name} updated the goal "{goal}"',
   "family.notif.contribution.title": "Contribution to {goal}",
-  "family.notif.contribution.body": "{name} added {amount} to \"{goal}\"",
+  "family.notif.contribution.body": '{name} added {amount} to "{goal}"',
   "family.member.remove": "Remove member",
   "family.member.remove.cta": "Remove",
   "family.toast.member.removed": "Member removed",
@@ -474,10 +490,10 @@ const en: Dict = {
   "family.section.activity": "Recent activity",
   "family.activity.member_joined": "{name} joined the family",
   "family.activity.member_removed": "{name} was removed",
-  "family.activity.goal_created": "{name} created goal \"{goal}\"",
-  "family.activity.goal_updated": "{name} updated goal \"{goal}\"",
-  "family.activity.goal_contribution": "{name} added {amount} to \"{goal}\"",
-  "family.activity.family_renamed": "{name} renamed the family to \"{newName}\"",
+  "family.activity.goal_created": '{name} created goal "{goal}"',
+  "family.activity.goal_updated": '{name} updated goal "{goal}"',
+  "family.activity.goal_contribution": '{name} added {amount} to "{goal}"',
+  "family.activity.family_renamed": '{name} renamed the family to "{newName}"',
   "family.activity.empty": "No activity yet",
   "family.member.relationship.label": "Relationship",
   "family.member.relationship.partner": "Partner",
@@ -501,7 +517,8 @@ const en: Dict = {
   "settings.alerts": "Spending alerts",
   "settings.weekly": "Weekly summary",
   "settings.monthly": "Monthly summary",
-  "settings.monthly.desc": "Income, expenses, goals & key insights — compiled into a monthly digest.",
+  "settings.monthly.desc":
+    "Income, expenses, goals & key insights — compiled into a monthly digest.",
   "settings.aiInsights": "AI insights",
   "settings.security.label": "Security",
   "settings.bankConnections": "Bank connections",
@@ -591,7 +608,8 @@ const en: Dict = {
   "settings.privacy.username.placeholder": "e.g. jaime.garcia",
   "settings.privacy.username.taken": "This username is already taken.",
   "settings.privacy.username.available": "Available!",
-  "settings.privacy.username.invalid": "Only lowercase letters, numbers and dots. No consecutive dots.",
+  "settings.privacy.username.invalid":
+    "Only lowercase letters, numbers and dots. No consecutive dots.",
   "settings.privacy.username.checking": "Checking…",
   "settings.privacy.save": "Save changes",
   "settings.privacy.saving": "Saving…",
@@ -604,7 +622,8 @@ const en: Dict = {
   "settings.categories.add.placeholder": "Category name",
   "settings.categories.save": "Save",
   "settings.categories.reset": "Reset to defaults",
-  "settings.categories.reset.confirm": "This will delete your custom categories and restore the defaults. Continue?",
+  "settings.categories.reset.confirm":
+    "This will delete your custom categories and restore the defaults. Continue?",
   "settings.categories.error.duplicate": "A category with this name already exists.",
 
   // ── Recommendations ───────────────────────────────────────────────────────
@@ -617,47 +636,75 @@ const en: Dict = {
   "rec.impact.opportunityPortfolio": "Start investing",
   "rec.impact.riskReductionGeneral": "Reduce risk",
   "rec.savingsNegative.title": "You're spending more than you earn",
-  "rec.savingsNegative.explanation": "Your expenses exceed your income by {deficit} per month. This gap will compound over time and put your finances under serious stress.",
-  "rec.savingsNegative.action": "Review your fixed costs first — subscriptions, recurring charges. Even small cuts add up fast.",
+  "rec.savingsNegative.explanation":
+    "Your expenses exceed your income by {deficit} per month. This gap will compound over time and put your finances under serious stress.",
+  "rec.savingsNegative.action":
+    "Review your fixed costs first — subscriptions, recurring charges. Even small cuts add up fast.",
   "rec.savingsLow.title": "Your savings rate is low",
-  "rec.savingsLow.explanation": "You're saving {rate}% of your income. Closing the gap by {gap}/month would put you on a healthier track.",
-  "rec.savingsLow.action": "Try the 1% challenge: set aside 1% more each month until you reach 15–20%.",
+  "rec.savingsLow.explanation":
+    "You're saving {rate}% of your income. Closing the gap by {gap}/month would put you on a healthier track.",
+  "rec.savingsLow.action":
+    "Try the 1% challenge: set aside 1% more each month until you reach 15–20%.",
   "rec.savingsExcellent.title": "Excellent savings rate",
-  "rec.savingsExcellent.explanation": "You're saving {rate}% of your income — well above average. Keep this up and consider putting the surplus to work.",
-  "rec.savingsExcellent.action": "Consider maxing out your investment contributions or accelerating a high-priority goal.",
+  "rec.savingsExcellent.explanation":
+    "You're saving {rate}% of your income — well above average. Keep this up and consider putting the surplus to work.",
+  "rec.savingsExcellent.action":
+    "Consider maxing out your investment contributions or accelerating a high-priority goal.",
   "rec.emergencyFundCritical.title": "No safety net detected",
-  "rec.emergencyFundCritical.explanation": "You have less than 1 month of expenses saved. A target of {target} (3 months) would give you real financial security.",
-  "rec.emergencyFundCritical.action": "Start a dedicated emergency fund account. Even {monthly}/month builds a cushion quickly.",
+  "rec.emergencyFundCritical.explanation":
+    "You have less than 1 month of expenses saved. A target of {target} (3 months) would give you real financial security.",
+  "rec.emergencyFundCritical.action":
+    "Start a dedicated emergency fund account. Even {monthly}/month builds a cushion quickly.",
   "rec.emergencyFundLow.title": "Emergency fund is thin",
-  "rec.emergencyFundLow.explanation": "Your emergency fund covers {months} months. You need {gap} more to reach a safe level.",
-  "rec.emergencyFundLow.action": "Set up an automatic monthly transfer to a separate account earmarked for emergencies only.",
+  "rec.emergencyFundLow.explanation":
+    "Your emergency fund covers {months} months. You need {gap} more to reach a safe level.",
+  "rec.emergencyFundLow.action":
+    "Set up an automatic monthly transfer to a separate account earmarked for emergencies only.",
   "rec.recurringPressureCritical.title": "Fixed costs are eating your income",
-  "rec.recurringPressureCritical.explanation": "{ratio}% of your income goes to fixed costs. Reducing to 50% would free up {potential} monthly.",
-  "rec.recurringPressureCritical.action": "List every recurring charge. Cancel or renegotiate what you no longer use or can replace cheaply.",
+  "rec.recurringPressureCritical.explanation":
+    "{ratio}% of your income goes to fixed costs. Reducing to 50% would free up {potential} monthly.",
+  "rec.recurringPressureCritical.action":
+    "List every recurring charge. Cancel or renegotiate what you no longer use or can replace cheaply.",
   "rec.recurringPressureElevated.title": "Fixed costs are elevated",
-  "rec.recurringPressureElevated.explanation": "{ratio}% of your income is committed to fixed costs — above the recommended 50% ceiling.",
-  "rec.recurringPressureElevated.action": "Look for one recurring cost you could reduce this month — a subscription, utility plan, or insurance.",
+  "rec.recurringPressureElevated.explanation":
+    "{ratio}% of your income is committed to fixed costs — above the recommended 50% ceiling.",
+  "rec.recurringPressureElevated.action":
+    "Look for one recurring cost you could reduce this month — a subscription, utility plan, or insurance.",
   "rec.portfolioEmpty.title": "No investments tracked yet",
-  "rec.portfolioEmpty.explanation": "Your investment portfolio is empty. Even small monthly contributions compound significantly over time.",
-  "rec.portfolioEmpty.action": "Start with a low-cost index fund or ETF. Even €50/month compounds meaningfully over 10 years.",
+  "rec.portfolioEmpty.explanation":
+    "Your investment portfolio is empty. Even small monthly contributions compound significantly over time.",
+  "rec.portfolioEmpty.action":
+    "Start with a low-cost index fund or ETF. Even €50/month compounds meaningfully over 10 years.",
   "rec.portfolioCryptoOverweight.title": "Crypto exposure is high",
-  "rec.portfolioCryptoOverweight.explanation": "{cryptoPercent}% of your portfolio is in crypto — above the recommended limit. High volatility can significantly impact your total wealth.",
-  "rec.portfolioCryptoOverweight.action": "Consider rebalancing toward more stable asset classes like ETFs or bonds to reduce your risk profile.",
+  "rec.portfolioCryptoOverweight.explanation":
+    "{cryptoPercent}% of your portfolio is in crypto — above the recommended limit. High volatility can significantly impact your total wealth.",
+  "rec.portfolioCryptoOverweight.action":
+    "Consider rebalancing toward more stable asset classes like ETFs or bonds to reduce your risk profile.",
   "rec.portfolioPositionConcentrated.title": "High concentration in {name}",
-  "rec.portfolioPositionConcentrated.explanation": "{name} represents {percent}% of your portfolio. A single position this large creates significant risk if that asset underperforms.",
-  "rec.portfolioPositionConcentrated.action": "Consider gradually diversifying into other assets to spread your risk.",
+  "rec.portfolioPositionConcentrated.explanation":
+    "{name} represents {percent}% of your portfolio. A single position this large creates significant risk if that asset underperforms.",
+  "rec.portfolioPositionConcentrated.action":
+    "Consider gradually diversifying into other assets to spread your risk.",
   "rec.portfolioLowDiversification.title": "Portfolio needs more diversification",
-  "rec.portfolioLowDiversification.explanation": "Your diversification score is low, meaning your investments are concentrated in too few asset classes.",
-  "rec.portfolioLowDiversification.action": "Add exposure to different asset types — global equities, bonds, or real estate funds — to spread your risk.",
+  "rec.portfolioLowDiversification.explanation":
+    "Your diversification score is low, meaning your investments are concentrated in too few asset classes.",
+  "rec.portfolioLowDiversification.action":
+    "Add exposure to different asset types — global equities, bonds, or real estate funds — to spread your risk.",
   "rec.goalContributionLow.title": "Goals need more funding",
-  "rec.goalContributionLow.explanation": "Your current monthly contributions to goals are too small relative to your income. Your goals may take much longer than planned.",
-  "rec.goalContributionLow.action": "Review each goal and set a realistic monthly contribution. Even 5% of your income directed to goals makes a real difference.",
+  "rec.goalContributionLow.explanation":
+    "Your current monthly contributions to goals are too small relative to your income. Your goals may take much longer than planned.",
+  "rec.goalContributionLow.action":
+    "Review each goal and set a realistic monthly contribution. Even 5% of your income directed to goals makes a real difference.",
   "rec.goalDeadlinePressure.title": "{goalName} is at risk",
-  "rec.goalDeadlinePressure.explanation": "You're {completion}% of the way to {goalName} with {months} months left. To reach it on time, you need to contribute {required}/month.",
-  "rec.goalDeadlinePressure.action": "Increase your monthly contribution to {goalName} now, or adjust the deadline to a more realistic date.",
+  "rec.goalDeadlinePressure.explanation":
+    "You're {completion}% of the way to {goalName} with {months} months left. To reach it on time, you need to contribute {required}/month.",
+  "rec.goalDeadlinePressure.action":
+    "Increase your monthly contribution to {goalName} now, or adjust the deadline to a more realistic date.",
   "rec.budgetOverrunProjected.title": "Budget overrun projected",
-  "rec.budgetOverrunProjected.explanation": "At your current pace, you'll exceed your income by {overrun} this month. Your safe daily budget is {safePerDay}.",
-  "rec.budgetOverrunProjected.action": "Focus variable spending on essentials for the rest of the month. Pause non-urgent purchases.",
+  "rec.budgetOverrunProjected.explanation":
+    "At your current pace, you'll exceed your income by {overrun} this month. Your safe daily budget is {safePerDay}.",
+  "rec.budgetOverrunProjected.action":
+    "Focus variable spending on essentials for the rest of the month. Pause non-urgent purchases.",
 
   // ── Notifications ─────────────────────────────────────────────────────────
   "notifications.title": "Notifications",
@@ -666,9 +713,11 @@ const en: Dict = {
 
   // ── Fallback insight cards (shown when no AI/engine data) ─────────────────
   "dashboard.insight.roundup.title": "Round-up savings",
-  "dashboard.insight.roundup.body": "Auto-round transactions to the nearest euro. Average users save €27/mo without effort.",
+  "dashboard.insight.roundup.body":
+    "Auto-round transactions to the nearest euro. Average users save €27/mo without effort.",
   "dashboard.insight.idlecash.title": "Idle cash",
-  "dashboard.insight.idlecash.body": "If you have over €1,000 not invested, a savings account at 3% adds €30/mo passively.",
+  "dashboard.insight.idlecash.body":
+    "If you have over €1,000 not invested, a savings account at 3% adds €30/mo passively.",
 
   // ── Savings accounts ──────────────────────────────────────────────────────
   "budget.tab.savings": "Savings",
@@ -677,7 +726,8 @@ const en: Dict = {
   "savings.summary.accounts": "Accounts",
   "savings.section.title": "Savings accounts",
   "savings.empty.title": "No savings tracked",
-  "savings.empty.desc": "Add your checking, savings and emergency accounts to unlock accurate health scores and net worth.",
+  "savings.empty.desc":
+    "Add your checking, savings and emergency accounts to unlock accurate health scores and net worth.",
   "savings.add.button": "Add account",
   "savings.dialog.add.title": "New savings account",
   "savings.dialog.edit.title": "Edit account",
@@ -745,7 +795,8 @@ const es: Dict = {
   "auth.terms": "Al continuar aceptas nuestros Términos y Política de Privacidad.",
   "auth.hero.tagline": "El copiloto financiero de tu familia",
   "auth.hero.title": "Claridad serena y bonita para tu dinero.",
-  "auth.hero.subtitle": "Controla ingresos, gastos, objetivos e inversiones — todo en un espacio privado.",
+  "auth.hero.subtitle":
+    "Controla ingresos, gastos, objetivos e inversiones — todo en un espacio privado.",
   "auth.hero.b1": "Cifrado de nivel bancario",
   "auth.hero.b2": "Insights con IA",
   "auth.hero.b3": "Pensado para familias",
@@ -760,7 +811,8 @@ const es: Dict = {
   "auth.name.required": "Por favor, introduce tu nombre y apellido.",
   "auth.email.required": "Por favor, introduce tu correo electrónico.",
   "auth.password.minlength": "La contraseña debe tener al menos 6 caracteres.",
-  "auth.error.emailNotConfirmed": "Confirma tu email primero — revisa tu bandeja de entrada para el enlace de confirmación.",
+  "auth.error.emailNotConfirmed":
+    "Confirma tu email primero — revisa tu bandeja de entrada para el enlace de confirmación.",
   "auth.signup.success.title": "¡Cuenta creada!",
 
   // ── Nav ───────────────────────────────────────────────────────────────────
@@ -806,7 +858,8 @@ const es: Dict = {
   "onboarding.step5.title": "¿Qué es lo más importante para ti ahora mismo?",
   "onboarding.step5.subtitle": "Adaptaremos los consejos e insights a tus metas.",
   "onboarding.step3b.title": "¿A cuánto suben aproximadamente?",
-  "onboarding.step3b.subtitle": "Escribe una cifra mensual estimada para cada gasto. Puedes saltarte los que no sepas.",
+  "onboarding.step3b.subtitle":
+    "Escribe una cifra mensual estimada para cada gasto. Puedes saltarte los que no sepas.",
   "onboarding.step3b.empty": "No has seleccionado gastos fijos — toca Continuar.",
   "onboarding.cta.enter": "Entrar a NOOLY",
   "onboarding.toast.success": "Todo listo",
@@ -913,15 +966,22 @@ const es: Dict = {
   "health.status.healthy": "Saludable",
   "health.status.improving": "Mejorando",
   "health.status.unstable": "Inestable",
-  "health.explain.overspending": "Gastas más de lo que ingresas. Pequeños recortes marcan la diferencia.",
-  "health.explain.noEmergencyFund": "Tener un mes de reserva lo cambia todo — es tu red de seguridad financiera.",
-  "health.explain.fixedCritical": "Tus gastos fijos consumen la mayor parte de tus ingresos. Reducirlos te daría mucho margen.",
-  "health.explain.savingsLow": "Ahorrar de forma constante, aunque sea poco, construye estabilidad duradera.",
-  "health.explain.emergencyLow": "Un poco más en tu fondo de reserva te dará verdadera tranquilidad.",
+  "health.explain.overspending":
+    "Gastas más de lo que ingresas. Pequeños recortes marcan la diferencia.",
+  "health.explain.noEmergencyFund":
+    "Tener un mes de reserva lo cambia todo — es tu red de seguridad financiera.",
+  "health.explain.fixedCritical":
+    "Tus gastos fijos consumen la mayor parte de tus ingresos. Reducirlos te daría mucho margen.",
+  "health.explain.savingsLow":
+    "Ahorrar de forma constante, aunque sea poco, construye estabilidad duradera.",
+  "health.explain.emergencyLow":
+    "Un poco más en tu fondo de reserva te dará verdadera tranquilidad.",
   "health.explain.fixedHigh": "Reducir gastos fijos te daría más libertad y capacidad de ahorro.",
-  "health.explain.excellent": "Tus finanzas están floreciendo. Estás construyendo una estabilidad real y duradera.",
+  "health.explain.excellent":
+    "Tus finanzas están floreciendo. Estás construyendo una estabilidad real y duradera.",
   "health.explain.strong": "Gestionas bien tu dinero. Mantén este impulso.",
-  "health.explain.healthy": "Tus finanzas tienen un buen ritmo. Pequeñas mejoras te llevarán más lejos.",
+  "health.explain.healthy":
+    "Tus finanzas tienen un buen ritmo. Pequeñas mejoras te llevarán más lejos.",
   "health.sub.savingsRate": "Ahorro",
   "health.sub.emergencyFund": "Red de seguridad",
   "health.sub.recurringPressure": "Gastos fijos",
@@ -986,13 +1046,15 @@ const es: Dict = {
   "budget.dialog.bill.name.placeholder": "Alquiler, Netflix…",
   "budget.dialog.bill.dueday": "Día del mes en que se carga (1–31)",
   "budget.dialog.expense.fixed.info.title": "Cargo mensual recurrente",
-  "budget.dialog.expense.fixed.info.body": "Este gasto se guardará como factura recurrente. No tendrás que introducirlo cada mes.",
+  "budget.dialog.expense.fixed.info.body":
+    "Este gasto se guardará como factura recurrente. No tendrás que introducirlo cada mes.",
   "budget.dialog.expense.fixed.cta": "Guardar como factura",
   "budget.expense.recurring": "recurrente",
   "budget.section.bills": "Facturas recurrentes",
   "budget.section.bills.sub": "Gastos fijos mensuales",
   "budget.empty.bills.title": "Sin facturas recurrentes",
-  "budget.empty.bills.desc": "Añade alquiler, servicios y suscripciones para que aparezcan en tu previsión.",
+  "budget.empty.bills.desc":
+    "Añade alquiler, servicios y suscripciones para que aparezcan en tu previsión.",
   "budget.add.bill": "Añadir factura",
   "budget.bill.paid": "Pagado",
   "budget.bill.pending": "Pendiente",
@@ -1009,7 +1071,8 @@ const es: Dict = {
   "analytics.stat.thisMonth": "Este mes",
   "analytics.stat.average": "Media 6 meses",
   "analytics.empty.title": "Aún sin datos",
-  "analytics.empty.desc": "Añade algunos gastos para ver tendencias, comparativas y análisis con IA.",
+  "analytics.empty.desc":
+    "Añade algunos gastos para ver tendencias, comparativas y análisis con IA.",
 
   // ── Goals ─────────────────────────────────────────────────────────────────
   "goals.title": "Metas",
@@ -1069,7 +1132,7 @@ const es: Dict = {
   "goals.card.set_monthly": "Define un importe mensual para proyectar la finalización",
   "goals.card.next": "Siguiente: {pct}% (faltan {amount})",
   "goals.card.last_deposit": "Último depósito: +{amount} el {date}",
-  "goals.confirm.delete": "¿Eliminar \"{name}\"?",
+  "goals.confirm.delete": '¿Eliminar "{name}"?',
   "goals.kpi.pct_income": "{pct}% de ingresos",
   "goals.kpi.set_plan": "configura un plan",
   "goals.kpi.months_left": "~{n} meses",
@@ -1081,15 +1144,21 @@ const es: Dict = {
   "goals.contrib.error": "Introduce un importe válido",
   "insights.anomaly.body": "Media histórica: {avg} · z-score {z}",
   "insights.weekend.title": "Gasto en fin de semana {ratio}× la media entre semana",
-  "insights.weekend.body": "El gasto discrecional aumenta los fines de semana. Un presupuesto de fin de semana puede ayudar.",
+  "insights.weekend.body":
+    "El gasto discrecional aumenta los fines de semana. Un presupuesto de fin de semana puede ayudar.",
   "insights.monthend.title": "{pct}% del gasto de este mes en los últimos 7 días",
-  "insights.monthend.body": "Los picos a fin de mes tensan el presupuesto. Intenta distribuir las compras más uniformemente.",
+  "insights.monthend.body":
+    "Los picos a fin de mes tensan el presupuesto. Intenta distribuir las compras más uniformemente.",
   "insights.traj.bad.title": "El gasto está por encima de tu media de los últimos 3 meses",
-  "insights.traj.bad.body": "Cambio mes a mes: +{pct}%. Revisa tus categorías con mayor crecimiento.",
-  "insights.traj.good.title": "El gasto está por debajo de tu media de los últimos 3 meses — buen ritmo",
-  "insights.traj.good.body": "Sigue así. Un gasto consistentemente menor se traduce en ahorros reales.",
+  "insights.traj.bad.body":
+    "Cambio mes a mes: +{pct}%. Revisa tus categorías con mayor crecimiento.",
+  "insights.traj.good.title":
+    "El gasto está por debajo de tu media de los últimos 3 meses — buen ritmo",
+  "insights.traj.good.body":
+    "Sigue así. Un gasto consistentemente menor se traduce en ahorros reales.",
   "insights.highgrowth.title": "El gasto en {cats} creció más de un 20% respecto al mes anterior",
-  "insights.highgrowth.body": "Estas categorías crecen más rápido de lo habitual. Comprueba si son picos puntuales o una nueva tendencia.",
+  "insights.highgrowth.body":
+    "Estas categorías crecen más rápido de lo habitual. Comprueba si son picos puntuales o una nueva tendencia.",
 
   // ── Family ────────────────────────────────────────────────────────────────
   "family.title": "Familia",
@@ -1103,7 +1172,8 @@ const es: Dict = {
   "family.section.members": "Miembros",
   "family.section.goals": "Objetivos compartidos",
   "family.empty.title": "Planificad juntos vuestro dinero",
-  "family.empty.desc": "Crea un grupo familiar para compartir metas de ahorro, controlar gastos y avanzar juntos.",
+  "family.empty.desc":
+    "Crea un grupo familiar para compartir metas de ahorro, controlar gastos y avanzar juntos.",
   "family.create.button": "Crear grupo familiar",
   "family.goal.empty.title": "Sin objetivos compartidos aún",
   "family.goal.empty.desc": "Un viaje, un fondo de emergencia, una casa... empezad juntos.",
@@ -1112,7 +1182,8 @@ const es: Dict = {
   "family.role.member": "miembro",
   "family.role.child": "hijo/a",
   "family.you.label": "(tú)",
-  "family.invite.notice": "Las invitaciones por email estarán disponibles pronto. Por ahora los miembros aparecen en tu grupo localmente.",
+  "family.invite.notice":
+    "Las invitaciones por email estarán disponibles pronto. Por ahora los miembros aparecen en tu grupo localmente.",
   "family.dialog.create.title": "Crear grupo familiar",
   "family.dialog.create.name.label": "Nombre del grupo",
   "family.dialog.create.name.placeholder": "Los García",
@@ -1172,11 +1243,11 @@ const es: Dict = {
   "family.notif.joined.title": "Nuevo miembro familiar",
   "family.notif.joined.body": "{name} se unió a tu grupo familiar",
   "family.notif.goal.created.title": "Nuevo objetivo compartido",
-  "family.notif.goal.created.body": "{name} creó el objetivo \"{goal}\"",
+  "family.notif.goal.created.body": '{name} creó el objetivo "{goal}"',
   "family.notif.goal.updated.title": "Objetivo actualizado",
-  "family.notif.goal.updated.body": "{name} actualizó el objetivo \"{goal}\"",
+  "family.notif.goal.updated.body": '{name} actualizó el objetivo "{goal}"',
   "family.notif.contribution.title": "Aportación a {goal}",
-  "family.notif.contribution.body": "{name} añadió {amount} a \"{goal}\"",
+  "family.notif.contribution.body": '{name} añadió {amount} a "{goal}"',
   "family.member.remove": "Eliminar miembro",
   "family.member.remove.cta": "Eliminar",
   "family.toast.member.removed": "Miembro eliminado",
@@ -1186,10 +1257,10 @@ const es: Dict = {
   "family.section.activity": "Actividad reciente",
   "family.activity.member_joined": "{name} se unió a la familia",
   "family.activity.member_removed": "{name} fue eliminado",
-  "family.activity.goal_created": "{name} creó el objetivo \"{goal}\"",
-  "family.activity.goal_updated": "{name} actualizó el objetivo \"{goal}\"",
-  "family.activity.goal_contribution": "{name} aportó {amount} a \"{goal}\"",
-  "family.activity.family_renamed": "{name} renombró la familia a \"{newName}\"",
+  "family.activity.goal_created": '{name} creó el objetivo "{goal}"',
+  "family.activity.goal_updated": '{name} actualizó el objetivo "{goal}"',
+  "family.activity.goal_contribution": '{name} aportó {amount} a "{goal}"',
+  "family.activity.family_renamed": '{name} renombró la familia a "{newName}"',
   "family.activity.empty": "Sin actividad aún",
   "family.member.relationship.label": "Relación",
   "family.member.relationship.partner": "Pareja",
@@ -1213,7 +1284,8 @@ const es: Dict = {
   "settings.alerts": "Alertas de gasto",
   "settings.weekly": "Resumen semanal",
   "settings.monthly": "Resumen mensual",
-  "settings.monthly.desc": "Ingresos, gastos, metas e insights clave — compilados en un resumen mensual.",
+  "settings.monthly.desc":
+    "Ingresos, gastos, metas e insights clave — compilados en un resumen mensual.",
   "settings.aiInsights": "Insights con IA",
   "settings.security.label": "Seguridad",
   "settings.bankConnections": "Conexiones bancarias",
@@ -1298,12 +1370,14 @@ const es: Dict = {
   "settings.privacy.address": "Dirección",
   "settings.privacy.address.placeholder": "ej. Calle Mayor 10, Madrid",
   "settings.privacy.username": "Tu nombre de usuario en NOOLY",
-  "settings.privacy.username.note": "Asignado automáticamente. Compártelo para que otros te encuentren.",
+  "settings.privacy.username.note":
+    "Asignado automáticamente. Compártelo para que otros te encuentren.",
   "settings.privacy.username.pending": "Se generará automáticamente al guardar tu nombre.",
   "settings.privacy.username.placeholder": "ej. jaime.garcia",
   "settings.privacy.username.taken": "Este nombre de usuario ya está en uso.",
   "settings.privacy.username.available": "¡Disponible!",
-  "settings.privacy.username.invalid": "Solo letras minúsculas, números y puntos. Sin puntos consecutivos.",
+  "settings.privacy.username.invalid":
+    "Solo letras minúsculas, números y puntos. Sin puntos consecutivos.",
   "settings.privacy.username.checking": "Comprobando…",
   "settings.privacy.save": "Guardar cambios",
   "settings.privacy.saving": "Guardando…",
@@ -1316,7 +1390,8 @@ const es: Dict = {
   "settings.categories.add.placeholder": "Nombre de categoría",
   "settings.categories.save": "Guardar",
   "settings.categories.reset": "Restablecer por defecto",
-  "settings.categories.reset.confirm": "Se eliminarán tus categorías personalizadas y se restaurarán las predeterminadas. ¿Continuar?",
+  "settings.categories.reset.confirm":
+    "Se eliminarán tus categorías personalizadas y se restaurarán las predeterminadas. ¿Continuar?",
   "settings.categories.error.duplicate": "Ya existe una categoría con ese nombre.",
 
   // ── Recomendaciones ───────────────────────────────────────────────────────
@@ -1329,47 +1404,75 @@ const es: Dict = {
   "rec.impact.opportunityPortfolio": "Empieza a invertir",
   "rec.impact.riskReductionGeneral": "Reduce el riesgo",
   "rec.savingsNegative.title": "Gastas más de lo que ingresas",
-  "rec.savingsNegative.explanation": "Tus gastos superan tus ingresos en {deficit} al mes. Esta diferencia se acumula y pone tus finanzas bajo presión.",
-  "rec.savingsNegative.action": "Revisa primero tus gastos fijos: suscripciones, cargos recurrentes. Incluso pequeños recortes suman rápido.",
+  "rec.savingsNegative.explanation":
+    "Tus gastos superan tus ingresos en {deficit} al mes. Esta diferencia se acumula y pone tus finanzas bajo presión.",
+  "rec.savingsNegative.action":
+    "Revisa primero tus gastos fijos: suscripciones, cargos recurrentes. Incluso pequeños recortes suman rápido.",
   "rec.savingsLow.title": "Tu tasa de ahorro es baja",
-  "rec.savingsLow.explanation": "Estás ahorrando el {rate}% de tus ingresos. Cerrar la brecha en {gap}/mes te pondría en una senda más saludable.",
-  "rec.savingsLow.action": "Prueba el reto del 1%: aparta un 1% más cada mes hasta llegar al 15–20%.",
+  "rec.savingsLow.explanation":
+    "Estás ahorrando el {rate}% de tus ingresos. Cerrar la brecha en {gap}/mes te pondría en una senda más saludable.",
+  "rec.savingsLow.action":
+    "Prueba el reto del 1%: aparta un 1% más cada mes hasta llegar al 15–20%.",
   "rec.savingsExcellent.title": "Tasa de ahorro excelente",
-  "rec.savingsExcellent.explanation": "Estás ahorrando el {rate}% de tus ingresos, muy por encima de la media. Sigue así y considera poner ese excedente a trabajar.",
-  "rec.savingsExcellent.action": "Considera maximizar tus aportaciones a inversiones o acelerar una meta prioritaria.",
+  "rec.savingsExcellent.explanation":
+    "Estás ahorrando el {rate}% de tus ingresos, muy por encima de la media. Sigue así y considera poner ese excedente a trabajar.",
+  "rec.savingsExcellent.action":
+    "Considera maximizar tus aportaciones a inversiones o acelerar una meta prioritaria.",
   "rec.emergencyFundCritical.title": "Sin colchón de seguridad",
-  "rec.emergencyFundCritical.explanation": "Tienes menos de 1 mes de gastos en reserva. Un objetivo de {target} (3 meses) te daría seguridad financiera real.",
-  "rec.emergencyFundCritical.action": "Abre una cuenta dedicada. Con solo {monthly}/mes construyes un colchón rápidamente.",
+  "rec.emergencyFundCritical.explanation":
+    "Tienes menos de 1 mes de gastos en reserva. Un objetivo de {target} (3 meses) te daría seguridad financiera real.",
+  "rec.emergencyFundCritical.action":
+    "Abre una cuenta dedicada. Con solo {monthly}/mes construyes un colchón rápidamente.",
   "rec.emergencyFundLow.title": "Fondo de emergencia escaso",
-  "rec.emergencyFundLow.explanation": "Tu fondo de emergencia cubre {months} meses. Necesitas {gap} más para alcanzar un nivel seguro.",
-  "rec.emergencyFundLow.action": "Configura una transferencia automática mensual a una cuenta separada solo para emergencias.",
+  "rec.emergencyFundLow.explanation":
+    "Tu fondo de emergencia cubre {months} meses. Necesitas {gap} más para alcanzar un nivel seguro.",
+  "rec.emergencyFundLow.action":
+    "Configura una transferencia automática mensual a una cuenta separada solo para emergencias.",
   "rec.recurringPressureCritical.title": "Los gastos fijos se comen tus ingresos",
-  "rec.recurringPressureCritical.explanation": "El {ratio}% de tus ingresos va a gastos fijos. Reducirlo al 50% liberaría {potential} al mes.",
-  "rec.recurringPressureCritical.action": "Lista cada cargo recurrente. Cancela o renegocia lo que ya no necesitas.",
+  "rec.recurringPressureCritical.explanation":
+    "El {ratio}% de tus ingresos va a gastos fijos. Reducirlo al 50% liberaría {potential} al mes.",
+  "rec.recurringPressureCritical.action":
+    "Lista cada cargo recurrente. Cancela o renegocia lo que ya no necesitas.",
   "rec.recurringPressureElevated.title": "Gastos fijos elevados",
-  "rec.recurringPressureElevated.explanation": "El {ratio}% de tus ingresos está comprometido en gastos fijos, por encima del 50% recomendado.",
-  "rec.recurringPressureElevated.action": "Busca un gasto recurrente que puedas reducir este mes: una suscripción, tarifa de servicio o seguro.",
+  "rec.recurringPressureElevated.explanation":
+    "El {ratio}% de tus ingresos está comprometido en gastos fijos, por encima del 50% recomendado.",
+  "rec.recurringPressureElevated.action":
+    "Busca un gasto recurrente que puedas reducir este mes: una suscripción, tarifa de servicio o seguro.",
   "rec.portfolioEmpty.title": "Sin inversiones registradas",
-  "rec.portfolioEmpty.explanation": "Tu cartera de inversiones está vacía. Incluso aportaciones pequeñas cada mes tienen un gran impacto a largo plazo.",
-  "rec.portfolioEmpty.action": "Empieza con un fondo índice de bajo coste. Incluso 50€/mes crece de forma significativa en 10 años.",
+  "rec.portfolioEmpty.explanation":
+    "Tu cartera de inversiones está vacía. Incluso aportaciones pequeñas cada mes tienen un gran impacto a largo plazo.",
+  "rec.portfolioEmpty.action":
+    "Empieza con un fondo índice de bajo coste. Incluso 50€/mes crece de forma significativa en 10 años.",
   "rec.portfolioCryptoOverweight.title": "Alta exposición a criptomonedas",
-  "rec.portfolioCryptoOverweight.explanation": "El {cryptoPercent}% de tu cartera está en cripto, por encima del límite recomendado. La alta volatilidad puede impactar seriamente tu patrimonio.",
-  "rec.portfolioCryptoOverweight.action": "Considera rebalancear hacia activos más estables como ETFs o bonos.",
+  "rec.portfolioCryptoOverweight.explanation":
+    "El {cryptoPercent}% de tu cartera está en cripto, por encima del límite recomendado. La alta volatilidad puede impactar seriamente tu patrimonio.",
+  "rec.portfolioCryptoOverweight.action":
+    "Considera rebalancear hacia activos más estables como ETFs o bonos.",
   "rec.portfolioPositionConcentrated.title": "Alta concentración en {name}",
-  "rec.portfolioPositionConcentrated.explanation": "{name} representa el {percent}% de tu cartera. Una posición tan grande crea riesgo significativo si ese activo cae.",
-  "rec.portfolioPositionConcentrated.action": "Considera diversificar gradualmente hacia otros activos.",
+  "rec.portfolioPositionConcentrated.explanation":
+    "{name} representa el {percent}% de tu cartera. Una posición tan grande crea riesgo significativo si ese activo cae.",
+  "rec.portfolioPositionConcentrated.action":
+    "Considera diversificar gradualmente hacia otros activos.",
   "rec.portfolioLowDiversification.title": "La cartera necesita más diversificación",
-  "rec.portfolioLowDiversification.explanation": "Tu puntuación de diversificación es baja, lo que significa que tus inversiones están concentradas en pocos tipos de activo.",
-  "rec.portfolioLowDiversification.action": "Añade exposición a diferentes tipos: acciones globales, bonos o fondos inmobiliarios.",
+  "rec.portfolioLowDiversification.explanation":
+    "Tu puntuación de diversificación es baja, lo que significa que tus inversiones están concentradas en pocos tipos de activo.",
+  "rec.portfolioLowDiversification.action":
+    "Añade exposición a diferentes tipos: acciones globales, bonos o fondos inmobiliarios.",
   "rec.goalContributionLow.title": "Las metas necesitan más financiación",
-  "rec.goalContributionLow.explanation": "Tus aportaciones mensuales a metas son demasiado pequeñas respecto a tus ingresos. Tus metas pueden tardar mucho más de lo planeado.",
-  "rec.goalContributionLow.action": "Revisa cada meta y fija una aportación mensual realista. Incluso el 5% de tus ingresos marca la diferencia.",
+  "rec.goalContributionLow.explanation":
+    "Tus aportaciones mensuales a metas son demasiado pequeñas respecto a tus ingresos. Tus metas pueden tardar mucho más de lo planeado.",
+  "rec.goalContributionLow.action":
+    "Revisa cada meta y fija una aportación mensual realista. Incluso el 5% de tus ingresos marca la diferencia.",
   "rec.goalDeadlinePressure.title": "{goalName} está en riesgo",
-  "rec.goalDeadlinePressure.explanation": "Llevas el {completion}% del camino hacia {goalName} y quedan {months} meses. Para llegar a tiempo necesitas aportar {required}/mes.",
-  "rec.goalDeadlinePressure.action": "Aumenta tu aportación mensual a {goalName} ahora, o ajusta la fecha límite a una más realista.",
+  "rec.goalDeadlinePressure.explanation":
+    "Llevas el {completion}% del camino hacia {goalName} y quedan {months} meses. Para llegar a tiempo necesitas aportar {required}/mes.",
+  "rec.goalDeadlinePressure.action":
+    "Aumenta tu aportación mensual a {goalName} ahora, o ajusta la fecha límite a una más realista.",
   "rec.budgetOverrunProjected.title": "Se prevé superar el presupuesto",
-  "rec.budgetOverrunProjected.explanation": "A tu ritmo actual, superarás tus ingresos en {overrun} este mes. Tu presupuesto diario seguro es {safePerDay}.",
-  "rec.budgetOverrunProjected.action": "Centra el gasto variable en lo esencial el resto del mes. Pausa las compras no urgentes.",
+  "rec.budgetOverrunProjected.explanation":
+    "A tu ritmo actual, superarás tus ingresos en {overrun} este mes. Tu presupuesto diario seguro es {safePerDay}.",
+  "rec.budgetOverrunProjected.action":
+    "Centra el gasto variable en lo esencial el resto del mes. Pausa las compras no urgentes.",
 
   // ── Notifications ─────────────────────────────────────────────────────────
   "notifications.title": "Notificaciones",
@@ -1378,9 +1481,11 @@ const es: Dict = {
 
   // ── Fallback insight cards ─────────────────────────────────────────────────
   "dashboard.insight.roundup.title": "Ahorro redondeado",
-  "dashboard.insight.roundup.body": "Redondea tus transacciones al euro más cercano. Los usuarios ahorran de media €27/mes sin esfuerzo.",
+  "dashboard.insight.roundup.body":
+    "Redondea tus transacciones al euro más cercano. Los usuarios ahorran de media €27/mes sin esfuerzo.",
   "dashboard.insight.idlecash.title": "Dinero inactivo",
-  "dashboard.insight.idlecash.body": "Si tienes más de €1.000 sin invertir, una cuenta de ahorro al 3% añade €30/mes de forma pasiva.",
+  "dashboard.insight.idlecash.body":
+    "Si tienes más de €1.000 sin invertir, una cuenta de ahorro al 3% añade €30/mes de forma pasiva.",
 
   // ── Cuentas de ahorro ─────────────────────────────────────────────────────
   "budget.tab.savings": "Ahorros",
@@ -1389,7 +1494,8 @@ const es: Dict = {
   "savings.summary.accounts": "Cuentas",
   "savings.section.title": "Cuentas de ahorro",
   "savings.empty.title": "Sin ahorros registrados",
-  "savings.empty.desc": "Añade tus cuentas corrientes, de ahorro y de emergencia para obtener puntuaciones precisas de salud y patrimonio neto.",
+  "savings.empty.desc":
+    "Añade tus cuentas corrientes, de ahorro y de emergencia para obtener puntuaciones precisas de salud y patrimonio neto.",
   "savings.add.button": "Añadir cuenta",
   "savings.dialog.add.title": "Nueva cuenta de ahorro",
   "savings.dialog.edit.title": "Editar cuenta",
@@ -1399,7 +1505,8 @@ const es: Dict = {
   "savings.field.institution": "Entidad (opcional)",
   "savings.field.institution.placeholder": "Nombre del banco…",
   "savings.field.emergency.label": "Fondo de emergencia",
-  "savings.field.emergency.desc": "Contabilizar como reservas de emergencia para la puntuación de salud.",
+  "savings.field.emergency.desc":
+    "Contabilizar como reservas de emergencia para la puntuación de salud.",
   "savings.badge.emergency": "Emergencia",
   "savings.type.checking": "Corriente",
   "savings.type.savings": "Ahorro",
@@ -1456,7 +1563,8 @@ const fr: Dict = {
   "auth.terms": "En continuant, vous acceptez nos Conditions et notre Politique.",
   "auth.hero.tagline": "Le copilote financier de votre famille",
   "auth.hero.title": "Une clarté belle et sereine pour votre argent.",
-  "auth.hero.subtitle": "Suivez revenus, dépenses, objectifs et investissements en toute confidentialité.",
+  "auth.hero.subtitle":
+    "Suivez revenus, dépenses, objectifs et investissements en toute confidentialité.",
   "auth.hero.b1": "Chiffrement bancaire",
   "auth.hero.b2": "Insights par IA",
   "auth.hero.b3": "Pensé pour les familles",
@@ -1501,14 +1609,16 @@ const fr: Dict = {
   "onboarding.step2.title": "Combien rentre-t-il chaque mois dans le foyer ?",
   "onboarding.step2.subtitle": "Total du ménage : salaires, freelance, tout.",
   "onboarding.step3.title": "Quelles sont vos charges fixes ?",
-  "onboarding.step3.subtitle": "Sélectionnez celles qui vous correspondent. Les montants sont optionnels.",
+  "onboarding.step3.subtitle":
+    "Sélectionnez celles qui vous correspondent. Les montants sont optionnels.",
   "onboarding.step3.notice": "Vous pouvez les modifier dans l'app.",
   "onboarding.step4.title": "À quoi ressemble votre quotidien ?",
   "onboarding.step4.subtitle": "Cochez les catégories où vous dépensez habituellement.",
   "onboarding.step5.title": "Qu'est-ce qui compte le plus pour vous maintenant ?",
   "onboarding.step5.subtitle": "Nous adapterons les conseils à vos objectifs.",
   "onboarding.step3b.title": "À combien s'élèvent-ils environ ?",
-  "onboarding.step3b.subtitle": "Entrez un montant mensuel estimé pour chacun. Vous pouvez ignorer ceux dont vous n'êtes pas sûr.",
+  "onboarding.step3b.subtitle":
+    "Entrez un montant mensuel estimé pour chacun. Vous pouvez ignorer ceux dont vous n'êtes pas sûr.",
   "onboarding.step3b.empty": "Aucune charge fixe sélectionnée — appuyez sur Continuer.",
   "onboarding.cta.enter": "Entrer dans NOOLY",
   "onboarding.toast.success": "C'est parti",
@@ -1605,15 +1715,22 @@ const fr: Dict = {
   "health.status.healthy": "Sain",
   "health.status.improving": "En progrès",
   "health.status.unstable": "Instable",
-  "health.explain.overspending": "Vous dépensez plus que vous ne gagnez. Même de petites réductions font une vraie différence.",
-  "health.explain.noEmergencyFund": "Avoir un mois de réserve change tout — c'est votre filet de sécurité financier.",
-  "health.explain.fixedCritical": "Vos charges fixes consomment l'essentiel de vos revenus. Les réduire vous donnerait de la marge.",
+  "health.explain.overspending":
+    "Vous dépensez plus que vous ne gagnez. Même de petites réductions font une vraie différence.",
+  "health.explain.noEmergencyFund":
+    "Avoir un mois de réserve change tout — c'est votre filet de sécurité financier.",
+  "health.explain.fixedCritical":
+    "Vos charges fixes consomment l'essentiel de vos revenus. Les réduire vous donnerait de la marge.",
   "health.explain.savingsLow": "Épargner régulièrement, même peu, construit une stabilité durable.",
-  "health.explain.emergencyLow": "Un peu plus dans votre fonds de réserve vous apportera une vraie tranquillité d'esprit.",
-  "health.explain.fixedHigh": "Réduire vos charges fixes vous donnerait plus de liberté et de capacité d'épargne.",
-  "health.explain.excellent": "Vos finances s'épanouissent. Vous construisez une stabilité réelle et durable.",
+  "health.explain.emergencyLow":
+    "Un peu plus dans votre fonds de réserve vous apportera une vraie tranquillité d'esprit.",
+  "health.explain.fixedHigh":
+    "Réduire vos charges fixes vous donnerait plus de liberté et de capacité d'épargne.",
+  "health.explain.excellent":
+    "Vos finances s'épanouissent. Vous construisez une stabilité réelle et durable.",
   "health.explain.strong": "Vous gérez bien votre argent. Maintenez cet élan.",
-  "health.explain.healthy": "Vos finances ont un bon rythme. De petites améliorations vous porteront plus loin.",
+  "health.explain.healthy":
+    "Vos finances ont un bon rythme. De petites améliorations vous porteront plus loin.",
   "health.sub.savingsRate": "Épargne",
   "health.sub.emergencyFund": "Filet de sécurité",
   "health.sub.recurringPressure": "Charges fixes",
@@ -1798,7 +1915,8 @@ const fr: Dict = {
   "settings.categories.add.placeholder": "Nom de la catégorie",
   "settings.categories.save": "Enregistrer",
   "settings.categories.reset": "Réinitialiser par défaut",
-  "settings.categories.reset.confirm": "Cela supprimera vos catégories personnalisées et restaurera les valeurs par défaut. Continuer ?",
+  "settings.categories.reset.confirm":
+    "Cela supprimera vos catégories personnalisées et restaurera les valeurs par défaut. Continuer ?",
   "settings.categories.error.duplicate": "Une catégorie avec ce nom existe déjà.",
 
   // ── Recommandations ───────────────────────────────────────────────────────
@@ -1811,47 +1929,75 @@ const fr: Dict = {
   "rec.impact.opportunityPortfolio": "Commencer à investir",
   "rec.impact.riskReductionGeneral": "Réduire le risque",
   "rec.savingsNegative.title": "Vous dépensez plus que vous ne gagnez",
-  "rec.savingsNegative.explanation": "Vos dépenses dépassent vos revenus de {deficit} par mois. Cet écart va s'aggraver et mettre vos finances sous pression.",
-  "rec.savingsNegative.action": "Examinez d'abord vos charges fixes : abonnements, frais récurrents. Même de petites économies s'accumulent vite.",
+  "rec.savingsNegative.explanation":
+    "Vos dépenses dépassent vos revenus de {deficit} par mois. Cet écart va s'aggraver et mettre vos finances sous pression.",
+  "rec.savingsNegative.action":
+    "Examinez d'abord vos charges fixes : abonnements, frais récurrents. Même de petites économies s'accumulent vite.",
   "rec.savingsLow.title": "Votre taux d'épargne est faible",
-  "rec.savingsLow.explanation": "Vous épargnez {rate}% de vos revenus. Combler l'écart de {gap}/mois vous mettrait sur une trajectoire plus saine.",
-  "rec.savingsLow.action": "Essayez le défi du 1% : mettez de côté 1% de plus chaque mois jusqu'à atteindre 15–20%.",
+  "rec.savingsLow.explanation":
+    "Vous épargnez {rate}% de vos revenus. Combler l'écart de {gap}/mois vous mettrait sur une trajectoire plus saine.",
+  "rec.savingsLow.action":
+    "Essayez le défi du 1% : mettez de côté 1% de plus chaque mois jusqu'à atteindre 15–20%.",
   "rec.savingsExcellent.title": "Excellent taux d'épargne",
-  "rec.savingsExcellent.explanation": "Vous épargnez {rate}% de vos revenus — bien au-dessus de la moyenne. Continuez et envisagez de faire fructifier ce surplus.",
-  "rec.savingsExcellent.action": "Maximisez vos contributions d'investissement ou accélérez un objectif prioritaire.",
+  "rec.savingsExcellent.explanation":
+    "Vous épargnez {rate}% de vos revenus — bien au-dessus de la moyenne. Continuez et envisagez de faire fructifier ce surplus.",
+  "rec.savingsExcellent.action":
+    "Maximisez vos contributions d'investissement ou accélérez un objectif prioritaire.",
   "rec.emergencyFundCritical.title": "Pas de filet de sécurité",
-  "rec.emergencyFundCritical.explanation": "Vous avez moins d'1 mois de dépenses en réserve. Un objectif de {target} (3 mois) vous donnerait une vraie sécurité financière.",
-  "rec.emergencyFundCritical.action": "Ouvrez un compte dédié. Même {monthly}/mois constitue rapidement un coussin.",
+  "rec.emergencyFundCritical.explanation":
+    "Vous avez moins d'1 mois de dépenses en réserve. Un objectif de {target} (3 mois) vous donnerait une vraie sécurité financière.",
+  "rec.emergencyFundCritical.action":
+    "Ouvrez un compte dédié. Même {monthly}/mois constitue rapidement un coussin.",
   "rec.emergencyFundLow.title": "Épargne de précaution insuffisante",
-  "rec.emergencyFundLow.explanation": "Votre épargne de précaution couvre {months} mois. Il vous manque {gap} pour atteindre un niveau sûr.",
-  "rec.emergencyFundLow.action": "Mettez en place un virement automatique mensuel vers un compte dédié aux urgences uniquement.",
+  "rec.emergencyFundLow.explanation":
+    "Votre épargne de précaution couvre {months} mois. Il vous manque {gap} pour atteindre un niveau sûr.",
+  "rec.emergencyFundLow.action":
+    "Mettez en place un virement automatique mensuel vers un compte dédié aux urgences uniquement.",
   "rec.recurringPressureCritical.title": "Les charges fixes dévorent vos revenus",
-  "rec.recurringPressureCritical.explanation": "{ratio}% de vos revenus vont aux charges fixes. Réduire à 50% libérerait {potential} par mois.",
-  "rec.recurringPressureCritical.action": "Listez chaque charge récurrente. Annulez ou renégociez ce dont vous n'avez plus besoin.",
+  "rec.recurringPressureCritical.explanation":
+    "{ratio}% de vos revenus vont aux charges fixes. Réduire à 50% libérerait {potential} par mois.",
+  "rec.recurringPressureCritical.action":
+    "Listez chaque charge récurrente. Annulez ou renégociez ce dont vous n'avez plus besoin.",
   "rec.recurringPressureElevated.title": "Charges fixes élevées",
-  "rec.recurringPressureElevated.explanation": "{ratio}% de vos revenus sont engagés en charges fixes — au-dessus du plafond recommandé de 50%.",
-  "rec.recurringPressureElevated.action": "Identifiez une charge récurrente à réduire ce mois : abonnement, forfait ou assurance.",
+  "rec.recurringPressureElevated.explanation":
+    "{ratio}% de vos revenus sont engagés en charges fixes — au-dessus du plafond recommandé de 50%.",
+  "rec.recurringPressureElevated.action":
+    "Identifiez une charge récurrente à réduire ce mois : abonnement, forfait ou assurance.",
   "rec.portfolioEmpty.title": "Aucun investissement enregistré",
-  "rec.portfolioEmpty.explanation": "Votre portefeuille d'investissements est vide. Même de petites contributions mensuelles ont un impact considérable sur le long terme.",
-  "rec.portfolioEmpty.action": "Commencez par un fonds indiciel à faibles frais. Même 50€/mois génère une belle croissance en 10 ans.",
+  "rec.portfolioEmpty.explanation":
+    "Votre portefeuille d'investissements est vide. Même de petites contributions mensuelles ont un impact considérable sur le long terme.",
+  "rec.portfolioEmpty.action":
+    "Commencez par un fonds indiciel à faibles frais. Même 50€/mois génère une belle croissance en 10 ans.",
   "rec.portfolioCryptoOverweight.title": "Surexposition aux cryptos",
-  "rec.portfolioCryptoOverweight.explanation": "{cryptoPercent}% de votre portefeuille est en crypto — au-dessus du seuil recommandé. La forte volatilité peut impacter significativement votre patrimoine.",
-  "rec.portfolioCryptoOverweight.action": "Envisagez de rééquilibrer vers des actifs plus stables comme des ETF ou des obligations.",
+  "rec.portfolioCryptoOverweight.explanation":
+    "{cryptoPercent}% de votre portefeuille est en crypto — au-dessus du seuil recommandé. La forte volatilité peut impacter significativement votre patrimoine.",
+  "rec.portfolioCryptoOverweight.action":
+    "Envisagez de rééquilibrer vers des actifs plus stables comme des ETF ou des obligations.",
   "rec.portfolioPositionConcentrated.title": "Forte concentration sur {name}",
-  "rec.portfolioPositionConcentrated.explanation": "{name} représente {percent}% de votre portefeuille. Une telle concentration crée un risque important si cet actif sous-performe.",
-  "rec.portfolioPositionConcentrated.action": "Envisagez de diversifier progressivement vers d'autres actifs.",
+  "rec.portfolioPositionConcentrated.explanation":
+    "{name} représente {percent}% de votre portefeuille. Une telle concentration crée un risque important si cet actif sous-performe.",
+  "rec.portfolioPositionConcentrated.action":
+    "Envisagez de diversifier progressivement vers d'autres actifs.",
   "rec.portfolioLowDiversification.title": "Portefeuille peu diversifié",
-  "rec.portfolioLowDiversification.explanation": "Votre score de diversification est faible — vos investissements sont concentrés dans trop peu de classes d'actifs.",
-  "rec.portfolioLowDiversification.action": "Ajoutez des expositions à différents types d'actifs : actions mondiales, obligations ou fonds immobiliers.",
+  "rec.portfolioLowDiversification.explanation":
+    "Votre score de diversification est faible — vos investissements sont concentrés dans trop peu de classes d'actifs.",
+  "rec.portfolioLowDiversification.action":
+    "Ajoutez des expositions à différents types d'actifs : actions mondiales, obligations ou fonds immobiliers.",
   "rec.goalContributionLow.title": "Les objectifs manquent de financement",
-  "rec.goalContributionLow.explanation": "Vos contributions mensuelles aux objectifs sont trop faibles par rapport à vos revenus. Vos objectifs risquent de prendre bien plus longtemps que prévu.",
-  "rec.goalContributionLow.action": "Examinez chaque objectif et fixez une contribution mensuelle réaliste. Même 5% de vos revenus fait une vraie différence.",
+  "rec.goalContributionLow.explanation":
+    "Vos contributions mensuelles aux objectifs sont trop faibles par rapport à vos revenus. Vos objectifs risquent de prendre bien plus longtemps que prévu.",
+  "rec.goalContributionLow.action":
+    "Examinez chaque objectif et fixez une contribution mensuelle réaliste. Même 5% de vos revenus fait une vraie différence.",
   "rec.goalDeadlinePressure.title": "{goalName} est en danger",
-  "rec.goalDeadlinePressure.explanation": "Vous êtes à {completion}% de {goalName} avec {months} mois restants. Pour y arriver à temps, vous devez contribuer {required}/mois.",
-  "rec.goalDeadlinePressure.action": "Augmentez votre contribution mensuelle à {goalName} maintenant, ou ajustez la date limite.",
+  "rec.goalDeadlinePressure.explanation":
+    "Vous êtes à {completion}% de {goalName} avec {months} mois restants. Pour y arriver à temps, vous devez contribuer {required}/mois.",
+  "rec.goalDeadlinePressure.action":
+    "Augmentez votre contribution mensuelle à {goalName} maintenant, ou ajustez la date limite.",
   "rec.budgetOverrunProjected.title": "Dépassement budgétaire prévu",
-  "rec.budgetOverrunProjected.explanation": "À votre rythme actuel, vous dépasserez vos revenus de {overrun} ce mois. Votre budget quotidien sûr est de {safePerDay}.",
-  "rec.budgetOverrunProjected.action": "Concentrez-vous sur l'essentiel pour le reste du mois. Reportez les achats non urgents.",
+  "rec.budgetOverrunProjected.explanation":
+    "À votre rythme actuel, vous dépasserez vos revenus de {overrun} ce mois. Votre budget quotidien sûr est de {safePerDay}.",
+  "rec.budgetOverrunProjected.action":
+    "Concentrez-vous sur l'essentiel pour le reste du mois. Reportez les achats non urgents.",
 };
 
 const de: Dict = {
@@ -1925,7 +2071,8 @@ const de: Dict = {
   "onboarding.step5.title": "Was ist dir gerade am wichtigsten?",
   "onboarding.step5.subtitle": "Wir passen Ratschläge und Insights an deine Ziele an.",
   "onboarding.step3b.title": "Wie hoch sind sie ungefähr?",
-  "onboarding.step3b.subtitle": "Gib für jeden Posten einen geschätzten Monatsbetrag ein. Du kannst unsichere Posten überspringen.",
+  "onboarding.step3b.subtitle":
+    "Gib für jeden Posten einen geschätzten Monatsbetrag ein. Du kannst unsichere Posten überspringen.",
   "onboarding.step3b.empty": "Keine fixen Ausgaben gewählt — tippe auf Weiter.",
   "onboarding.cta.enter": "NOOLY betreten",
   "onboarding.toast.success": "Fertig",
@@ -2022,15 +2169,20 @@ const de: Dict = {
   "health.status.healthy": "Gesund",
   "health.status.improving": "Im Aufbau",
   "health.status.unstable": "Instabil",
-  "health.explain.overspending": "Du gibst mehr aus als du einnimmst. Kleine Einsparungen machen einen echten Unterschied.",
-  "health.explain.noEmergencyFund": "Schon ein Monatsvorrat ändert alles — er ist dein finanzielles Sicherheitsnetz.",
-  "health.explain.fixedCritical": "Deine Fixkosten verbrauchen den größten Teil deines Einkommens. Eine Reduzierung würde Luft schaffen.",
+  "health.explain.overspending":
+    "Du gibst mehr aus als du einnimmst. Kleine Einsparungen machen einen echten Unterschied.",
+  "health.explain.noEmergencyFund":
+    "Schon ein Monatsvorrat ändert alles — er ist dein finanzielles Sicherheitsnetz.",
+  "health.explain.fixedCritical":
+    "Deine Fixkosten verbrauchen den größten Teil deines Einkommens. Eine Reduzierung würde Luft schaffen.",
   "health.explain.savingsLow": "Regelmäßig sparen — auch wenig — baut dauerhaft Stabilität auf.",
   "health.explain.emergencyLow": "Etwas mehr in deinem Notgroschen gibt dir echte Gelassenheit.",
   "health.explain.fixedHigh": "Weniger Fixkosten würden dir mehr Freiheit und Sparpotenzial geben.",
-  "health.explain.excellent": "Deine Finanzen florieren. Du baust echte, nachhaltige Stabilität auf.",
+  "health.explain.excellent":
+    "Deine Finanzen florieren. Du baust echte, nachhaltige Stabilität auf.",
   "health.explain.strong": "Du verwaltest dein Geld gut. Behalte diesen Schwung bei.",
-  "health.explain.healthy": "Deine Finanzen haben einen guten Rhythmus. Kleine Verbesserungen tragen dich weiter.",
+  "health.explain.healthy":
+    "Deine Finanzen haben einen guten Rhythmus. Kleine Verbesserungen tragen dich weiter.",
   "health.sub.savingsRate": "Ersparnis",
   "health.sub.emergencyFund": "Sicherheitsnetz",
   "health.sub.recurringPressure": "Fixkosten",
@@ -2215,7 +2367,8 @@ const de: Dict = {
   "settings.categories.add.placeholder": "Kategoriename",
   "settings.categories.save": "Speichern",
   "settings.categories.reset": "Auf Standard zurücksetzen",
-  "settings.categories.reset.confirm": "Dadurch werden deine Kategorien gelöscht und die Standardkategorien wiederhergestellt. Fortfahren?",
+  "settings.categories.reset.confirm":
+    "Dadurch werden deine Kategorien gelöscht und die Standardkategorien wiederhergestellt. Fortfahren?",
   "settings.categories.error.duplicate": "Eine Kategorie mit diesem Namen existiert bereits.",
 
   // ── Empfehlungen ──────────────────────────────────────────────────────────
@@ -2228,47 +2381,74 @@ const de: Dict = {
   "rec.impact.opportunityPortfolio": "Mit Anlegen beginnen",
   "rec.impact.riskReductionGeneral": "Risiko reduzieren",
   "rec.savingsNegative.title": "Du gibst mehr aus als du verdienst",
-  "rec.savingsNegative.explanation": "Deine Ausgaben übersteigen dein Einkommen um {deficit} pro Monat. Diese Lücke wächst und setzt deine Finanzen unter Druck.",
-  "rec.savingsNegative.action": "Überprüfe zuerst deine Fixkosten: Abonnements, Daueraufträge. Schon kleine Einsparungen summieren sich.",
+  "rec.savingsNegative.explanation":
+    "Deine Ausgaben übersteigen dein Einkommen um {deficit} pro Monat. Diese Lücke wächst und setzt deine Finanzen unter Druck.",
+  "rec.savingsNegative.action":
+    "Überprüfe zuerst deine Fixkosten: Abonnements, Daueraufträge. Schon kleine Einsparungen summieren sich.",
   "rec.savingsLow.title": "Deine Sparquote ist niedrig",
-  "rec.savingsLow.explanation": "Du sparst {rate}% deines Einkommens. Die Lücke von {gap}/Monat zu schließen würde dich auf einen gesünderen Kurs bringen.",
-  "rec.savingsLow.action": "Probiere die 1%-Herausforderung: Spare jeden Monat 1% mehr, bis du 15–20% erreichst.",
+  "rec.savingsLow.explanation":
+    "Du sparst {rate}% deines Einkommens. Die Lücke von {gap}/Monat zu schließen würde dich auf einen gesünderen Kurs bringen.",
+  "rec.savingsLow.action":
+    "Probiere die 1%-Herausforderung: Spare jeden Monat 1% mehr, bis du 15–20% erreichst.",
   "rec.savingsExcellent.title": "Ausgezeichnete Sparquote",
-  "rec.savingsExcellent.explanation": "Du sparst {rate}% deines Einkommens — weit über dem Durchschnitt. Behalte das bei und überlege, den Überschuss zu investieren.",
-  "rec.savingsExcellent.action": "Maximiere deine Investitionsbeiträge oder beschleunige ein wichtiges Ziel.",
+  "rec.savingsExcellent.explanation":
+    "Du sparst {rate}% deines Einkommens — weit über dem Durchschnitt. Behalte das bei und überlege, den Überschuss zu investieren.",
+  "rec.savingsExcellent.action":
+    "Maximiere deine Investitionsbeiträge oder beschleunige ein wichtiges Ziel.",
   "rec.emergencyFundCritical.title": "Kein Sicherheitsnetz vorhanden",
-  "rec.emergencyFundCritical.explanation": "Du hast weniger als 1 Monat Ausgaben als Notgroschen. Ein Ziel von {target} (3 Monate) würde dir echte finanzielle Sicherheit geben.",
-  "rec.emergencyFundCritical.action": "Eröffne ein separates Konto. Schon {monthly}/Monat bildet schnell ein Polster.",
+  "rec.emergencyFundCritical.explanation":
+    "Du hast weniger als 1 Monat Ausgaben als Notgroschen. Ein Ziel von {target} (3 Monate) würde dir echte finanzielle Sicherheit geben.",
+  "rec.emergencyFundCritical.action":
+    "Eröffne ein separates Konto. Schon {monthly}/Monat bildet schnell ein Polster.",
   "rec.emergencyFundLow.title": "Notgroschen ist zu klein",
-  "rec.emergencyFundLow.explanation": "Dein Notgroschen deckt {months} Monate ab. Du brauchst {gap} mehr für ein sicheres Niveau.",
-  "rec.emergencyFundLow.action": "Richte einen monatlichen Dauerauftrag auf ein separates Konto ein, das nur für Notfälle bestimmt ist.",
+  "rec.emergencyFundLow.explanation":
+    "Dein Notgroschen deckt {months} Monate ab. Du brauchst {gap} mehr für ein sicheres Niveau.",
+  "rec.emergencyFundLow.action":
+    "Richte einen monatlichen Dauerauftrag auf ein separates Konto ein, das nur für Notfälle bestimmt ist.",
   "rec.recurringPressureCritical.title": "Fixkosten fressen dein Einkommen",
-  "rec.recurringPressureCritical.explanation": "{ratio}% deines Einkommens gehen für Fixkosten drauf. Auf 50% zu reduzieren würde {potential} monatlich freisetzen.",
-  "rec.recurringPressureCritical.action": "Liste jeden Dauerauftrag auf. Kündige oder verhandle neu, was du nicht mehr brauchst.",
+  "rec.recurringPressureCritical.explanation":
+    "{ratio}% deines Einkommens gehen für Fixkosten drauf. Auf 50% zu reduzieren würde {potential} monatlich freisetzen.",
+  "rec.recurringPressureCritical.action":
+    "Liste jeden Dauerauftrag auf. Kündige oder verhandle neu, was du nicht mehr brauchst.",
   "rec.recurringPressureElevated.title": "Fixkosten erhöht",
-  "rec.recurringPressureElevated.explanation": "{ratio}% deines Einkommens sind für Fixkosten gebunden — über der empfohlenen 50%-Grenze.",
-  "rec.recurringPressureElevated.action": "Finde eine laufende Ausgabe, die du diesen Monat reduzieren kannst: ein Abo, Tarifplan oder eine Versicherung.",
+  "rec.recurringPressureElevated.explanation":
+    "{ratio}% deines Einkommens sind für Fixkosten gebunden — über der empfohlenen 50%-Grenze.",
+  "rec.recurringPressureElevated.action":
+    "Finde eine laufende Ausgabe, die du diesen Monat reduzieren kannst: ein Abo, Tarifplan oder eine Versicherung.",
   "rec.portfolioEmpty.title": "Noch keine Investments",
-  "rec.portfolioEmpty.explanation": "Dein Anlageportfolio ist leer. Selbst kleine monatliche Beiträge haben langfristig eine große Wirkung durch den Zinseszins.",
-  "rec.portfolioEmpty.action": "Starte mit einem günstigen Indexfonds oder ETF. Schon 50€/Monat wächst in 10 Jahren deutlich.",
+  "rec.portfolioEmpty.explanation":
+    "Dein Anlageportfolio ist leer. Selbst kleine monatliche Beiträge haben langfristig eine große Wirkung durch den Zinseszins.",
+  "rec.portfolioEmpty.action":
+    "Starte mit einem günstigen Indexfonds oder ETF. Schon 50€/Monat wächst in 10 Jahren deutlich.",
   "rec.portfolioCryptoOverweight.title": "Zu viel Krypto im Portfolio",
-  "rec.portfolioCryptoOverweight.explanation": "{cryptoPercent}% deines Portfolios stecken in Krypto — über der empfohlenen Grenze. Die hohe Volatilität kann deinen Gesamtwert stark beeinflussen.",
-  "rec.portfolioCryptoOverweight.action": "Erwäge eine Umschichtung in stabilere Anlageklassen wie ETFs oder Anleihen.",
+  "rec.portfolioCryptoOverweight.explanation":
+    "{cryptoPercent}% deines Portfolios stecken in Krypto — über der empfohlenen Grenze. Die hohe Volatilität kann deinen Gesamtwert stark beeinflussen.",
+  "rec.portfolioCryptoOverweight.action":
+    "Erwäge eine Umschichtung in stabilere Anlageklassen wie ETFs oder Anleihen.",
   "rec.portfolioPositionConcentrated.title": "Hohe Konzentration in {name}",
-  "rec.portfolioPositionConcentrated.explanation": "{name} macht {percent}% deines Portfolios aus. Eine so große Einzelposition ist riskant, falls der Wert fällt.",
+  "rec.portfolioPositionConcentrated.explanation":
+    "{name} macht {percent}% deines Portfolios aus. Eine so große Einzelposition ist riskant, falls der Wert fällt.",
   "rec.portfolioPositionConcentrated.action": "Diversifiziere schrittweise in andere Anlagen.",
   "rec.portfolioLowDiversification.title": "Portfolio braucht mehr Streuung",
-  "rec.portfolioLowDiversification.explanation": "Dein Diversifikationsscore ist niedrig — deine Investments sind auf zu wenige Anlageklassen konzentriert.",
-  "rec.portfolioLowDiversification.action": "Füge Exposure zu verschiedenen Asset-Typen hinzu: globale Aktien, Anleihen oder Immobilienfonds.",
+  "rec.portfolioLowDiversification.explanation":
+    "Dein Diversifikationsscore ist niedrig — deine Investments sind auf zu wenige Anlageklassen konzentriert.",
+  "rec.portfolioLowDiversification.action":
+    "Füge Exposure zu verschiedenen Asset-Typen hinzu: globale Aktien, Anleihen oder Immobilienfonds.",
   "rec.goalContributionLow.title": "Ziele brauchen mehr Beiträge",
-  "rec.goalContributionLow.explanation": "Deine monatlichen Beiträge zu Zielen sind im Verhältnis zu deinem Einkommen zu gering. Deine Ziele könnten viel länger dauern als geplant.",
-  "rec.goalContributionLow.action": "Überprüfe jedes Ziel und lege einen realistischen Monatsbeitrag fest. Schon 5% deines Einkommens macht einen echten Unterschied.",
+  "rec.goalContributionLow.explanation":
+    "Deine monatlichen Beiträge zu Zielen sind im Verhältnis zu deinem Einkommen zu gering. Deine Ziele könnten viel länger dauern als geplant.",
+  "rec.goalContributionLow.action":
+    "Überprüfe jedes Ziel und lege einen realistischen Monatsbeitrag fest. Schon 5% deines Einkommens macht einen echten Unterschied.",
   "rec.goalDeadlinePressure.title": "{goalName} ist gefährdet",
-  "rec.goalDeadlinePressure.explanation": "Du hast {completion}% von {goalName} erreicht, bei noch {months} Monaten. Um es rechtzeitig zu schaffen, musst du {required}/Monat beitragen.",
-  "rec.goalDeadlinePressure.action": "Erhöhe jetzt deinen Monatsbeitrag für {goalName} oder passe die Frist an.",
+  "rec.goalDeadlinePressure.explanation":
+    "Du hast {completion}% von {goalName} erreicht, bei noch {months} Monaten. Um es rechtzeitig zu schaffen, musst du {required}/Monat beitragen.",
+  "rec.goalDeadlinePressure.action":
+    "Erhöhe jetzt deinen Monatsbeitrag für {goalName} oder passe die Frist an.",
   "rec.budgetOverrunProjected.title": "Budgetüberschreitung droht",
-  "rec.budgetOverrunProjected.explanation": "Bei deinem aktuellen Tempo wirst du dein Einkommen diesen Monat um {overrun} überschreiten. Dein sicheres Tagesbudget beträgt {safePerDay}.",
-  "rec.budgetOverrunProjected.action": "Konzentriere variable Ausgaben auf das Wesentliche. Verschiebe nicht dringende Käufe.",
+  "rec.budgetOverrunProjected.explanation":
+    "Bei deinem aktuellen Tempo wirst du dein Einkommen diesen Monat um {overrun} überschreiten. Dein sicheres Tagesbudget beträgt {safePerDay}.",
+  "rec.budgetOverrunProjected.action":
+    "Konzentriere variable Ausgaben auf das Wesentliche. Verschiebe nicht dringende Käufe.",
 };
 
 const pt: Dict = {
@@ -2342,7 +2522,8 @@ const pt: Dict = {
   "onboarding.step5.title": "O que é mais importante para ti agora?",
   "onboarding.step5.subtitle": "Vamos adaptar os conselhos e insights às tuas metas.",
   "onboarding.step3b.title": "A quanto sobem aproximadamente?",
-  "onboarding.step3b.subtitle": "Introduz um valor mensal estimado para cada despesa. Podes ignorar os que não tiveres a certeza.",
+  "onboarding.step3b.subtitle":
+    "Introduz um valor mensal estimado para cada despesa. Podes ignorar os que não tiveres a certeza.",
   "onboarding.step3b.empty": "Nenhuma despesa fixa selecionada — toca em Continuar.",
   "onboarding.cta.enter": "Entrar no NOOLY",
   "onboarding.toast.success": "Tudo pronto",
@@ -2439,15 +2620,22 @@ const pt: Dict = {
   "health.status.healthy": "Saudável",
   "health.status.improving": "A melhorar",
   "health.status.unstable": "Instável",
-  "health.explain.overspending": "Estás a gastar mais do que ganhas. Pequenos cortes fazem uma grande diferença.",
-  "health.explain.noEmergencyFund": "Ter um mês de reserva muda tudo — é a tua rede de segurança financeira.",
-  "health.explain.fixedCritical": "Os teus custos fixos consomem a maior parte do teu rendimento. Reduzi-los daria-te margem de manobra.",
+  "health.explain.overspending":
+    "Estás a gastar mais do que ganhas. Pequenos cortes fazem uma grande diferença.",
+  "health.explain.noEmergencyFund":
+    "Ter um mês de reserva muda tudo — é a tua rede de segurança financeira.",
+  "health.explain.fixedCritical":
+    "Os teus custos fixos consomem a maior parte do teu rendimento. Reduzi-los daria-te margem de manobra.",
   "health.explain.savingsLow": "Poupar regularmente, mesmo pouco, constrói estabilidade duradoura.",
-  "health.explain.emergencyLow": "Um pouco mais no teu fundo de reserva dar-te-á verdadeira tranquilidade.",
-  "health.explain.fixedHigh": "Reduzir custos fixos dar-te-ia mais liberdade e capacidade de poupança.",
-  "health.explain.excellent": "As tuas finanças estão a prosperar. Estás a construir uma estabilidade real e duradoura.",
+  "health.explain.emergencyLow":
+    "Um pouco mais no teu fundo de reserva dar-te-á verdadeira tranquilidade.",
+  "health.explain.fixedHigh":
+    "Reduzir custos fixos dar-te-ia mais liberdade e capacidade de poupança.",
+  "health.explain.excellent":
+    "As tuas finanças estão a prosperar. Estás a construir uma estabilidade real e duradoura.",
   "health.explain.strong": "Estás a gerir bem o teu dinheiro. Mantém este impulso.",
-  "health.explain.healthy": "As tuas finanças têm um bom ritmo. Pequenas melhorias levar-te-ão mais longe.",
+  "health.explain.healthy":
+    "As tuas finanças têm um bom ritmo. Pequenas melhorias levar-te-ão mais longe.",
   "health.sub.savingsRate": "Poupança",
   "health.sub.emergencyFund": "Rede de segurança",
   "health.sub.recurringPressure": "Custos fixos",
@@ -2632,7 +2820,8 @@ const pt: Dict = {
   "settings.categories.add.placeholder": "Nome da categoria",
   "settings.categories.save": "Guardar",
   "settings.categories.reset": "Repor predefinições",
-  "settings.categories.reset.confirm": "Isto eliminará as tuas categorias personalizadas e restaurará as predefinições. Continuar?",
+  "settings.categories.reset.confirm":
+    "Isto eliminará as tuas categorias personalizadas e restaurará as predefinições. Continuar?",
   "settings.categories.error.duplicate": "Já existe uma categoria com esse nome.",
 
   // ── Recomendações ─────────────────────────────────────────────────────────
@@ -2645,47 +2834,75 @@ const pt: Dict = {
   "rec.impact.opportunityPortfolio": "Começar a investir",
   "rec.impact.riskReductionGeneral": "Reduzir o risco",
   "rec.savingsNegative.title": "Gastas mais do que ganhas",
-  "rec.savingsNegative.explanation": "As tuas despesas superam os teus rendimentos em {deficit} por mês. Esta diferença acumula-se e coloca as tuas finanças sob pressão.",
-  "rec.savingsNegative.action": "Revê primeiro os teus custos fixos: subscrições, encargos recorrentes. Mesmo pequenos cortes somam-se depressa.",
+  "rec.savingsNegative.explanation":
+    "As tuas despesas superam os teus rendimentos em {deficit} por mês. Esta diferença acumula-se e coloca as tuas finanças sob pressão.",
+  "rec.savingsNegative.action":
+    "Revê primeiro os teus custos fixos: subscrições, encargos recorrentes. Mesmo pequenos cortes somam-se depressa.",
   "rec.savingsLow.title": "A tua taxa de poupança é baixa",
-  "rec.savingsLow.explanation": "Estás a poupar {rate}% dos teus rendimentos. Fechar a diferença de {gap}/mês colocar-te-ia numa trajetória mais saudável.",
-  "rec.savingsLow.action": "Experimenta o desafio do 1%: reserva 1% a mais por mês até atingires 15–20%.",
+  "rec.savingsLow.explanation":
+    "Estás a poupar {rate}% dos teus rendimentos. Fechar a diferença de {gap}/mês colocar-te-ia numa trajetória mais saudável.",
+  "rec.savingsLow.action":
+    "Experimenta o desafio do 1%: reserva 1% a mais por mês até atingires 15–20%.",
   "rec.savingsExcellent.title": "Taxa de poupança excelente",
-  "rec.savingsExcellent.explanation": "Estás a poupar {rate}% dos teus rendimentos — bem acima da média. Continua assim e considera pôr o excedente a render.",
-  "rec.savingsExcellent.action": "Considera maximizar as tuas contribuições de investimento ou acelerar uma meta prioritária.",
+  "rec.savingsExcellent.explanation":
+    "Estás a poupar {rate}% dos teus rendimentos — bem acima da média. Continua assim e considera pôr o excedente a render.",
+  "rec.savingsExcellent.action":
+    "Considera maximizar as tuas contribuições de investimento ou acelerar uma meta prioritária.",
   "rec.emergencyFundCritical.title": "Sem rede de segurança",
-  "rec.emergencyFundCritical.explanation": "Tens menos de 1 mês de despesas em reserva. Um objetivo de {target} (3 meses) dar-te-ia segurança financeira real.",
-  "rec.emergencyFundCritical.action": "Abre uma conta dedicada. Mesmo {monthly}/mês constrói uma almofada rapidamente.",
+  "rec.emergencyFundCritical.explanation":
+    "Tens menos de 1 mês de despesas em reserva. Um objetivo de {target} (3 meses) dar-te-ia segurança financeira real.",
+  "rec.emergencyFundCritical.action":
+    "Abre uma conta dedicada. Mesmo {monthly}/mês constrói uma almofada rapidamente.",
   "rec.emergencyFundLow.title": "Fundo de emergência escasso",
-  "rec.emergencyFundLow.explanation": "O teu fundo de emergência cobre {months} meses. Precisas de mais {gap} para atingir um nível seguro.",
-  "rec.emergencyFundLow.action": "Configura uma transferência automática mensal para uma conta separada só para emergências.",
+  "rec.emergencyFundLow.explanation":
+    "O teu fundo de emergência cobre {months} meses. Precisas de mais {gap} para atingir um nível seguro.",
+  "rec.emergencyFundLow.action":
+    "Configura uma transferência automática mensal para uma conta separada só para emergências.",
   "rec.recurringPressureCritical.title": "Os custos fixos consomem os teus rendimentos",
-  "rec.recurringPressureCritical.explanation": "{ratio}% dos teus rendimentos vão para custos fixos. Reduzir para 50% libertaria {potential} por mês.",
-  "rec.recurringPressureCritical.action": "Lista cada encargo recorrente. Cancela ou renegocia o que já não precisas.",
+  "rec.recurringPressureCritical.explanation":
+    "{ratio}% dos teus rendimentos vão para custos fixos. Reduzir para 50% libertaria {potential} por mês.",
+  "rec.recurringPressureCritical.action":
+    "Lista cada encargo recorrente. Cancela ou renegocia o que já não precisas.",
   "rec.recurringPressureElevated.title": "Custos fixos elevados",
-  "rec.recurringPressureElevated.explanation": "{ratio}% dos teus rendimentos estão comprometidos em custos fixos — acima do limite recomendado de 50%.",
-  "rec.recurringPressureElevated.action": "Procura um custo recorrente que possas reduzir este mês: subscrição, plano de serviço ou seguro.",
+  "rec.recurringPressureElevated.explanation":
+    "{ratio}% dos teus rendimentos estão comprometidos em custos fixos — acima do limite recomendado de 50%.",
+  "rec.recurringPressureElevated.action":
+    "Procura um custo recorrente que possas reduzir este mês: subscrição, plano de serviço ou seguro.",
   "rec.portfolioEmpty.title": "Sem investimentos registados",
-  "rec.portfolioEmpty.explanation": "A tua carteira de investimentos está vazia. Mesmo pequenas contribuições mensais têm um grande impacto a longo prazo.",
-  "rec.portfolioEmpty.action": "Começa com um fundo de índice de baixo custo. Mesmo 50€/mês cresce significativamente em 10 anos.",
+  "rec.portfolioEmpty.explanation":
+    "A tua carteira de investimentos está vazia. Mesmo pequenas contribuições mensais têm um grande impacto a longo prazo.",
+  "rec.portfolioEmpty.action":
+    "Começa com um fundo de índice de baixo custo. Mesmo 50€/mês cresce significativamente em 10 anos.",
   "rec.portfolioCryptoOverweight.title": "Exposição elevada a criptos",
-  "rec.portfolioCryptoOverweight.explanation": "{cryptoPercent}% da tua carteira está em cripto — acima do limite recomendado. A alta volatilidade pode impactar significativamente o teu patrimônio.",
-  "rec.portfolioCryptoOverweight.action": "Considera rebalancear para classes de ativos mais estáveis como ETFs ou obrigações.",
+  "rec.portfolioCryptoOverweight.explanation":
+    "{cryptoPercent}% da tua carteira está em cripto — acima do limite recomendado. A alta volatilidade pode impactar significativamente o teu patrimônio.",
+  "rec.portfolioCryptoOverweight.action":
+    "Considera rebalancear para classes de ativos mais estáveis como ETFs ou obrigações.",
   "rec.portfolioPositionConcentrated.title": "Alta concentração em {name}",
-  "rec.portfolioPositionConcentrated.explanation": "{name} representa {percent}% da tua carteira. Uma posição tão grande cria risco significativo se esse ativo cair.",
-  "rec.portfolioPositionConcentrated.action": "Considera diversificar gradualmente para outros ativos.",
+  "rec.portfolioPositionConcentrated.explanation":
+    "{name} representa {percent}% da tua carteira. Uma posição tão grande cria risco significativo se esse ativo cair.",
+  "rec.portfolioPositionConcentrated.action":
+    "Considera diversificar gradualmente para outros ativos.",
   "rec.portfolioLowDiversification.title": "A carteira precisa de mais diversificação",
-  "rec.portfolioLowDiversification.explanation": "A tua pontuação de diversificação é baixa — os teus investimentos estão concentrados em poucas classes de ativos.",
-  "rec.portfolioLowDiversification.action": "Adiciona exposição a diferentes tipos de ativos: ações globais, obrigações ou fundos imobiliários.",
+  "rec.portfolioLowDiversification.explanation":
+    "A tua pontuação de diversificação é baixa — os teus investimentos estão concentrados em poucas classes de ativos.",
+  "rec.portfolioLowDiversification.action":
+    "Adiciona exposição a diferentes tipos de ativos: ações globais, obrigações ou fundos imobiliários.",
   "rec.goalContributionLow.title": "As metas precisam de mais financiamento",
-  "rec.goalContributionLow.explanation": "As tuas contribuições mensais para metas são demasiado pequenas em relação aos teus rendimentos. As tuas metas podem demorar muito mais do que o planeado.",
-  "rec.goalContributionLow.action": "Revê cada meta e define uma contribuição mensal realista. Mesmo 5% dos teus rendimentos faz diferença real.",
+  "rec.goalContributionLow.explanation":
+    "As tuas contribuições mensais para metas são demasiado pequenas em relação aos teus rendimentos. As tuas metas podem demorar muito mais do que o planeado.",
+  "rec.goalContributionLow.action":
+    "Revê cada meta e define uma contribuição mensal realista. Mesmo 5% dos teus rendimentos faz diferença real.",
   "rec.goalDeadlinePressure.title": "{goalName} está em risco",
-  "rec.goalDeadlinePressure.explanation": "Estás {completion}% do caminho para {goalName} com {months} meses restantes. Para chegar a tempo, precisas de contribuir {required}/mês.",
-  "rec.goalDeadlinePressure.action": "Aumenta a tua contribuição mensal para {goalName} agora, ou ajusta o prazo para uma data mais realista.",
+  "rec.goalDeadlinePressure.explanation":
+    "Estás {completion}% do caminho para {goalName} com {months} meses restantes. Para chegar a tempo, precisas de contribuir {required}/mês.",
+  "rec.goalDeadlinePressure.action":
+    "Aumenta a tua contribuição mensal para {goalName} agora, ou ajusta o prazo para uma data mais realista.",
   "rec.budgetOverrunProjected.title": "Previsão de exceder o orçamento",
-  "rec.budgetOverrunProjected.explanation": "Ao teu ritmo atual, ultrapassarás os teus rendimentos em {overrun} este mês. O teu orçamento diário seguro é {safePerDay}.",
-  "rec.budgetOverrunProjected.action": "Foca as despesas variáveis no essencial pelo resto do mês. Adia as compras não urgentes.",
+  "rec.budgetOverrunProjected.explanation":
+    "Ao teu ritmo atual, ultrapassarás os teus rendimentos em {overrun} este mês. O teu orçamento diário seguro é {safePerDay}.",
+  "rec.budgetOverrunProjected.action":
+    "Foca as despesas variáveis no essencial pelo resto do mês. Adia as compras não urgentes.",
 };
 
 const it: Dict = {
@@ -2759,7 +2976,8 @@ const it: Dict = {
   "onboarding.step5.title": "Cosa conta di più per te ora?",
   "onboarding.step5.subtitle": "Personalizzeremo i consigli e gli insight ai tuoi obiettivi.",
   "onboarding.step3b.title": "A quanto ammontano approssimativamente?",
-  "onboarding.step3b.subtitle": "Inserisci un importo mensile stimato per ciascuna. Puoi saltare quelle di cui non sei sicuro.",
+  "onboarding.step3b.subtitle":
+    "Inserisci un importo mensile stimato per ciascuna. Puoi saltare quelle di cui non sei sicuro.",
   "onboarding.step3b.empty": "Nessuna spesa fissa selezionata — tocca Continua.",
   "onboarding.cta.enter": "Entra in NOOLY",
   "onboarding.toast.success": "Tutto pronto",
@@ -2856,15 +3074,23 @@ const it: Dict = {
   "health.status.healthy": "Sano",
   "health.status.improving": "In miglioramento",
   "health.status.unstable": "Instabile",
-  "health.explain.overspending": "Stai spendendo più di quanto guadagni. Anche piccoli tagli fanno davvero la differenza.",
-  "health.explain.noEmergencyFund": "Avere anche solo un mese di riserva cambia tutto — è la tua rete di sicurezza finanziaria.",
-  "health.explain.fixedCritical": "I tuoi costi fissi consumano gran parte del tuo reddito. Ridurli ti darebbe respiro.",
-  "health.explain.savingsLow": "Risparmiare con costanza — anche poco — costruisce stabilità duratura nel tempo.",
-  "health.explain.emergencyLow": "Un po' di più nel tuo fondo di riserva ti darà vera tranquillità.",
-  "health.explain.fixedHigh": "Ridurre i costi fissi ti darebbe più libertà e capacità di risparmio.",
-  "health.explain.excellent": "Le tue finanze prosperano. Stai costruendo una stabilità reale e duratura.",
+  "health.explain.overspending":
+    "Stai spendendo più di quanto guadagni. Anche piccoli tagli fanno davvero la differenza.",
+  "health.explain.noEmergencyFund":
+    "Avere anche solo un mese di riserva cambia tutto — è la tua rete di sicurezza finanziaria.",
+  "health.explain.fixedCritical":
+    "I tuoi costi fissi consumano gran parte del tuo reddito. Ridurli ti darebbe respiro.",
+  "health.explain.savingsLow":
+    "Risparmiare con costanza — anche poco — costruisce stabilità duratura nel tempo.",
+  "health.explain.emergencyLow":
+    "Un po' di più nel tuo fondo di riserva ti darà vera tranquillità.",
+  "health.explain.fixedHigh":
+    "Ridurre i costi fissi ti darebbe più libertà e capacità di risparmio.",
+  "health.explain.excellent":
+    "Le tue finanze prosperano. Stai costruendo una stabilità reale e duratura.",
   "health.explain.strong": "Stai gestendo bene i tuoi soldi. Mantieni questo slancio.",
-  "health.explain.healthy": "Le tue finanze hanno un buon ritmo. Piccoli miglioramenti ti porteranno ancora più lontano.",
+  "health.explain.healthy":
+    "Le tue finanze hanno un buon ritmo. Piccoli miglioramenti ti porteranno ancora più lontano.",
   "health.sub.savingsRate": "Risparmio",
   "health.sub.emergencyFund": "Rete di sicurezza",
   "health.sub.recurringPressure": "Costi fissi",
@@ -3049,7 +3275,8 @@ const it: Dict = {
   "settings.categories.add.placeholder": "Nome categoria",
   "settings.categories.save": "Salva",
   "settings.categories.reset": "Ripristina predefiniti",
-  "settings.categories.reset.confirm": "Questo eliminerà le tue categorie e ripristinerà quelle predefinite. Continuare?",
+  "settings.categories.reset.confirm":
+    "Questo eliminerà le tue categorie e ripristinerà quelle predefinite. Continuare?",
   "settings.categories.error.duplicate": "Esiste già una categoria con questo nome.",
 
   // ── Raccomandazioni ───────────────────────────────────────────────────────
@@ -3062,47 +3289,75 @@ const it: Dict = {
   "rec.impact.opportunityPortfolio": "Inizia a investire",
   "rec.impact.riskReductionGeneral": "Riduci il rischio",
   "rec.savingsNegative.title": "Spendi più di quanto guadagni",
-  "rec.savingsNegative.explanation": "Le tue spese superano le entrate di {deficit} al mese. Questo divario si accumula e mette le tue finanze sotto pressione.",
-  "rec.savingsNegative.action": "Inizia esaminando i costi fissi: abbonamenti, addebiti ricorrenti. Anche piccoli tagli si sommano velocemente.",
+  "rec.savingsNegative.explanation":
+    "Le tue spese superano le entrate di {deficit} al mese. Questo divario si accumula e mette le tue finanze sotto pressione.",
+  "rec.savingsNegative.action":
+    "Inizia esaminando i costi fissi: abbonamenti, addebiti ricorrenti. Anche piccoli tagli si sommano velocemente.",
   "rec.savingsLow.title": "Il tuo tasso di risparmio è basso",
-  "rec.savingsLow.explanation": "Stai risparmiando il {rate}% delle entrate. Colmare il gap di {gap}/mese ti porterebbe su un percorso più sano.",
-  "rec.savingsLow.action": "Prova la sfida dell'1%: metti da parte l'1% in più ogni mese fino a raggiungere il 15–20%.",
+  "rec.savingsLow.explanation":
+    "Stai risparmiando il {rate}% delle entrate. Colmare il gap di {gap}/mese ti porterebbe su un percorso più sano.",
+  "rec.savingsLow.action":
+    "Prova la sfida dell'1%: metti da parte l'1% in più ogni mese fino a raggiungere il 15–20%.",
   "rec.savingsExcellent.title": "Ottimo tasso di risparmio",
-  "rec.savingsExcellent.explanation": "Stai risparmiando il {rate}% delle entrate — ben al di sopra della media. Continua così e considera di far fruttare il surplus.",
-  "rec.savingsExcellent.action": "Considera di massimizzare i contributi agli investimenti o accelerare un obiettivo prioritario.",
+  "rec.savingsExcellent.explanation":
+    "Stai risparmiando il {rate}% delle entrate — ben al di sopra della media. Continua così e considera di far fruttare il surplus.",
+  "rec.savingsExcellent.action":
+    "Considera di massimizzare i contributi agli investimenti o accelerare un obiettivo prioritario.",
   "rec.emergencyFundCritical.title": "Nessuna rete di sicurezza",
-  "rec.emergencyFundCritical.explanation": "Hai meno di 1 mese di spese come fondo di emergenza. Un obiettivo di {target} (3 mesi) ti darebbe vera sicurezza finanziaria.",
-  "rec.emergencyFundCritical.action": "Apri un conto dedicato. Anche {monthly}/mese costruisce rapidamente un cuscinetto.",
+  "rec.emergencyFundCritical.explanation":
+    "Hai meno di 1 mese di spese come fondo di emergenza. Un obiettivo di {target} (3 mesi) ti darebbe vera sicurezza finanziaria.",
+  "rec.emergencyFundCritical.action":
+    "Apri un conto dedicato. Anche {monthly}/mese costruisce rapidamente un cuscinetto.",
   "rec.emergencyFundLow.title": "Fondo di emergenza insufficiente",
-  "rec.emergencyFundLow.explanation": "Il tuo fondo di emergenza copre {months} mesi. Ti mancano {gap} per raggiungere un livello sicuro.",
-  "rec.emergencyFundLow.action": "Imposta un bonifico automatico mensile su un conto separato dedicato solo alle emergenze.",
+  "rec.emergencyFundLow.explanation":
+    "Il tuo fondo di emergenza copre {months} mesi. Ti mancano {gap} per raggiungere un livello sicuro.",
+  "rec.emergencyFundLow.action":
+    "Imposta un bonifico automatico mensile su un conto separato dedicato solo alle emergenze.",
   "rec.recurringPressureCritical.title": "I costi fissi mangiano le entrate",
-  "rec.recurringPressureCritical.explanation": "Il {ratio}% delle entrate va in costi fissi. Ridurre al 50% libererebbe {potential} al mese.",
-  "rec.recurringPressureCritical.action": "Elenca ogni addebito ricorrente. Annulla o rinegozia ciò che non ti serve più.",
+  "rec.recurringPressureCritical.explanation":
+    "Il {ratio}% delle entrate va in costi fissi. Ridurre al 50% libererebbe {potential} al mese.",
+  "rec.recurringPressureCritical.action":
+    "Elenca ogni addebito ricorrente. Annulla o rinegozia ciò che non ti serve più.",
   "rec.recurringPressureElevated.title": "Costi fissi elevati",
-  "rec.recurringPressureElevated.explanation": "Il {ratio}% delle entrate è impegnato in costi fissi — sopra il tetto consigliato del 50%.",
-  "rec.recurringPressureElevated.action": "Trova una spesa ricorrente da ridurre questo mese: abbonamento, piano tariffario o assicurazione.",
+  "rec.recurringPressureElevated.explanation":
+    "Il {ratio}% delle entrate è impegnato in costi fissi — sopra il tetto consigliato del 50%.",
+  "rec.recurringPressureElevated.action":
+    "Trova una spesa ricorrente da ridurre questo mese: abbonamento, piano tariffario o assicurazione.",
   "rec.portfolioEmpty.title": "Nessun investimento registrato",
-  "rec.portfolioEmpty.explanation": "Il tuo portafoglio investimenti è vuoto. Anche piccoli contributi mensili hanno un grande impatto nel lungo periodo.",
-  "rec.portfolioEmpty.action": "Inizia con un fondo indice a basso costo. Anche 50€/mese cresce significativamente in 10 anni.",
+  "rec.portfolioEmpty.explanation":
+    "Il tuo portafoglio investimenti è vuoto. Anche piccoli contributi mensili hanno un grande impatto nel lungo periodo.",
+  "rec.portfolioEmpty.action":
+    "Inizia con un fondo indice a basso costo. Anche 50€/mese cresce significativamente in 10 anni.",
   "rec.portfolioCryptoOverweight.title": "Eccessiva esposizione alle crypto",
-  "rec.portfolioCryptoOverweight.explanation": "Il {cryptoPercent}% del portafoglio è in crypto — sopra il limite consigliato. L'alta volatilità può impattare significativamente il tuo patrimonio.",
-  "rec.portfolioCryptoOverweight.action": "Considera di ribilanciare verso classi di attivi più stabili come ETF o obbligazioni.",
+  "rec.portfolioCryptoOverweight.explanation":
+    "Il {cryptoPercent}% del portafoglio è in crypto — sopra il limite consigliato. L'alta volatilità può impattare significativamente il tuo patrimonio.",
+  "rec.portfolioCryptoOverweight.action":
+    "Considera di ribilanciare verso classi di attivi più stabili come ETF o obbligazioni.",
   "rec.portfolioPositionConcentrated.title": "Alta concentrazione in {name}",
-  "rec.portfolioPositionConcentrated.explanation": "{name} rappresenta il {percent}% del portafoglio. Una posizione così grande crea rischio significativo se quell'attivo scende.",
-  "rec.portfolioPositionConcentrated.action": "Considera di diversificare gradualmente verso altri attivi.",
+  "rec.portfolioPositionConcentrated.explanation":
+    "{name} rappresenta il {percent}% del portafoglio. Una posizione così grande crea rischio significativo se quell'attivo scende.",
+  "rec.portfolioPositionConcentrated.action":
+    "Considera di diversificare gradualmente verso altri attivi.",
   "rec.portfolioLowDiversification.title": "Il portafoglio ha bisogno di più diversificazione",
-  "rec.portfolioLowDiversification.explanation": "Il punteggio di diversificazione è basso — i tuoi investimenti sono concentrati in troppe poche classi di attivi.",
-  "rec.portfolioLowDiversification.action": "Aggiungi esposizione a diversi tipi di attivi: azionario globale, obbligazioni o fondi immobiliari.",
+  "rec.portfolioLowDiversification.explanation":
+    "Il punteggio di diversificazione è basso — i tuoi investimenti sono concentrati in troppe poche classi di attivi.",
+  "rec.portfolioLowDiversification.action":
+    "Aggiungi esposizione a diversi tipi di attivi: azionario globale, obbligazioni o fondi immobiliari.",
   "rec.goalContributionLow.title": "Gli obiettivi hanno bisogno di più fondi",
-  "rec.goalContributionLow.explanation": "I tuoi contributi mensili agli obiettivi sono troppo piccoli rispetto alle entrate. I tuoi obiettivi potrebbero richiedere molto più tempo del previsto.",
-  "rec.goalContributionLow.action": "Rivedi ogni obiettivo e fissa un contributo mensile realistico. Anche il 5% delle entrate fa una vera differenza.",
+  "rec.goalContributionLow.explanation":
+    "I tuoi contributi mensili agli obiettivi sono troppo piccoli rispetto alle entrate. I tuoi obiettivi potrebbero richiedere molto più tempo del previsto.",
+  "rec.goalContributionLow.action":
+    "Rivedi ogni obiettivo e fissa un contributo mensile realistico. Anche il 5% delle entrate fa una vera differenza.",
   "rec.goalDeadlinePressure.title": "{goalName} è a rischio",
-  "rec.goalDeadlinePressure.explanation": "Sei al {completion}% di {goalName} con {months} mesi rimasti. Per arrivarci in tempo devi contribuire {required}/mese.",
-  "rec.goalDeadlinePressure.action": "Aumenta subito il contributo mensile a {goalName} o aggiusta la scadenza.",
+  "rec.goalDeadlinePressure.explanation":
+    "Sei al {completion}% di {goalName} con {months} mesi rimasti. Per arrivarci in tempo devi contribuire {required}/mese.",
+  "rec.goalDeadlinePressure.action":
+    "Aumenta subito il contributo mensile a {goalName} o aggiusta la scadenza.",
   "rec.budgetOverrunProjected.title": "Sforamento del budget previsto",
-  "rec.budgetOverrunProjected.explanation": "Al ritmo attuale supererai le entrate di {overrun} questo mese. Il tuo budget giornaliero sicuro è {safePerDay}.",
-  "rec.budgetOverrunProjected.action": "Concentra le spese variabili sull'essenziale per il resto del mese. Rimanda gli acquisti non urgenti.",
+  "rec.budgetOverrunProjected.explanation":
+    "Al ritmo attuale supererai le entrate di {overrun} questo mese. Il tuo budget giornaliero sicuro è {safePerDay}.",
+  "rec.budgetOverrunProjected.action":
+    "Concentra le spese variabili sull'essenziale per il resto del mese. Rimanda gli acquisti non urgenti.",
 };
 
 export const TRANSLATIONS: Record<LocaleCode, Dict> = { en, es, fr, de, pt, it };

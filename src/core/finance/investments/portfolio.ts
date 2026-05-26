@@ -5,7 +5,12 @@
  * concentration risk classification, and risk signals.
  */
 
-import type { FinancialEngineContext, PortfolioAnalytics, AllocationSlice, ConcentrationRisk } from "../types";
+import type {
+  FinancialEngineContext,
+  PortfolioAnalytics,
+  AllocationSlice,
+  ConcentrationRisk,
+} from "../types";
 import {
   INVESTMENT_TYPE_COUNT,
   HHI_CONCENTRATION_THRESHOLDS,
@@ -15,11 +20,11 @@ import {
 import { safeDivide, clamp, hhi } from "../utils/math";
 
 const TYPE_LABELS: Record<string, string> = {
-  stock:   "Stocks",
-  etf:     "ETFs",
-  crypto:  "Crypto",
+  stock: "Stocks",
+  etf: "ETFs",
+  crypto: "Crypto",
   savings: "Savings",
-  other:   "Other",
+  other: "Other",
 };
 
 export function computePortfolioAnalytics(ctx: FinancialEngineContext): PortfolioAnalytics {
@@ -64,18 +69,16 @@ export function computePortfolioAnalytics(ctx: FinancialEngineContext): Portfoli
     });
   }
 
-  const allocationByType: AllocationSlice[] = Array.from(typeMap.entries()).map(
-    ([type, agg]) => ({
-      type,
-      label: TYPE_LABELS[type] ?? type,
-      value: agg.value,
-      cost: agg.cost,
-      gainLoss: agg.value - agg.cost,
-      gainLossPercent: safeDivide(agg.value - agg.cost, agg.cost, 0) * 100,
-      fraction: safeDivide(agg.value, totalValue, 0),
-      count: agg.count,
-    }),
-  );
+  const allocationByType: AllocationSlice[] = Array.from(typeMap.entries()).map(([type, agg]) => ({
+    type,
+    label: TYPE_LABELS[type] ?? type,
+    value: agg.value,
+    cost: agg.cost,
+    gainLoss: agg.value - agg.cost,
+    gainLossPercent: safeDivide(agg.value - agg.cost, agg.cost, 0) * 100,
+    fraction: safeDivide(agg.value, totalValue, 0),
+    count: agg.count,
+  }));
   allocationByType.sort((a, b) => b.value - a.value);
 
   // ── HHI & diversification ────────────────────────────────────────────────
@@ -85,9 +88,7 @@ export function computePortfolioAnalytics(ctx: FinancialEngineContext): Portfoli
   // Normalise score: 0 at HHI=1.0 (monopoly), 100 at HHI=1/N (perfect spread)
   const minHHI = 1 / INVESTMENT_TYPE_COUNT;
   const diversificationScore =
-    hhiValue <= minHHI
-      ? 100
-      : clamp(((1 - hhiValue) / (1 - minHHI)) * 100, 0, 100);
+    hhiValue <= minHHI ? 100 : clamp(((1 - hhiValue) / (1 - minHHI)) * 100, 0, 100);
 
   const concentrationRisk: ConcentrationRisk =
     hhiValue < HHI_CONCENTRATION_THRESHOLDS.low

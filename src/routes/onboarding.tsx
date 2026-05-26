@@ -6,11 +6,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  ArrowLeft, ArrowRight, Loader2, Check,
-  Home, Building2, Car, Banknote, Wrench, Smartphone, Dumbbell, Repeat, Shield, Bus, Baby,
-  ShoppingCart, Utensils, Music, Heart, Plane, PawPrint, Sparkles,
-  PiggyBank, CreditCard, TrendingDown, Star, Brain, Target, TrendingUp,
-  Sofa, Landmark, Shirt, MoreHorizontal,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  Check,
+  Home,
+  Building2,
+  Car,
+  Banknote,
+  Wrench,
+  Smartphone,
+  Dumbbell,
+  Repeat,
+  Shield,
+  Bus,
+  Baby,
+  ShoppingCart,
+  Utensils,
+  Music,
+  Heart,
+  Plane,
+  PawPrint,
+  Sparkles,
+  PiggyBank,
+  CreditCard,
+  TrendingDown,
+  Star,
+  Brain,
+  Target,
+  TrendingUp,
+  Sofa,
+  Landmark,
+  Shirt,
+  MoreHorizontal,
 } from "lucide-react";
 import { useT } from "@/i18n";
 
@@ -22,51 +50,51 @@ type CatDef = { id: string; icon: React.ElementType; color: string; dbIcon: stri
 
 // electricity / water / gas removed; car / loans / household added
 const FIXED_CATS: CatDef[] = [
-  { id: "rent",          icon: Home,       color: "sky",    dbIcon: "home" },
-  { id: "mortgage",      icon: Building2,  color: "sky",    dbIcon: "building-2" },
-  { id: "car",           icon: Car,        color: "sky",    dbIcon: "car" },
-  { id: "loans",         icon: Banknote,   color: "warn",   dbIcon: "banknote" },
-  { id: "household",     icon: Wrench,     color: "sky",    dbIcon: "wrench" },
-  { id: "phone",         icon: Smartphone, color: "mint",   dbIcon: "smartphone" },
-  { id: "gym",           icon: Dumbbell,   color: "mint",   dbIcon: "dumbbell" },
-  { id: "subscriptions", icon: Repeat,     color: "violet", dbIcon: "repeat" },
-  { id: "insurance",     icon: Shield,     color: "sky",    dbIcon: "shield" },
-  { id: "transport",     icon: Bus,        color: "sky",    dbIcon: "bus" },
-  { id: "childcare",     icon: Baby,       color: "mint",   dbIcon: "baby" },
+  { id: "rent", icon: Home, color: "sky", dbIcon: "home" },
+  { id: "mortgage", icon: Building2, color: "sky", dbIcon: "building-2" },
+  { id: "car", icon: Car, color: "sky", dbIcon: "car" },
+  { id: "loans", icon: Banknote, color: "warn", dbIcon: "banknote" },
+  { id: "household", icon: Wrench, color: "sky", dbIcon: "wrench" },
+  { id: "phone", icon: Smartphone, color: "mint", dbIcon: "smartphone" },
+  { id: "gym", icon: Dumbbell, color: "mint", dbIcon: "dumbbell" },
+  { id: "subscriptions", icon: Repeat, color: "violet", dbIcon: "repeat" },
+  { id: "insurance", icon: Shield, color: "sky", dbIcon: "shield" },
+  { id: "transport", icon: Bus, color: "sky", dbIcon: "bus" },
+  { id: "childcare", icon: Baby, color: "mint", dbIcon: "baby" },
 ];
 
 const VARIABLE_CATS: CatDef[] = [
-  { id: "others",    icon: MoreHorizontal, color: "mint",   dbIcon: "more-horizontal" },
-  { id: "leisure",   icon: Music,          color: "violet", dbIcon: "music" },
-  { id: "beauty",    icon: Sparkles,       color: "violet", dbIcon: "sparkles" },
-  { id: "home",      icon: Sofa,           color: "sky",    dbIcon: "sofa" },
-  { id: "health",    icon: Heart,          color: "mint",   dbIcon: "heart" },
-  { id: "travel",    icon: Plane,          color: "sky",    dbIcon: "plane" },
-  { id: "finance",   icon: Landmark,       color: "violet", dbIcon: "landmark" },
-  { id: "transport", icon: Bus,            color: "sky",    dbIcon: "bus" },
-  { id: "clothing",  icon: Shirt,          color: "warn",   dbIcon: "shirt" },
-  { id: "pets",      icon: PawPrint,       color: "mint",   dbIcon: "paw-print" },
-  { id: "loan",      icon: CreditCard,     color: "violet", dbIcon: "credit-card" },
+  { id: "others", icon: MoreHorizontal, color: "mint", dbIcon: "more-horizontal" },
+  { id: "leisure", icon: Music, color: "violet", dbIcon: "music" },
+  { id: "beauty", icon: Sparkles, color: "violet", dbIcon: "sparkles" },
+  { id: "home", icon: Sofa, color: "sky", dbIcon: "sofa" },
+  { id: "health", icon: Heart, color: "mint", dbIcon: "heart" },
+  { id: "travel", icon: Plane, color: "sky", dbIcon: "plane" },
+  { id: "finance", icon: Landmark, color: "violet", dbIcon: "landmark" },
+  { id: "transport", icon: Bus, color: "sky", dbIcon: "bus" },
+  { id: "clothing", icon: Shirt, color: "warn", dbIcon: "shirt" },
+  { id: "pets", icon: PawPrint, color: "mint", dbIcon: "paw-print" },
+  { id: "loan", icon: CreditCard, color: "violet", dbIcon: "credit-card" },
 ];
 
 const PRIORITY_DEFS = [
-  { id: "savings",   icon: PiggyBank   },
-  { id: "debt",      icon: CreditCard  },
-  { id: "family",    icon: Heart       },
-  { id: "lifestyle", icon: Star        },
-  { id: "spending",  icon: TrendingDown},
-  { id: "travel",    icon: Plane       },
-  { id: "home",      icon: Home        },
-  { id: "stress",    icon: Brain       },
-  { id: "children",  icon: Baby        },
-  { id: "control",   icon: Target      },
-  { id: "invest",    icon: TrendingUp  },
+  { id: "savings", icon: PiggyBank },
+  { id: "debt", icon: CreditCard },
+  { id: "family", icon: Heart },
+  { id: "lifestyle", icon: Star },
+  { id: "spending", icon: TrendingDown },
+  { id: "travel", icon: Plane },
+  { id: "home", icon: Home },
+  { id: "stress", icon: Brain },
+  { id: "children", icon: Baby },
+  { id: "control", icon: Target },
+  { id: "invest", icon: TrendingUp },
 ] as const;
 
 const COLOR_CLS: Record<string, string> = {
-  mint:   "bg-positive-soft text-positive",
-  sky:    "bg-sky-soft text-sky",
-  warn:   "bg-warn-soft text-warn",
+  mint: "bg-positive-soft text-positive",
+  sky: "bg-sky-soft text-sky",
+  warn: "bg-warn-soft text-warn",
   violet: "bg-violet-soft text-violet",
 };
 
@@ -77,22 +105,27 @@ function Onboarding() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t } = useT();
-  const [step, setStep]       = useState(0);
+  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const finishingRef = useRef(false);
 
-  const [savingsTarget,    setSavingsTarget]    = useState("");
-  const [income,           setIncome]           = useState("");
-  const [selectedFixed,    setSelectedFixed]    = useState<string[]>([]);
-  const [fixedAmounts,     setFixedAmounts]     = useState<Record<string, string>>({});
+  const [savingsTarget, setSavingsTarget] = useState("");
+  const [income, setIncome] = useState("");
+  const [selectedFixed, setSelectedFixed] = useState<string[]>([]);
+  const [fixedAmounts, setFixedAmounts] = useState<Record<string, string>>({});
   const [selectedVariable, setSelectedVariable] = useState<string[]>([]);
-  const [priorities,       setPriorities]       = useState<string[]>([]);
+  const [priorities, setPriorities] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate({ to: "/auth" }); return; }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        navigate({ to: "/auth" });
+        return;
+      }
       const { data: prof } = await supabase
         .from("profiles")
         .select("onboarded")
@@ -100,27 +133,29 @@ function Onboarding() {
         .maybeSingle();
       if (!cancelled && prof?.onboarded) navigate({ to: "/app" });
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   const canNext =
     (step === 0 && Number(savingsTarget) > 0) ||
-    (step === 1 && Number(income) > 0)         ||
-    step === 2                                  || // variable — optional selection
-    step === 3                                  || // fixed cats — optional
-    step === 4                                  || // fixed amounts — always skippable
+    (step === 1 && Number(income) > 0) ||
+    step === 2 || // variable — optional selection
+    step === 3 || // fixed cats — optional
+    step === 4 || // fixed amounts — always skippable
     (step === 5 && priorities.length > 0);
 
   const last = step === TOTAL_STEPS - 1;
 
   function toggleFixed(id: string) {
-    setSelectedFixed((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+    setSelectedFixed((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   }
   function toggleVariable(id: string) {
-    setSelectedVariable((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+    setSelectedVariable((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   }
   function togglePriority(id: string) {
-    setPriorities((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+    setPriorities((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   }
   function setFixedAmount(id: string, val: string) {
     setFixedAmounts((p) => ({ ...p, [id]: val }));
@@ -131,7 +166,9 @@ function Onboarding() {
     finishingRef.current = true;
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
 
       const { data: existing } = await supabase
@@ -146,11 +183,14 @@ function Onboarding() {
         return;
       }
 
-      await supabase.from("profiles").update({
-        monthly_savings_target: Number(savingsTarget),
-        priorities,
-        onboarded: true,
-      }).eq("id", user.id);
+      await supabase
+        .from("profiles")
+        .update({
+          monthly_savings_target: Number(savingsTarget),
+          priorities,
+          onboarded: true,
+        })
+        .eq("id", user.id);
 
       if (Number(income) > 0) {
         const { data: existingIncome } = await supabase
@@ -179,18 +219,36 @@ function Onboarding() {
       if (!existingCats || existingCats.length === 0) {
         const fixedRows = selectedFixed.map((id) => {
           const cat = FIXED_CATS.find((c) => c.id === id)!;
-          return { user_id: user.id, name: t(`fixed.${id}`), icon: cat.dbIcon, color: cat.color, kind: "fixed" };
+          return {
+            user_id: user.id,
+            name: t(`fixed.${id}`),
+            icon: cat.dbIcon,
+            color: cat.color,
+            kind: "fixed",
+          };
         });
         const varRows = selectedVariable.map((id) => {
           const cat = VARIABLE_CATS.find((c) => c.id === id)!;
-          return { user_id: user.id, name: t(`variable.${id}`), icon: cat.dbIcon, color: cat.color, kind: "variable" };
+          return {
+            user_id: user.id,
+            name: t(`variable.${id}`),
+            icon: cat.dbIcon,
+            color: cat.color,
+            kind: "variable",
+          };
         });
 
         const allRows = [...fixedRows, ...varRows];
         if (allRows.length === 0) {
           allRows.push(
-            { user_id: user.id, name: t("fixed.rent"),         icon: "home",          color: "sky",  kind: "fixed" },
-            { user_id: user.id, name: t("variable.groceries"), icon: "shopping-cart", color: "mint", kind: "variable" },
+            { user_id: user.id, name: t("fixed.rent"), icon: "home", color: "sky", kind: "fixed" },
+            {
+              user_id: user.id,
+              name: t("variable.groceries"),
+              icon: "shopping-cart",
+              color: "mint",
+              kind: "variable",
+            },
           );
         }
 
@@ -223,7 +281,9 @@ function Onboarding() {
         }
       }
 
-      toast.success(t("onboarding.toast.success"), { description: t("onboarding.toast.success.desc") });
+      toast.success(t("onboarding.toast.success"), {
+        description: t("onboarding.toast.success.desc"),
+      });
       await queryClient.invalidateQueries({ queryKey: ["profiles-auth-check", user.id] });
       queryClient.removeQueries({ queryKey: ["profiles-auth-check", user.id] });
       navigate({ to: "/app" });
@@ -257,9 +317,7 @@ function Onboarding() {
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === step  ? "w-6 bg-primary" :
-                i < step    ? "w-2 bg-primary/50" :
-                              "w-2 bg-border"
+                i === step ? "w-6 bg-primary" : i < step ? "w-2 bg-primary/50" : "w-2 bg-border"
               }`}
             />
           ))}
@@ -268,21 +326,16 @@ function Onboarding() {
       </div>
 
       {/* Step content */}
-      <div key={step} className="flex-1 flex flex-col px-6 pt-10 pb-8 max-w-md w-full mx-auto animate-rise">
-        {step === 0 && (
-          <StepSavings t={t} value={savingsTarget} onChange={setSavingsTarget} />
-        )}
-        {step === 1 && (
-          <StepIncome t={t} value={income} onChange={setIncome} />
-        )}
+      <div
+        key={step}
+        className="flex-1 flex flex-col px-6 pt-10 pb-8 max-w-md w-full mx-auto animate-rise"
+      >
+        {step === 0 && <StepSavings t={t} value={savingsTarget} onChange={setSavingsTarget} />}
+        {step === 1 && <StepIncome t={t} value={income} onChange={setIncome} />}
         {/* Step 2: día a día (variable) — moved before fixed */}
-        {step === 2 && (
-          <StepVariable t={t} selected={selectedVariable} onToggle={toggleVariable} />
-        )}
+        {step === 2 && <StepVariable t={t} selected={selectedVariable} onToggle={toggleVariable} />}
         {/* Step 3: fixed categories selection */}
-        {step === 3 && (
-          <StepFixed t={t} selected={selectedFixed} onToggle={toggleFixed} />
-        )}
+        {step === 3 && <StepFixed t={t} selected={selectedFixed} onToggle={toggleFixed} />}
         {/* Step 4: estimated amounts for selected fixed categories */}
         {step === 4 && (
           <StepFixedAmounts
@@ -292,9 +345,7 @@ function Onboarding() {
             onAmountChange={setFixedAmount}
           />
         )}
-        {step === 5 && (
-          <StepPriorities t={t} selected={priorities} onToggle={togglePriority} />
-        )}
+        {step === 5 && <StepPriorities t={t} selected={priorities} onToggle={togglePriority} />}
 
         <Button
           disabled={!canNext || loading}
@@ -317,12 +368,20 @@ function Onboarding() {
 
 /* ───────────────────────── Step 1: Savings target ─────────────────────── */
 
-function StepSavings({ t, value, onChange }: { t: (k: string) => string; value: string; onChange: (v: string) => void }) {
+function StepSavings({
+  t,
+  value,
+  onChange,
+}: {
+  t: (k: string) => string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const chips = [
-    { label: t("onboarding.step1.chip.100"),      amount: "100" },
-    { label: t("onboarding.step1.chip.200"),      amount: "200" },
-    { label: t("onboarding.step1.chip.400"),      amount: "400" },
-    { label: t("onboarding.step1.chip.whatever"), amount: "50"  },
+    { label: t("onboarding.step1.chip.100"), amount: "100" },
+    { label: t("onboarding.step1.chip.200"), amount: "200" },
+    { label: t("onboarding.step1.chip.400"), amount: "400" },
+    { label: t("onboarding.step1.chip.whatever"), amount: "50" },
   ];
 
   return (
@@ -332,15 +391,21 @@ function StepSavings({ t, value, onChange }: { t: (k: string) => string; value: 
         <div className="card-soft p-6 flex items-baseline gap-2">
           <span className="text-2xl text-muted-foreground">€</span>
           <Input
-            type="number" inputMode="decimal" min="0" autoFocus
-            value={value} onChange={(e) => onChange(e.target.value)} placeholder="0"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            autoFocus
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="0"
             className="border-0 shadow-none p-0 h-auto text-5xl font-bold tracking-tight num focus-visible:ring-0 bg-transparent"
           />
         </div>
         <div className="flex flex-wrap gap-2">
           {chips.map((c) => (
             <button
-              key={c.amount} type="button"
+              key={c.amount}
+              type="button"
               onClick={() => onChange(c.amount)}
               className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all press-scale ${
                 value === c.amount
@@ -360,7 +425,15 @@ function StepSavings({ t, value, onChange }: { t: (k: string) => string; value: 
 
 /* ───────────────────────── Step 2: Income ─────────────────────────────── */
 
-function StepIncome({ t, value, onChange }: { t: (k: string) => string; value: string; onChange: (v: string) => void }) {
+function StepIncome({
+  t,
+  value,
+  onChange,
+}: {
+  t: (k: string) => string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <>
       <StepHeading title={t("onboarding.step2.title")} subtitle={t("onboarding.step2.subtitle")} />
@@ -368,8 +441,13 @@ function StepIncome({ t, value, onChange }: { t: (k: string) => string; value: s
         <div className="card-soft p-6 flex items-baseline gap-2">
           <span className="text-2xl text-muted-foreground">€</span>
           <Input
-            type="number" inputMode="decimal" min="0" autoFocus
-            value={value} onChange={(e) => onChange(e.target.value)} placeholder="0"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            autoFocus
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="0"
             className="border-0 shadow-none p-0 h-auto text-5xl font-bold tracking-tight num focus-visible:ring-0 bg-transparent"
           />
         </div>
@@ -380,12 +458,26 @@ function StepIncome({ t, value, onChange }: { t: (k: string) => string; value: s
 
 /* ───────────────────────── Step 3: Variable lifestyle (día a día) ─────── */
 
-function StepVariable({ t, selected, onToggle }: { t: (k: string) => string; selected: string[]; onToggle: (id: string) => void }) {
+function StepVariable({
+  t,
+  selected,
+  onToggle,
+}: {
+  t: (k: string) => string;
+  selected: string[];
+  onToggle: (id: string) => void;
+}) {
   return (
     <>
       <StepHeading title={t("onboarding.step4.title")} subtitle={t("onboarding.step4.subtitle")} />
       <div className="mt-6 flex-1">
-        <CategoryGrid cats={VARIABLE_CATS} prefix="variable" selected={selected} onToggle={onToggle} t={t} />
+        <CategoryGrid
+          cats={VARIABLE_CATS}
+          prefix="variable"
+          selected={selected}
+          onToggle={onToggle}
+          t={t}
+        />
       </div>
     </>
   );
@@ -393,12 +485,26 @@ function StepVariable({ t, selected, onToggle }: { t: (k: string) => string; sel
 
 /* ───────────────────────── Step 4: Fixed categories ───────────────────── */
 
-function StepFixed({ t, selected, onToggle }: { t: (k: string) => string; selected: string[]; onToggle: (id: string) => void }) {
+function StepFixed({
+  t,
+  selected,
+  onToggle,
+}: {
+  t: (k: string) => string;
+  selected: string[];
+  onToggle: (id: string) => void;
+}) {
   return (
     <>
       <StepHeading title={t("onboarding.step3.title")} subtitle={t("onboarding.step3.subtitle")} />
       <div className="mt-6 flex-1">
-        <CategoryGrid cats={FIXED_CATS} prefix="fixed" selected={selected} onToggle={onToggle} t={t} />
+        <CategoryGrid
+          cats={FIXED_CATS}
+          prefix="fixed"
+          selected={selected}
+          onToggle={onToggle}
+          t={t}
+        />
         <p className="text-xs text-muted-foreground mt-4">{t("onboarding.step3.notice")}</p>
       </div>
     </>
@@ -408,7 +514,10 @@ function StepFixed({ t, selected, onToggle }: { t: (k: string) => string; select
 /* ───────────────────────── Step 5: Fixed amounts ──────────────────────── */
 
 function StepFixedAmounts({
-  t, selectedFixed, amounts, onAmountChange,
+  t,
+  selectedFixed,
+  amounts,
+  onAmountChange,
 }: {
   t: (k: string) => string;
   selectedFixed: string[];
@@ -417,24 +526,33 @@ function StepFixedAmounts({
 }) {
   return (
     <>
-      <StepHeading title={t("onboarding.step3b.title")} subtitle={t("onboarding.step3b.subtitle")} />
+      <StepHeading
+        title={t("onboarding.step3b.title")}
+        subtitle={t("onboarding.step3b.subtitle")}
+      />
       <div className="mt-6 flex-1 space-y-2.5 overflow-y-auto">
         {selectedFixed.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center pt-8">{t("onboarding.step3b.empty")}</p>
+          <p className="text-sm text-muted-foreground text-center pt-8">
+            {t("onboarding.step3b.empty")}
+          </p>
         ) : (
           selectedFixed.map((id) => {
             const cat = FIXED_CATS.find((c) => c.id === id)!;
             const Icon = cat.icon;
             return (
               <div key={id} className="card-soft flex items-center gap-3 px-4 py-3">
-                <span className={`size-9 rounded-xl grid place-items-center shrink-0 ${COLOR_CLS[cat.color] ?? "bg-muted text-muted-foreground"}`}>
+                <span
+                  className={`size-9 rounded-xl grid place-items-center shrink-0 ${COLOR_CLS[cat.color] ?? "bg-muted text-muted-foreground"}`}
+                >
                   <Icon className="size-4" />
                 </span>
                 <span className="flex-1 text-sm font-medium">{t(`fixed.${id}`)}</span>
                 <div className="flex items-center gap-1 shrink-0">
                   <span className="text-muted-foreground text-sm">€</span>
                   <input
-                    type="number" inputMode="decimal" min="0"
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
                     value={amounts[id] ?? ""}
                     onChange={(e) => onAmountChange(id, e.target.value)}
                     placeholder="0"
@@ -452,7 +570,15 @@ function StepFixedAmounts({
 
 /* ───────────────────────── Step 6: Priorities ─────────────────────────── */
 
-function StepPriorities({ t, selected, onToggle }: { t: (k: string) => string; selected: string[]; onToggle: (id: string) => void }) {
+function StepPriorities({
+  t,
+  selected,
+  onToggle,
+}: {
+  t: (k: string) => string;
+  selected: string[];
+  onToggle: (id: string) => void;
+}) {
   return (
     <>
       <StepHeading title={t("onboarding.step5.title")} subtitle={t("onboarding.step5.subtitle")} />
@@ -461,7 +587,9 @@ function StepPriorities({ t, selected, onToggle }: { t: (k: string) => string; s
           const active = selected.includes(id);
           return (
             <button
-              key={id} type="button" onClick={() => onToggle(id)}
+              key={id}
+              type="button"
+              onClick={() => onToggle(id)}
               className={`relative p-4 rounded-2xl border text-left transition-all press-scale ${
                 active
                   ? "bg-primary text-primary-foreground border-primary shadow-card"
@@ -495,7 +623,11 @@ function StepHeading({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 function CategoryGrid({
-  cats, prefix, selected, onToggle, t,
+  cats,
+  prefix,
+  selected,
+  onToggle,
+  t,
 }: {
   cats: CatDef[];
   prefix: string;
@@ -509,7 +641,9 @@ function CategoryGrid({
         const active = selected.includes(id);
         return (
           <button
-            key={id} type="button" onClick={() => onToggle(id)}
+            key={id}
+            type="button"
+            onClick={() => onToggle(id)}
             className={`relative flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-2xl border transition-all press-scale ${
               active
                 ? "bg-primary/8 border-primary shadow-sm"
@@ -521,7 +655,9 @@ function CategoryGrid({
                 <Check className="size-2.5 text-primary-foreground" />
               </span>
             )}
-            <span className={`size-9 rounded-xl grid place-items-center ${COLOR_CLS[color] ?? "bg-muted text-muted-foreground"}`}>
+            <span
+              className={`size-9 rounded-xl grid place-items-center ${COLOR_CLS[color] ?? "bg-muted text-muted-foreground"}`}
+            >
               <Icon className="size-4" />
             </span>
             <span className="text-[11px] font-medium text-center leading-tight line-clamp-2">

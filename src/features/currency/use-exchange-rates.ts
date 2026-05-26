@@ -8,10 +8,7 @@ function useBaseCurrency(): string {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   return (
-    readUserBaseCurrencyOrNull(user?.id) ??
-    profile?.base_currency ??
-    profile?.currency ??
-    "EUR"
+    readUserBaseCurrencyOrNull(user?.id) ?? profile?.base_currency ?? profile?.currency ?? "EUR"
   );
 }
 
@@ -34,8 +31,11 @@ export function useCurrencyConvert(): (amount: number) => number {
   const base = useBaseCurrency();
   const display = profile?.currency ?? "EUR";
 
-  return useCallback((amount: number) => {
-    if (base === display || !rates) return amount;
-    return applyRate(amount, display, rates);
-  }, [base, display, rates]);
+  return useCallback(
+    (amount: number) => {
+      if (base === display || !rates) return amount;
+      return applyRate(amount, display, rates);
+    },
+    [base, display, rates],
+  );
 }

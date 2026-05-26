@@ -165,14 +165,19 @@ function Budget() {
     setOpen(true);
   }, []);
 
-  const handleDeleteExpense = useCallback((id: string) => {
-    deleteExpense.mutate(id);
-  }, [deleteExpense.mutate]);
+  const handleDeleteExpense = useCallback(
+    (id: string) => {
+      deleteExpense.mutate(id);
+    },
+    [deleteExpense.mutate],
+  );
 
   if (isLoading) return <BudgetSkeleton />;
 
   const totalSavingsBalance = savingsAccounts.reduce((s, a) => s + a.balance, 0);
-  const emergencyBalance = savingsAccounts.filter((a) => a.is_emergency_fund).reduce((s, a) => s + a.balance, 0);
+  const emergencyBalance = savingsAccounts
+    .filter((a) => a.is_emergency_fund)
+    .reduce((s, a) => s + a.balance, 0);
 
   const tabs: [Tab, string][] = [
     ["all", t("budget.tab.all")],
@@ -207,7 +212,10 @@ function Budget() {
         </div>
         <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border-subtle">
           <Stat label={t("budget.summary.fixed")} value={money(convert(totalFixed), currency)} />
-          <Stat label={t("budget.summary.variable")} value={money(convert(totalVariable), currency)} />
+          <Stat
+            label={t("budget.summary.variable")}
+            value={money(convert(totalVariable), currency)}
+          />
         </div>
       </div>
 
@@ -237,7 +245,10 @@ function Budget() {
               {money(convert(totalSavingsBalance), currency)}
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border-subtle">
-              <Stat label={t("savings.summary.emergency")} value={money(convert(emergencyBalance), currency)} />
+              <Stat
+                label={t("savings.summary.emergency")}
+                value={money(convert(emergencyBalance), currency)}
+              />
               <Stat label={t("savings.summary.accounts")} value={`${savingsAccounts.length}`} />
             </div>
           </div>
@@ -246,7 +257,10 @@ function Budget() {
               title={t("savings.section.title")}
               action={
                 <button
-                  onClick={() => { setEditingSavings(null); setOpenSavings(true); }}
+                  onClick={() => {
+                    setEditingSavings(null);
+                    setOpenSavings(true);
+                  }}
                   className="text-xs font-medium text-positive"
                 >
                   + {t("common.add")}
@@ -259,7 +273,13 @@ function Budget() {
                 title={t("savings.empty.title")}
                 description={t("savings.empty.desc")}
                 action={
-                  <Button size="sm" onClick={() => { setEditingSavings(null); setOpenSavings(true); }}>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEditingSavings(null);
+                      setOpenSavings(true);
+                    }}
+                  >
                     {t("savings.add.button")}
                   </Button>
                 }
@@ -269,12 +289,19 @@ function Budget() {
                 {savingsAccounts.map((acc) => (
                   <button
                     key={acc.id}
-                    onClick={() => { setEditingSavings(acc); setOpenSavings(true); }}
+                    onClick={() => {
+                      setEditingSavings(acc);
+                      setOpenSavings(true);
+                    }}
                     className="group w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-muted/40 transition"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="size-9 rounded-xl bg-sky-soft text-sky grid place-items-center shrink-0">
-                        {acc.is_emergency_fund ? <ShieldCheck className="size-4" /> : <Landmark className="size-4" />}
+                        {acc.is_emergency_fund ? (
+                          <ShieldCheck className="size-4" />
+                        ) : (
+                          <Landmark className="size-4" />
+                        )}
                       </div>
                       <div className="min-w-0">
                         <div className="text-sm font-medium truncate">{acc.name}</div>
@@ -316,7 +343,10 @@ function Budget() {
               {money(convert(totalIncome), currency)}
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border-subtle">
-              <Stat label={t("budget.income.recurring")} value={money(convert(recurringIncome), currency)} />
+              <Stat
+                label={t("budget.income.recurring")}
+                value={money(convert(recurringIncome), currency)}
+              />
               <Stat label={t("budget.income.sources")} value={`${incomes.length}`} />
             </div>
           </div>
@@ -410,10 +440,14 @@ function Budget() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <CategoryDot color={c.color} />
-                        <span className="text-sm font-medium">{CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}</span>
+                        <span className="text-sm font-medium">
+                          {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
+                        </span>
                         <span className="text-[11px] text-muted-foreground">· {c.count}</span>
                       </div>
-                      <div className="text-sm font-semibold num">{money(convert(c.total), currency)}</div>
+                      <div className="text-sm font-semibold num">
+                        {money(convert(c.total), currency)}
+                      </div>
                     </div>
                     <div className="h-1 bg-muted rounded-full overflow-hidden">
                       <div
@@ -465,7 +499,6 @@ function Budget() {
               </div>
             )}
           </section>
-
         </>
       )}
 
@@ -582,7 +615,9 @@ function ExpenseDialog({
         },
         {
           onSuccess: onClose,
-          onSettled: () => { submittingRef.current = false; },
+          onSettled: () => {
+            submittingRef.current = false;
+          },
         },
       );
     } else if (kind === "fixed") {
@@ -591,10 +626,16 @@ function ExpenseDialog({
         { name: resolvedName, amount: Number(amount), due_day: Number(dueDay) || 1 },
         {
           onSuccess: () => {
-            setAmount(""); setDescription(""); setCategoryId(""); setKind("variable");
-            setDueDay("1"); onClose();
+            setAmount("");
+            setDescription("");
+            setCategoryId("");
+            setKind("variable");
+            setDueDay("1");
+            onClose();
           },
-          onSettled: () => { submittingRef.current = false; },
+          onSettled: () => {
+            submittingRef.current = false;
+          },
         },
       );
     } else {
@@ -609,9 +650,15 @@ function ExpenseDialog({
         },
         {
           onSuccess: () => {
-            setAmount(""); setDescription(""); setCategoryId(""); setKind("variable"); onClose();
+            setAmount("");
+            setDescription("");
+            setCategoryId("");
+            setKind("variable");
+            onClose();
           },
-          onSettled: () => { submittingRef.current = false; },
+          onSettled: () => {
+            submittingRef.current = false;
+          },
         },
       );
     }
@@ -692,7 +739,9 @@ function ExpenseDialog({
               <div className="rounded-xl bg-positive-soft/30 border border-positive/20 px-4 py-3 flex gap-3 items-start">
                 <RepeatIcon className="size-4 text-positive shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-positive">{t("budget.dialog.expense.fixed.info.title")}</p>
+                  <p className="text-xs font-semibold text-positive">
+                    {t("budget.dialog.expense.fixed.info.title")}
+                  </p>
                   <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
                     {t("budget.dialog.expense.fixed.info.body")}
                   </p>
@@ -940,7 +989,9 @@ function SavingsDialog({
     };
     const opts = {
       onSuccess: onClose,
-      onSettled: () => { submittingRef.current = false; },
+      onSettled: () => {
+        submittingRef.current = false;
+      },
     };
     if (editing) {
       updateSavings.mutate({ id: editing.id, updates: payload }, opts);
@@ -950,7 +1001,12 @@ function SavingsDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="rounded-2xl">
         <DialogHeader>
           <DialogTitle>
@@ -998,7 +1054,9 @@ function SavingsDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{t("savings.field.institution")}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {t("savings.field.institution")}
+            </Label>
             <Input
               value={institution}
               onChange={(e) => setInstitution(e.target.value)}
@@ -1017,14 +1075,20 @@ function SavingsDialog({
             <ShieldCheck className="size-4 shrink-0" />
             <div>
               <div className="text-xs font-semibold">{t("savings.field.emergency.label")}</div>
-              <div className="text-[11px] opacity-70 leading-snug">{t("savings.field.emergency.desc")}</div>
+              <div className="text-[11px] opacity-70 leading-snug">
+                {t("savings.field.emergency.desc")}
+              </div>
             </div>
           </button>
           <div className="flex gap-2 pt-1">
             <Button variant="outline" onClick={onClose} className="flex-1">
               <X className="size-4 mr-1" /> {t("common.cancel")}
             </Button>
-            <Button onClick={save} disabled={isPending || !name || Number(balance) < 0} className="flex-1">
+            <Button
+              onClick={save}
+              disabled={isPending || !name || Number(balance) < 0}
+              className="flex-1"
+            >
               {isPending ? t("common.loading") : editing ? t("common.save") : t("common.add")}
             </Button>
           </div>
@@ -1039,7 +1103,14 @@ function SavingsDialog({
 type ConvertFn = (n: number) => number;
 
 const ExpenseRow = memo(function ExpenseRow({
-  expense, cat, currency, convert, onEdit, onDelete, isPendingDelete, t,
+  expense,
+  cat,
+  currency,
+  convert,
+  onEdit,
+  onDelete,
+  isPendingDelete,
+  t,
 }: {
   expense: EditableExpense;
   cat: Category | undefined;
@@ -1059,7 +1130,12 @@ const ExpenseRow = memo(function ExpenseRow({
         <div className="min-w-0">
           <div className="text-sm font-medium truncate">{expense.description}</div>
           <div className="text-xs text-muted-foreground">
-            {cat ? (CATEGORY_NAME_TO_KEY[cat.name] ? t(CATEGORY_NAME_TO_KEY[cat.name]) : cat.name) : expense.kind} · {relativeDate(expense.spent_at)}
+            {cat
+              ? CATEGORY_NAME_TO_KEY[cat.name]
+                ? t(CATEGORY_NAME_TO_KEY[cat.name])
+                : cat.name
+              : expense.kind}{" "}
+            · {relativeDate(expense.spent_at)}
             {expense.recurring && ` · ${t("budget.expense.recurring")}`}
           </div>
         </div>

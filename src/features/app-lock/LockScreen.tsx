@@ -9,10 +9,10 @@ export function LockScreen() {
   const { unlock, meta, biometricAvailable } = useAppLock();
   const { t } = useT();
 
-  const [pin,       setPin]       = useState("");
-  const [shaking,   setShaking]   = useState(false);
-  const [errored,   setErrored]   = useState(false);
-  const [checking,  setChecking]  = useState(false);
+  const [pin, setPin] = useState("");
+  const [shaking, setShaking] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
   // Lockout countdown
@@ -33,18 +33,24 @@ export function LockScreen() {
 
   const isLockedOut = countdown > 0;
 
-  const attemptUnlock = useCallback(async (fullPin: string) => {
-    if (checking || isLockedOut) return;
-    setChecking(true);
-    const ok = await unlock(fullPin);
-    setChecking(false);
-    if (!ok) {
-      setPin("");
-      setErrored(true);
-      setShaking(true);
-      setTimeout(() => { setShaking(false); setErrored(false); }, 600);
-    }
-  }, [unlock, checking, isLockedOut]);
+  const attemptUnlock = useCallback(
+    async (fullPin: string) => {
+      if (checking || isLockedOut) return;
+      setChecking(true);
+      const ok = await unlock(fullPin);
+      setChecking(false);
+      if (!ok) {
+        setPin("");
+        setErrored(true);
+        setShaking(true);
+        setTimeout(() => {
+          setShaking(false);
+          setErrored(false);
+        }, 600);
+      }
+    },
+    [unlock, checking, isLockedOut],
+  );
 
   function onDigit(d: string) {
     if (isLockedOut || checking) return;
@@ -65,26 +71,32 @@ export function LockScreen() {
       className="fixed inset-0 z-[10001] flex flex-col items-center text-white overflow-hidden select-none"
       style={{
         background: "linear-gradient(160deg, #060c1c 0%, #070c18 55%, #040911 100%)",
-        paddingTop:    "max(env(safe-area-inset-top), 24px)",
+        paddingTop: "max(env(safe-area-inset-top), 24px)",
         paddingBottom: "max(env(safe-area-inset-bottom), 16px)",
       }}
     >
       {/* ── Ambient orbs ──────────────────────────────────────────────────── */}
       <motion.div
         className="absolute -top-32 left-1/2 -translate-x-1/2 size-[420px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, oklch(0.42 0.15 158 / 0.16) 0%, transparent 70%)" }}
+        style={{
+          background: "radial-gradient(circle, oklch(0.42 0.15 158 / 0.16) 0%, transparent 70%)",
+        }}
         animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.1, 1] }}
         transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute -bottom-24 -right-20 size-[320px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, oklch(0.42 0.12 210 / 0.10) 0%, transparent 70%)" }}
+        style={{
+          background: "radial-gradient(circle, oklch(0.42 0.12 210 / 0.10) 0%, transparent 70%)",
+        }}
         animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.08, 1] }}
         transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
       />
       <motion.div
         className="absolute bottom-1/3 -left-16 size-[260px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, oklch(0.38 0.14 290 / 0.07) 0%, transparent 70%)" }}
+        style={{
+          background: "radial-gradient(circle, oklch(0.38 0.14 290 / 0.07) 0%, transparent 70%)",
+        }}
         animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.12, 1] }}
         transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
       />
@@ -101,7 +113,8 @@ export function LockScreen() {
           className="size-16 rounded-3xl flex items-center justify-center mb-3"
           style={{
             background: "linear-gradient(135deg, oklch(0.68 0.14 158), oklch(0.56 0.13 175))",
-            boxShadow: "0 0 0 1px oklch(0.68 0.14 158 / 0.25), 0 16px 48px -12px oklch(0.62 0.14 158 / 0.50)",
+            boxShadow:
+              "0 0 0 1px oklch(0.68 0.14 158 / 0.25), 0 16px 48px -12px oklch(0.62 0.14 158 / 0.50)",
           }}
         >
           <span
@@ -137,11 +150,7 @@ export function LockScreen() {
             return (
               <motion.div
                 key={i}
-                animate={
-                  filled
-                    ? { scale: [1, 1.25, 1.1], opacity: 1 }
-                    : { scale: 1, opacity: 1 }
-                }
+                animate={filled ? { scale: [1, 1.25, 1.1], opacity: 1 } : { scale: 1, opacity: 1 }}
                 transition={{ duration: 0.18, ease: [0.34, 1.56, 0.64, 1] }}
                 className="size-4 rounded-full border-2 transition-colors duration-150"
                 style={
@@ -163,7 +172,15 @@ export function LockScreen() {
         {/* Status text */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={isLockedOut ? "locked" : errored ? "error" : meta.failedCount > 0 ? "attempts" : "idle"}
+            key={
+              isLockedOut
+                ? "locked"
+                : errored
+                  ? "error"
+                  : meta.failedCount > 0
+                    ? "attempts"
+                    : "idle"
+            }
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
@@ -175,7 +192,9 @@ export function LockScreen() {
                 {t("lock.lockedOut", { seconds: String(countdown) })}
               </p>
             ) : errored ? (
-              <p className="text-[13px]" style={{ color: "#f87171" }}>{t("lock.wrongPin")}</p>
+              <p className="text-[13px]" style={{ color: "#f87171" }}>
+                {t("lock.wrongPin")}
+              </p>
             ) : meta.failedCount > 0 && attemptsLeft > 0 ? (
               <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.30)" }}>
                 {t("lock.attemptsLeft", { count: String(attemptsLeft) })}

@@ -84,7 +84,12 @@ export function runFinancialEngine(ctx: FinancialEngineContext): FinancialEngine
   const budgetForecast = computeBudgetForecast(ctx);
   const spendingIntelligence = computeSpendingIntelligence(ctx);
   const portfolioAnalytics = computePortfolioAnalytics(ctx);
-  const recommendations = computeRecommendations(ctx, healthScore, portfolioAnalytics, budgetForecast);
+  const recommendations = computeRecommendations(
+    ctx,
+    healthScore,
+    portfolioAnalytics,
+    budgetForecast,
+  );
 
   const totalSavings = ctx.savingsAccounts.reduce((s, a) => s + a.balance, 0);
   const netWorth = totalSavings + portfolioAnalytics.totalValue;
