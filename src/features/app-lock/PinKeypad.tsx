@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { motion } from "framer-motion";
 import { Delete } from "lucide-react";
 
 interface PinKeypadProps {
@@ -16,18 +17,12 @@ const ROWS = [
   ["",  "0", "del"],
 ] as const;
 
+const SPRING = { type: "spring" as const, stiffness: 600, damping: 30 };
+
 export const PinKeypad = memo(function PinKeypad({
   onDigit, onDelete, disabled, variant = "dark",
 }: PinKeypadProps) {
   const isDark = variant === "dark";
-
-  const keyBase = isDark
-    ? "bg-white/10 text-white active:bg-white/25"
-    : "bg-muted text-foreground active:bg-foreground/10";
-
-  const delBase = isDark
-    ? "text-white/60 active:bg-white/10"
-    : "text-muted-foreground active:bg-muted";
 
   return (
     <div className="grid gap-3 w-full max-w-xs mx-auto">
@@ -38,27 +33,50 @@ export const PinKeypad = memo(function PinKeypad({
 
             if (key === "del") {
               return (
-                <button
+                <motion.button
                   key={ki}
+                  whileTap={{ scale: 0.88 }}
+                  transition={SPRING}
                   onPointerDown={(e) => { e.preventDefault(); if (!disabled) onDelete(); }}
                   disabled={disabled}
-                  className={`h-[68px] rounded-2xl flex items-center justify-center ${delBase} active:scale-95 transition-transform select-none disabled:opacity-30 touch-manipulation`}
+                  className="h-[66px] rounded-2xl flex items-center justify-center disabled:opacity-30 touch-manipulation select-none"
+                  style={
+                    isDark
+                      ? { color: "rgba(255,255,255,0.55)" }
+                      : { color: "var(--color-muted-foreground)" }
+                  }
                   aria-label="Delete"
                 >
                   <Delete className="size-5" />
-                </button>
+                </motion.button>
               );
             }
 
             return (
-              <button
+              <motion.button
                 key={ki}
+                whileTap={{ scale: 0.88 }}
+                transition={SPRING}
                 onPointerDown={(e) => { e.preventDefault(); if (!disabled) onDigit(key); }}
                 disabled={disabled}
-                className={`h-[68px] rounded-2xl ${keyBase} text-[26px] font-medium flex items-center justify-center active:scale-95 transition-all select-none disabled:opacity-30 touch-manipulation`}
+                className="h-[66px] rounded-2xl text-[24px] font-semibold flex items-center justify-center disabled:opacity-30 touch-manipulation select-none"
+                style={
+                  isDark
+                    ? {
+                        background: "rgba(255,255,255,0.07)",
+                        border: "1px solid rgba(255,255,255,0.09)",
+                        color: "rgba(255,255,255,0.90)",
+                        fontFamily: "var(--font-display)",
+                      }
+                    : {
+                        background: "var(--color-muted)",
+                        color: "var(--color-foreground)",
+                        fontFamily: "var(--font-display)",
+                      }
+                }
               >
                 {key}
-              </button>
+              </motion.button>
             );
           })}
         </div>
