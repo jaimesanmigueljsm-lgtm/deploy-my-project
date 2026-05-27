@@ -41,9 +41,14 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
 export async function updateProfile(userId: string, updates: ProfileUpdate): Promise<Profile> {
   const validated = parseOrThrow(UpdateProfileSchema, updates, "updateProfile");
 
+  // base_currency lives in local storage only — the profiles table doesn't have that column.
+  const { base_currency: _ignored, ...dbUpdates } = validated as typeof validated & {
+    base_currency?: string | null;
+  };
+
   const { data, error } = await supabase
     .from("profiles")
-    .update(validated)
+    .update(dbUpdates)
     .eq("id", userId)
     .select()
     .single();
