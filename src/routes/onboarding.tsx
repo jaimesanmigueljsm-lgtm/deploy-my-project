@@ -178,8 +178,8 @@ function Onboarding() {
         .eq("id", user.id)
         .maybeSingle();
       if (existing?.onboarded) {
-        await queryClient.invalidateQueries({ queryKey: ["profiles-auth-check", user.id] });
-        queryClient.removeQueries({ queryKey: ["profiles-auth-check", user.id] });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.profile(user.id) });
+        queryClient.removeQueries({ queryKey: queryKeys.profile(user.id) });
         navigate({ to: "/app" });
         return;
       }
