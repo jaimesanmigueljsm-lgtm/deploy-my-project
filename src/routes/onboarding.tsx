@@ -285,8 +285,8 @@ function Onboarding() {
       toast.success(t("onboarding.toast.success"), {
         description: t("onboarding.toast.success.desc"),
       });
-      await queryClient.invalidateQueries({ queryKey: ["profiles-auth-check", user.id] });
-      queryClient.removeQueries({ queryKey: ["profiles-auth-check", user.id] });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.profile(user.id) });
+      queryClient.removeQueries({ queryKey: queryKeys.profile(user.id) });
       navigate({ to: "/app" });
     } catch (e) {
       finishingRef.current = false;
