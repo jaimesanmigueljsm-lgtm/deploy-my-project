@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { AppLockProvider } from "@/features/app-lock/use-app-lock";
 import { NoolySplash } from "@/components/nooly-splash";
 import { analytics } from "@/lib/analytics";
+import { Sentry } from "@/lib/sentry";
 
 import appCss from "../styles.css?url";
 
@@ -83,6 +84,7 @@ function getSafeErrorContent(error: Error): { headline: string; detail: string; 
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error("[app error]", error);
+  Sentry.captureException(error);
   const router = useRouter();
   const { headline, detail, hint } = getSafeErrorContent(error);
   return (

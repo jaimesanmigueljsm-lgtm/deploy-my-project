@@ -3,6 +3,9 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 import { StartClient } from "@tanstack/react-start/client";
 import { getRouter } from "./router";
+import { initSentry } from "@/lib/sentry";
+
+initSentry();
 
 const app = (
   <StrictMode>
