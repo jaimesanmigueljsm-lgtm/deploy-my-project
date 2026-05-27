@@ -4,16 +4,18 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/i18n";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { AppLockProvider } from "@/features/app-lock/use-app-lock";
 import { NoolySplash } from "@/components/nooly-splash";
+import { analytics } from "@/lib/analytics";
 
 import appCss from "../styles.css?url";
 
@@ -112,6 +114,32 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+function AnalyticsTracker() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = useAuth();
+  const prevUid = useRef<string | null>(null);
+
+  useEffect(() => {
+    analytics.init();
+  }, []);
+
+  useEffect(() => {
+    analytics.page(pathname);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (user?.id && user.id !== prevUid.current) {
+      analytics.identify(user.id, { email: user.email ?? undefined });
+      prevUid.current = user.id;
+    } else if (!user && prevUid.current) {
+      analytics.reset();
+      prevUid.current = null;
+    }
+  }, [user]);
+
+  return null;
+}
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -193,6 +221,7 @@ function RootComponent() {
       <I18nProvider>
         <AuthProvider>
           <AppLockProvider>
+            <AnalyticsTracker />
             <Outlet />
             <Toaster position="top-center" />
           </AppLockProvider>
