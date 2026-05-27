@@ -184,14 +184,17 @@ function Onboarding() {
         return;
       }
 
-      await supabase
+      const { data: updatedProfile, error: updateError } = await supabase
         .from("profiles")
         .update({
           monthly_savings_target: Number(savingsTarget),
           priorities,
           onboarded: true,
         })
-        .eq("id", user.id);
+        .eq("id", user.id)
+        .select()
+        .single();
+      if (updateError) throw updateError;
 
       if (Number(income) > 0) {
         const { data: existingIncome } = await supabase
@@ -285,8 +288,10 @@ function Onboarding() {
       toast.success(t("onboarding.toast.success"), {
         description: t("onboarding.toast.success.desc"),
       });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.profile(user.id) });
-      queryClient.removeQueries({ queryKey: queryKeys.profile(user.id) });
+      // Seed the cache with the freshly-updated profile before navigating.
+      // beforeLoad reads queryKeys.profile(uid) with staleTime:5min — setting it
+      // here guarantees the guard sees onboarded:true immediately, no refetch race.
+      queryClient.setQueryData(queryKeys.profile(user.id), updatedProfile);
       navigate({ to: "/app" });
     } catch (e) {
       finishingRef.current = false;
