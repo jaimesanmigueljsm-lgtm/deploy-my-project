@@ -313,7 +313,7 @@ function Settings() {
                   onClick={() => {
                     const base = readUserBaseCurrencyOrNull(user?.id) ?? profile.currency ?? "EUR";
                     if (user?.id) writeUserBaseCurrency(user.id, base);
-                    updateProfile.mutate({ currency: c.code, base_currency: base });
+                    updateProfile.mutate({ currency: c.code });
                   }}
                   className="gap-3"
                 >
