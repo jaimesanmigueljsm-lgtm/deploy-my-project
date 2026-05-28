@@ -10,7 +10,7 @@ export function initSentry(): void {
     environment: ENV,
     sendDefaultPii: false,
     tracesSampleRate: 0.2,
-    replaysOnErrorSampleRate: 1.0,
+    replaysOnErrorSampleRate: 0,
     replaysSessionSampleRate: 0,
   });
 }

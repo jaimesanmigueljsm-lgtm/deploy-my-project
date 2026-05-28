@@ -611,7 +611,7 @@ function ExpenseDialog({
       setDescription(editing.description);
       setCategoryId(editing.category_id ?? "");
       setKind((editing.kind as "variable" | "fixed") ?? "variable");
-      setDate(editing.spent_at?.slice(0, 10) ?? "");
+      setDate(editing.spent_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
       if (editing.kind === "fixed" && editing.spent_at) {
         setFixedDay(String(new Date(editing.spent_at + "T12:00:00").getDate()));
       }
@@ -672,7 +672,7 @@ function ExpenseDialog({
           kind,
           category_id: categoryId || null,
           recurring: kind === "fixed",
-          ...(kind === "fixed" ? { spent_at: buildSpentAt(fixedDay) } : {}),
+          spent_at: kind === "fixed" ? buildSpentAt(fixedDay) : new Date().toISOString().slice(0, 10),
         },
         {
           onSuccess: () => {
