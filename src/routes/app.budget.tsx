@@ -400,9 +400,11 @@ function Budget() {
                       <div className="min-w-0">
                         <div className="text-sm font-medium truncate">{i.source}</div>
                         <div className="text-xs text-muted-foreground">
-                          {i.recurring
-                            ? t("budget.income.recurringLabel")
-                            : relativeDate(i.received_at)}
+                          {i.recurring && i.received_at
+                            ? `${t("budget.income.recurringDay")} ${new Date(i.received_at + "T12:00:00").getDate()}`
+                            : i.recurring
+                              ? t("budget.income.recurringLabel")
+                              : relativeDate(i.received_at)}
                         </div>
                       </div>
                     </div>
@@ -778,6 +780,7 @@ function IncomeDialog({
   const [source, setSource] = useState("");
   const [amount, setAmount] = useState("");
   const [recurring, setRecurring] = useState(true);
+  const [receivedDay, setReceivedDay] = useState("1");
 
   const addIncome = useAddIncome();
   const updateIncome = useUpdateIncome();
@@ -789,19 +792,39 @@ function IncomeDialog({
       setSource(editing.source);
       setAmount(String(editing.amount));
       setRecurring(editing.recurring);
+      if (editing.received_at) {
+        setReceivedDay(String(new Date(editing.received_at + "T12:00:00").getDate()));
+      } else {
+        setReceivedDay("1");
+      }
     } else {
       setSource("");
       setAmount("");
       setRecurring(true);
+      setReceivedDay("1");
     }
     submittingRef.current = false;
   }, [editing, open]);
+
+  function buildReceivedAt(day: string): string {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const maxDay = new Date(y, m + 1, 0).getDate();
+    const d = Math.min(Math.max(1, Number(day) || 1), maxDay);
+    return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
 
   function save() {
     if (submittingRef.current) return;
     if (!source || !amount || Number(amount) <= 0) return;
     submittingRef.current = true;
-    const payload = { source, amount: Number(amount), recurring };
+    const payload = {
+      source,
+      amount: Number(amount),
+      recurring,
+      received_at: recurring ? buildReceivedAt(receivedDay) : buildReceivedAt(String(new Date().getDate())),
+    };
     const opts = {
       onSuccess: onClose,
       onSettled: () => {
@@ -877,6 +900,23 @@ function IncomeDialog({
               </button>
             ))}
           </div>
+          {recurring && (
+            <div className="space-y-1.5 animate-rise">
+              <Label className="text-xs text-muted-foreground">
+                {t("budget.dialog.income.dayofmonth")}
+              </Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={31}
+                value={receivedDay}
+                onChange={(e) => setReceivedDay(e.target.value)}
+                placeholder="1"
+                className="text-sm"
+              />
+            </div>
+          )}
           <div className="flex gap-2 pt-1">
             <Button variant="outline" onClick={onClose} className="flex-1">
               {t("common.cancel")}
