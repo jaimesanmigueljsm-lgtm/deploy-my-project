@@ -785,7 +785,6 @@ function ExpenseDialog({
                   value={fixedDay}
                   onChange={(e) => setFixedDay(e.target.value)}
                   placeholder="1"
-                  className="text-sm"
                 />
               </div>
             </>
@@ -801,7 +800,6 @@ function ExpenseDialog({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="text-sm"
               />
             </div>
           )}
@@ -975,7 +973,6 @@ function IncomeDialog({
                 value={receivedDay}
                 onChange={(e) => setReceivedDay(e.target.value)}
                 placeholder="1"
-                className="text-sm"
               />
             </div>
           )}
