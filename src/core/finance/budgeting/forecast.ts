@@ -44,7 +44,7 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
     .reduce((s, b) => s + b.amount, 0);
 
   // ── Expected monthly income ───────────────────────────────────────────────
-  // Use this month's income if available, else fall back to 6-month average
+  // Priority: this month's actual income → 6-month average → sum of recurring incomes
   const thisMonthIncome = ctx.incomes
     .filter((i) => monthKey(i.receivedAt) === currentMonthKey)
     .reduce((s, i) => s + i.amount, 0);
@@ -57,7 +57,17 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
     .filter((v) => v > 0);
 
   const avgHistoricIncome = historicIncomeTotals.length > 0 ? mean(historicIncomeTotals) : 0;
-  const expectedMonthlyIncome = thisMonthIncome > 0 ? thisMonthIncome : avgHistoricIncome;
+
+  // Recurring incomes act as the guaranteed monthly baseline for new users
+  // who haven't yet accumulated historical data.
+  const recurringIncomeTotal = ctx.incomes
+    .filter((i) => i.recurring)
+    .reduce((s, i) => s + i.amount, 0);
+
+  const expectedMonthlyIncome =
+    thisMonthIncome > 0 ? thisMonthIncome :
+    avgHistoricIncome > 0 ? avgHistoricIncome :
+    recurringIncomeTotal;
 
   // ── Pace-based projection ─────────────────────────────────────────────────
   // Only extrapolate variable spending by pace — fixed costs (bills) don't scale

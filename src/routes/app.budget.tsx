@@ -566,12 +566,10 @@ function ExpenseDialog({
   const [categoryId, setCategoryId] = useState<string>("");
   const [kind, setKind] = useState<"variable" | "fixed">("variable");
   const [date, setDate] = useState("");
-  const [dueDay, setDueDay] = useState("1");
 
   const addExpense = useAddExpense();
-  const addBill = useAddBill();
   const updateExpense = useUpdateExpense();
-  const isPending = addExpense.isPending || addBill.isPending || updateExpense.isPending;
+  const isPending = addExpense.isPending || updateExpense.isPending;
   const submittingRef = useRef(false);
 
   useEffect(() => {
@@ -587,7 +585,6 @@ function ExpenseDialog({
       setCategoryId("");
       setKind("variable");
       setDate("");
-      setDueDay("1");
     }
     submittingRef.current = false;
   }, [editing, open]);
@@ -620,33 +617,15 @@ function ExpenseDialog({
           },
         },
       );
-    } else if (kind === "fixed") {
-      // New fixed expense → create a recurring bill instead
-      addBill.mutate(
-        { name: resolvedName, amount: Number(amount), due_day: Number(dueDay) || 1 },
-        {
-          onSuccess: () => {
-            setAmount("");
-            setDescription("");
-            setCategoryId("");
-            setKind("variable");
-            setDueDay("1");
-            onClose();
-          },
-          onSettled: () => {
-            submittingRef.current = false;
-          },
-        },
-      );
     } else {
-      // New variable expense
+      // New expense (fixed or variable)
       addExpense.mutate(
         {
           amount: Number(amount),
           description: resolvedName,
           kind,
           category_id: categoryId || null,
-          recurring: false,
+          recurring: kind === "fixed",
         },
         {
           onSuccess: () => {
@@ -733,35 +712,17 @@ function ExpenseDialog({
             ))}
           </div>
 
-          {/* Fixed expense → bill setup (new entries only) */}
+          {/* Fixed expense — recurring badge (new entries only) */}
           {kind === "fixed" && !editing && (
-            <div className="space-y-2.5 animate-rise">
-              <div className="rounded-xl bg-positive-soft/30 border border-positive/20 px-4 py-3 flex gap-3 items-start">
-                <RepeatIcon className="size-4 text-positive shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-semibold text-positive">
-                    {t("budget.dialog.expense.fixed.info.title")}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                    {t("budget.dialog.expense.fixed.info.body")}
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Info className="size-3" />
-                  {t("budget.dialog.bill.dueday")}
-                </Label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={31}
-                  value={dueDay}
-                  onChange={(e) => setDueDay(e.target.value)}
-                  placeholder="1"
-                  className="text-sm"
-                />
+            <div className="rounded-xl bg-positive-soft/30 border border-positive/20 px-4 py-3 flex gap-3 items-start animate-rise">
+              <RepeatIcon className="size-4 text-positive shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-positive">
+                  {t("budget.dialog.expense.fixed.info.title")}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                  {t("budget.dialog.expense.fixed.info.body")}
+                </p>
               </div>
             </div>
           )}

@@ -50,7 +50,21 @@ export async function fetchMonthIncomeTotal(
     .lte("received_at", end);
 
   if (error) throw new Error(error.message);
-  return (data ?? []).reduce((sum, r) => sum + Number(r.amount), 0);
+  const periodTotal = (data ?? []).reduce((sum, r) => sum + Number(r.amount), 0);
+
+  // No income recorded this month — fall back to the sum of recurring incomes
+  // so the dashboard always reflects the user's expected monthly income.
+  if (periodTotal === 0) {
+    const { data: recurring, error: recErr } = await supabase
+      .from("incomes")
+      .select("amount")
+      .eq("user_id", userId)
+      .eq("recurring", true);
+    if (recErr) throw new Error(recErr.message);
+    return (recurring ?? []).reduce((sum, r) => sum + Number(r.amount), 0);
+  }
+
+  return periodTotal;
 }
 
 export async function fetchDashboardGoals(userId: string): Promise<DashboardGoal[]> {
