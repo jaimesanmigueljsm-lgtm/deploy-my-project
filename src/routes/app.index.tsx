@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, memo } from "react";
+import { useMemo, memo, useState } from "react";
 import { money, monthLabel, monthRange, shortMoney } from "@/lib/format";
 import {
   Sparkles,
@@ -21,6 +21,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Sector,
 } from "recharts";
 import { SectionHeader, InsightCard, TrendBadge, SkeletonBlock } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
@@ -54,6 +55,7 @@ function Dashboard() {
     prevMonthTotal,
     incomeTotal,
     categories,
+    bills,
     recommendations,
     isLoading,
     range,
@@ -63,9 +65,16 @@ function Dashboard() {
   const { mutate: refreshInsights, isPending: refreshing } = useGenerateInsights();
 
   // ── Derived values (before any early return — Rules of Hooks) ────────────
-  const totalSpent = useMemo(() => expenses.reduce((s, x) => s + x.amount, 0), [expenses]);
+  const billsTotal = useMemo(() => bills.reduce((s, b) => s + Number(b.amount), 0), [bills]);
+  const totalSpent = useMemo(
+    () => expenses.reduce((s, x) => s + x.amount, 0) + billsTotal,
+    [expenses, billsTotal],
+  );
   const series = useMemo(() => buildSeries(expenses, range), [expenses, range]);
-  const dist = useMemo(() => buildDistribution(expenses, categories), [expenses, categories]);
+  const dist = useMemo(
+    () => buildDistribution(expenses, categories, bills),
+    [expenses, categories, bills],
+  );
 
   const convert = useCurrencyConvert();
 
@@ -276,7 +285,7 @@ const SpendingAreaChart = memo(function SpendingAreaChart({
   );
 });
 
-const SpendingPieChart = memo(function SpendingPieChart({
+function SpendingPieChart({
   dist,
   totalSpent,
   currency,
@@ -289,37 +298,70 @@ const SpendingPieChart = memo(function SpendingPieChart({
   convert: ConvertFn;
   totalLabel: string;
 }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const active = activeIndex !== null ? dist[activeIndex] : null;
+
   return (
     <div className="card-flat p-5 flex items-center gap-5">
       <div className="relative shrink-0">
-        <ResponsiveContainer width={104} height={104}>
+        <ResponsiveContainer width={112} height={112}>
           <PieChart>
             <Pie
               data={dist}
               dataKey="value"
-              innerRadius={36}
-              outerRadius={50}
+              innerRadius={38}
+              outerRadius={52}
               paddingAngle={2}
               stroke="none"
+              activeIndex={activeIndex ?? undefined}
+              activeShape={(props: Record<string, unknown>) => (
+                <Sector
+                  cx={props.cx as number}
+                  cy={props.cy as number}
+                  innerRadius={(props.innerRadius as number) - 2}
+                  outerRadius={(props.outerRadius as number) + 7}
+                  startAngle={props.startAngle as number}
+                  endAngle={props.endAngle as number}
+                  fill={props.fill as string}
+                  opacity={1}
+                />
+              )}
+              onMouseEnter={(_, idx) => setActiveIndex(idx)}
+              onMouseLeave={() => setActiveIndex(null)}
             >
               {dist.map((_d, i) => (
-                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                <Cell
+                  key={i}
+                  fill={CHART_COLORS[i % CHART_COLORS.length]}
+                  opacity={activeIndex === null || activeIndex === i ? 1 : 0.45}
+                />
               ))}
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-[9px] text-muted-foreground uppercase tracking-wider">
-            {totalLabel}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="text-[9px] text-muted-foreground uppercase tracking-wider truncate max-w-[60px] text-center">
+            {active ? active.name : totalLabel}
           </div>
-          <div className="text-sm font-semibold num">
-            {shortMoney(convert(totalSpent), currency)}
+          <div className="text-sm font-semibold num mt-0.5">
+            {shortMoney(convert(active ? active.value : totalSpent), currency)}
           </div>
+          {active && (
+            <div className="text-[9px] text-muted-foreground">
+              {Math.round((active.value / totalSpent) * 100)}%
+            </div>
+          )}
         </div>
       </div>
       <div className="flex-1 space-y-2 min-w-0">
-        {dist.slice(0, 4).map((d, i) => (
-          <div key={d.name} className="flex items-center justify-between text-xs">
+        {dist.slice(0, 5).map((d, i) => (
+          <div
+            key={d.name}
+            className="flex items-center justify-between text-xs transition-opacity"
+            style={{ opacity: activeIndex === null || activeIndex === i ? 1 : 0.4 }}
+            onMouseEnter={() => setActiveIndex(i)}
+            onMouseLeave={() => setActiveIndex(null)}
+          >
             <div className="flex items-center gap-2 min-w-0">
               <span
                 className="size-2 rounded-full shrink-0"
@@ -338,7 +380,7 @@ const SpendingPieChart = memo(function SpendingPieChart({
       </div>
     </div>
   );
-});
+}
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -357,12 +399,19 @@ function buildSeries(expenses: Expense[], range: ReturnType<typeof monthRange>) 
   return out;
 }
 
-function buildDistribution(expenses: Expense[], cats: Category[]) {
+function buildDistribution(
+  expenses: Expense[],
+  cats: Category[],
+  bills: { name: string; amount: number }[] = [],
+) {
   const map = new Map<string, number>();
   for (const e of expenses) {
     const cat = cats.find((c) => c.id === e.category_id);
     const key = cat?.name ?? "Other";
     map.set(key, (map.get(key) || 0) + e.amount);
+  }
+  for (const b of bills) {
+    map.set(b.name, (map.get(b.name) || 0) + Number(b.amount));
   }
   return Array.from(map.entries())
     .map(([name, value]) => ({ name, value }))

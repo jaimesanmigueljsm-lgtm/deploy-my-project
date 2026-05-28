@@ -5,6 +5,8 @@ export type IncomeExpensePoint = {
   label: string;
   income: number;
   expenses: number;
+  fixed: number;
+  variable: number;
   net: number;
 };
 
@@ -57,7 +59,7 @@ export function buildWeekdaySeries(expenses: AnalyticsExpense[]): WeekdaySeries[
  * Builds a monthly income vs expenses series for the given window of months.
  */
 export function buildIncomeExpenseSeries(
-  expenses: { amount: number; spent_at: string }[],
+  expenses: { amount: number; spent_at: string; kind?: string | null }[],
   incomes: { amount: number; received_at: string }[],
   months = 6,
 ): IncomeExpensePoint[] {
@@ -72,17 +74,19 @@ export function buildIncomeExpenseSeries(
         return r.getFullYear() === yr && r.getMonth() === mo;
       })
       .reduce((s, x) => s + x.amount, 0);
-    const exp = expenses
-      .filter((x) => {
-        const r = new Date(x.spent_at);
-        return r.getFullYear() === yr && r.getMonth() === mo;
-      })
-      .reduce((s, x) => s + x.amount, 0);
+    const inMonth = expenses.filter((x) => {
+      const r = new Date(x.spent_at);
+      return r.getFullYear() === yr && r.getMonth() === mo;
+    });
+    const fixed = inMonth.filter((x) => x.kind === "fixed").reduce((s, x) => s + x.amount, 0);
+    const variable = inMonth.filter((x) => x.kind !== "fixed").reduce((s, x) => s + x.amount, 0);
     return {
       label: shortMonth(d),
       income: Math.round(inc),
-      expenses: Math.round(exp),
-      net: Math.round(inc - exp),
+      expenses: Math.round(fixed + variable),
+      fixed: Math.round(fixed),
+      variable: Math.round(variable),
+      net: Math.round(inc - fixed - variable),
     };
   });
 }

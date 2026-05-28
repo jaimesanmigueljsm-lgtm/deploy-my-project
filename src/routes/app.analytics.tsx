@@ -20,7 +20,6 @@ import { useAnalyticsData } from "@/features/analytics/use-analytics";
 import {
   buildTopCategories,
   buildIncomeExpenseSeries,
-  buildFixedVariableSeries,
 } from "@/features/analytics/analytics.utils";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { HealthCard, HealthCardSkeleton } from "@/features/dashboard/components/health-card";
@@ -88,7 +87,6 @@ function Analytics() {
 
   const [period, setPeriod] = useState<Period>("month");
 
-  const fixedVarInView = useInView();
   const savingsInView = useInView();
   const healthInView = useInView();
 
@@ -123,11 +121,6 @@ function Analytics() {
   const chartSeries = useMemo(
     () => buildIncomeExpenseSeries(expenses, incomes, months),
     [expenses, incomes, months],
-  );
-
-  const fixedVariableSeries = useMemo(
-    () => buildFixedVariableSeries(expenses, months),
-    [expenses, months],
   );
 
   // ── Tu ahorro: current-month snapshot (independent of period selector) ────
@@ -247,7 +240,8 @@ function Analytics() {
           currency={currency}
           convert={convert}
           incomeLabel={t("analytics.chart.income")}
-          expensesLabel={t("analytics.chart.expenses")}
+          fixedLabel={t("analytics.chart.fixed")}
+          variableLabel={t("analytics.chart.variable")}
         />
       </section>
 
@@ -277,25 +271,6 @@ function Analytics() {
           </div>
         </section>
       )}
-
-      {/* Fixed vs Variable expenses chart — lazy render until in view */}
-      <section ref={fixedVarInView.ref}>
-        <SectionHeader
-          title={t("analytics.section.fixedVsVariable")}
-          subtitle={t("analytics.section.fixedVsVariable.sub")}
-        />
-        {fixedVarInView.visible ? (
-          <FixedVariableBarChart
-            data={fixedVariableSeries}
-            currency={currency}
-            convert={convert}
-            fixedLabel={t("analytics.chart.fixed")}
-            variableLabel={t("analytics.chart.variable")}
-          />
-        ) : (
-          <SkeletonBlock className="h-48" />
-        )}
-      </section>
 
       {/* Tu ahorro — lazy render until in view */}
       <section ref={savingsInView.ref}>
@@ -415,21 +390,29 @@ function Analytics() {
 // ─── Memoized chart components ────────────────────────────────────────────────
 
 type ConvertFn = (n: number) => number;
-type MonthSeries = { label: string; income: number; expenses: number; net: number };
-type FVSeries = { label: string; fixed: number; variable: number };
+type MonthSeries = {
+  label: string;
+  income: number;
+  expenses: number;
+  fixed: number;
+  variable: number;
+  net: number;
+};
 
 const IncomeExpenseBarChart = memo(function IncomeExpenseBarChart({
   data,
   currency,
   convert,
   incomeLabel,
-  expensesLabel,
+  fixedLabel,
+  variableLabel,
 }: {
   data: MonthSeries[];
   currency: string;
   convert: ConvertFn;
   incomeLabel: string;
-  expensesLabel: string;
+  fixedLabel: string;
+  variableLabel: string;
 }) {
   return (
     <div className="card-flat p-4">
@@ -438,8 +421,8 @@ const IncomeExpenseBarChart = memo(function IncomeExpenseBarChart({
           <BarChart
             data={data}
             margin={{ top: 8, right: 4, left: 4, bottom: 0 }}
-            barSize={14}
-            barGap={3}
+            barSize={16}
+            barGap={4}
           >
             <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
             <XAxis
@@ -468,74 +451,8 @@ const IncomeExpenseBarChart = memo(function IncomeExpenseBarChart({
             <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
             <ReferenceLine y={0} stroke="oklch(0.85 0.005 250)" />
             <Bar dataKey="income" name={incomeLabel} fill={CHART_COLORS[2]} radius={[4, 4, 2, 2]} />
-            <Bar
-              dataKey="expenses"
-              name={expensesLabel}
-              fill={CHART_COLORS[0]}
-              radius={[4, 4, 2, 2]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-});
-
-const FixedVariableBarChart = memo(function FixedVariableBarChart({
-  data,
-  currency,
-  convert,
-  fixedLabel,
-  variableLabel,
-}: {
-  data: FVSeries[];
-  currency: string;
-  convert: ConvertFn;
-  fixedLabel: string;
-  variableLabel: string;
-}) {
-  return (
-    <div className="card-flat p-4">
-      <div className="h-48 -ml-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            margin={{ top: 8, right: 4, left: 4, bottom: 0 }}
-            barSize={14}
-            barGap={3}
-          >
-            <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.93 0.005 250)" vertical={false} />
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: "oklch(0.52 0.012 255)" }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v) => shortMoney(convert(Number(v)), currency)}
-              width={44}
-            />
-            <Tooltip
-              cursor={{ fill: "oklch(0.96 0.006 250)" }}
-              contentStyle={getChartTooltipStyle()}
-              formatter={
-                ((v: unknown, name: unknown) => [
-                  money(convert(Number(v)), currency),
-                  name,
-                ]) as never
-              }
-            />
-            <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-            <Bar dataKey="fixed" name={fixedLabel} fill={CHART_COLORS[3]} radius={[4, 4, 2, 2]} />
-            <Bar
-              dataKey="variable"
-              name={variableLabel}
-              fill={CHART_COLORS[0]}
-              radius={[4, 4, 2, 2]}
-            />
+            <Bar dataKey="fixed" name={fixedLabel} stackId="exp" fill={CHART_COLORS[3]} radius={[0, 0, 0, 0]} />
+            <Bar dataKey="variable" name={variableLabel} stackId="exp" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
