@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SectionError } from "@/components/section-error";
 import { useMemo, useState, memo, useRef, useEffect } from "react";
 import { money, monthRange, shortMoney } from "@/lib/format";
 import { Sparkles, TrendingUp as TUp, PiggyBank, Wallet2 } from "lucide-react";
@@ -37,6 +38,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/analytics")({
   component: Analytics,
+  errorComponent: SectionError,
 });
 
 // ─── Intersection Observer hook ───────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { SectionError } from "@/components/section-error";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -73,6 +74,7 @@ import { CATEGORY_NAME_TO_KEY } from "@/i18n/translations";
 
 export const Route = createFileRoute("/app/settings")({
   component: Settings,
+  errorComponent: SectionError,
 });
 
 const CURRENCIES = [

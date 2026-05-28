@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SectionError } from "@/components/section-error";
 import { useMemo, memo, useState } from "react";
 import { money, monthLabel, monthRange, shortMoney } from "@/lib/format";
 import {
@@ -35,6 +36,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
+  errorComponent: SectionError,
 });
 
 // ─── Derived types ────────────────────────────────────────────────────────────

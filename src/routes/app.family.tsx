@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SectionError } from "@/components/section-error";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -131,6 +132,7 @@ const FK = {
 
 export const Route = createFileRoute("/app/family")({
   component: FamilyPage,
+  errorComponent: SectionError,
 });
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

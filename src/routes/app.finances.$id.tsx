@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SectionError } from "@/components/section-error";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { money, pct } from "@/lib/format";
@@ -9,6 +10,7 @@ import { CHART_COLORS, chartCursor } from "@/lib/chart";
 
 export const Route = createFileRoute("/app/finances/$id")({
   component: HoldingDetail,
+  errorComponent: SectionError,
 });
 
 type Investment = {

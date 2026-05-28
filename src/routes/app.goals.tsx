@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SectionError } from "@/components/section-error";
 import { useEffect, useMemo, useState } from "react";
 import { money, shortMoney } from "@/lib/format";
 import {
@@ -56,6 +57,7 @@ import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 
 export const Route = createFileRoute("/app/goals")({
   component: Goals,
+  errorComponent: SectionError,
 });
 
 // Safe string-indexed lookups for const objects

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SectionError } from "@/components/section-error";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { money, monthLabel, monthRange, relativeDate } from "@/lib/format";
 import {
@@ -48,6 +49,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/app/budget")({
   component: Budget,
+  errorComponent: SectionError,
   validateSearch: (search: Record<string, unknown>) => ({
     add:
       search.add === "expense" || search.add === "income"

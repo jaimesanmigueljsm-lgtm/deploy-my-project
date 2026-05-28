@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SectionError } from "@/components/section-error";
 import { useMemo, useState, memo } from "react";
 import { money, shortMoney, pct } from "@/lib/format";
 import { Plus, TrendingUp, Coins, Trash2, Sparkles } from "lucide-react";
@@ -33,6 +34,7 @@ import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 
 export const Route = createFileRoute("/app/finances")({
   component: Finances,
+  errorComponent: SectionError,
 });
 
 function Finances() {
