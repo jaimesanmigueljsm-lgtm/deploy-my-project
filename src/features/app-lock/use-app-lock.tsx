@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { hashPin, verifyPin } from "@/lib/pin-crypto";
+import { hashPin, verifyPin, isLegacyHash } from "@/lib/pin-crypto";
 import { pinStore, metaStore, promptStore, type LockMeta } from "./app-lock-store";
 import { LockScreen } from "./LockScreen";
 import { PinSetupScreen } from "./PinSetupScreen";
@@ -145,6 +145,10 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
 
       const ok = await verifyPin(uid, pin, storedHash);
       if (ok) {
+        // Silently upgrade legacy SHA-256 hash to PBKDF2 in the background
+        if (isLegacyHash(storedHash)) {
+          void hashPin(uid, pin).then((newHash) => pinStore.write(uid, newHash));
+        }
         metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
         setMeta(metaStore.read(uid));
         setIsLocked(false);
