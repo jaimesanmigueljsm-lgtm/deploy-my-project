@@ -1,7 +1,6 @@
 import { useMutation, useQueries, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { monthRange } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
 import { fetchProfile } from "@/features/profile/profile.service";
 import { fetchExpenses } from "@/features/expenses/expenses.service";
@@ -176,16 +175,12 @@ export function useDeleteBill() {
 export function useAddIncome() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const range = monthRange();
 
   return useMutation({
     mutationFn: (payload: AddIncomePayload) => addIncome(user!.id, payload),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.incomes(user!.id).all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard(user!.id, range.start),
-      });
       queryClient.invalidateQueries({ queryKey: ["analytics-incomes", user!.id] });
       toast.success("Income added");
     },

@@ -41,21 +41,14 @@ export function useExpenses(start: string, end: string) {
 export function useAddExpense() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const range = monthRange();
 
   return useMutation({
     mutationFn: (payload: AddExpensePayload) => addExpense(user!.id, payload),
 
     onSuccess: () => {
-      // Invalidate all expense queries for this user (any month).
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenses(user!.id).all,
       });
-      // Bust the dashboard aggregate so the hero card total stays in sync.
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard(user!.id, range.start),
-      });
-      // Bust analytics so charts reflect the new expense immediately.
       queryClient.invalidateQueries({ queryKey: ["analytics", user!.id] });
       toast.success("Expense added");
     },
@@ -99,9 +92,6 @@ export function useUpdateExpense() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.expenses(user!.id).all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard(user!.id, range.start),
-      });
       queryClient.invalidateQueries({ queryKey: ["analytics", user!.id] });
     },
 
@@ -147,9 +137,6 @@ export function useDeleteExpense() {
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.expenses(user!.id).all,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard(user!.id, range.start),
       });
       queryClient.invalidateQueries({ queryKey: ["analytics", user!.id] });
     },
