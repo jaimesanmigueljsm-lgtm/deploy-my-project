@@ -118,10 +118,10 @@ const html = `<!DOCTYPE html>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Nest" />
+    <meta name="apple-mobile-web-app-title" content="NOOLY" />
     <meta name="format-detection" content="telephone=no, date=no, address=no" />
     <meta name="description" content="An AI-powered family copilot to track income, expenses and savings goals with calm, beautiful clarity." />
-    <title>Nest — Family financial copilot</title>
+    <title>NOOLY — Family financial copilot</title>
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -175,7 +175,7 @@ const html = `<!DOCTYPE html>
          If React never mounts (stale cache, missing JS chunks, JS error), the
          fallback below kicks in after 10s and offers a one-tap cache wipe + reload.
          This is the safety net for users stuck with a poisoned service worker. -->
-    <div id="root"><div id="__nest_boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:system-ui,sans-serif;gap:12px;padding:24px;text-align:center"><div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#22c55e;border-radius:50%;animation:__nestspin 0.8s linear infinite"></div><p style="font-size:13px;color:#64748b;margin:0">Loading Nest…</p></div></div><style>@keyframes __nestspin{to{transform:rotate(360deg)}}</style>
+    <div id="root"><div id="__nest_boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:system-ui,sans-serif;gap:12px;padding:24px;text-align:center"><div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#22c55e;border-radius:50%;animation:__nestspin 0.8s linear infinite"></div><p style="font-size:13px;color:#64748b;margin:0">Loading NOOLY…</p></div></div><style>@keyframes __nestspin{to{transform:rotate(360deg)}}</style>
     <script>
       // Boot fallback: if React hasn't replaced #__nest_boot after 10s, show a
       // recovery card. The "Recargar limpio" button purges every cache + every
