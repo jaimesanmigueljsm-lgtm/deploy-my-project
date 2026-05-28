@@ -1,5 +1,5 @@
 import { TrendingDown, TrendingUp, Minus, Wallet, PiggyBank } from "lucide-react";
-import { shortMoney } from "@/lib/format";
+import { money } from "@/lib/format";
 import type { BudgetForecast } from "@/core/finance";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/nest";
@@ -104,14 +104,14 @@ export function ForecastWidget({
     <div className="grid grid-cols-3 gap-2.5">
       <Tile
         label={t("dashboard.forecast.daily")}
-        value={shortMoney(convert(Math.max(0, forecast.safeToSpendPerDay)), currency)}
+        value={money(convert(Math.max(0, forecast.safeToSpendPerDay)), currency)}
         sublabel={t("dashboard.forecast.daily.tip")}
         tone={spendTone}
         icon={<Wallet className="size-3" />}
       />
       <Tile
         label={t("dashboard.forecast.saved")}
-        value={shortMoney(convert(Math.max(0, saved)), currency)}
+        value={money(convert(Math.max(0, saved)), currency)}
         sublabel={t("dashboard.forecast.saved.sub")}
         tone={savedTone}
         icon={<PiggyBank className="size-3" />}
@@ -120,13 +120,13 @@ export function ForecastWidget({
         label={t("dashboard.forecast.closing")}
         value={
           closing < 0
-            ? `-${shortMoney(convert(Math.abs(closing)), currency)}`
-            : shortMoney(convert(closing), currency)
+            ? `-${money(convert(Math.abs(closing)), currency)}`
+            : money(convert(closing), currency)
         }
         sublabel={
           closing < 0
-            ? `${shortMoney(convert(Math.abs(closing)), currency)} ${t("dashboard.forecast.outlook.over")}`
-            : `${shortMoney(convert(closing), currency)} ${t("dashboard.forecast.closing.saves")}`
+            ? `${money(convert(Math.abs(closing)), currency)} ${t("dashboard.forecast.outlook.over")}`
+            : `${money(convert(closing), currency)} ${t("dashboard.forecast.closing.saves")}`
         }
         tone={closingTone}
         icon={<ClosingIcon className="size-3" />}

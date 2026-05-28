@@ -107,7 +107,7 @@ function Dashboard() {
         <div>
           <p className="text-xs text-muted-foreground">{t("dashboard.available")}</p>
           <div className="mt-1 balance-display num-display text-[44px] font-semibold leading-tight">
-            {shortMoney(convert(remaining), currency)}
+            {money(convert(remaining), currency)}
           </div>
           <div className="mt-2 flex items-center gap-3 text-xs">
             <span className="num inline-flex items-center gap-1 text-positive font-medium">
