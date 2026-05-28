@@ -13,8 +13,8 @@ export type Income = Pick<
 >;
 
 export type AddBillPayload = Pick<TablesInsert<"bills">, "name" | "amount" | "due_day">;
-export type AddIncomePayload = Pick<TablesInsert<"incomes">, "source" | "amount" | "recurring">;
-export type UpdateIncomePayload = Pick<TablesUpdate<"incomes">, "source" | "amount" | "recurring">;
+export type AddIncomePayload = Pick<TablesInsert<"incomes">, "source" | "amount" | "recurring"> & { received_at?: string };
+export type UpdateIncomePayload = Pick<TablesUpdate<"incomes">, "source" | "amount" | "recurring"> & { received_at?: string };
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 

@@ -24,6 +24,7 @@ import { SectionHeader, EmptyState, CategoryDot } from "@/components/nest";
 import {
   useBudgetData,
   useAddBill,
+  useDeleteBill,
   useAddIncome,
   useUpdateIncome,
   useDeleteIncome,
@@ -69,13 +70,14 @@ function Budget() {
   const { t } = useT();
   const range = useMemo(() => monthRange(), []);
 
-  const { expenses, categories, incomes, currency, isLoading } = useBudgetData(
+  const { expenses, categories, bills, incomes, currency, isLoading } = useBudgetData(
     range.start,
     range.end,
   );
   const convert = useCurrencyConvert();
 
   const deleteExpense = useDeleteExpense();
+  const deleteBill = useDeleteBill();
   const deleteIncome = useDeleteIncome();
 
   const [tab, setTab] = useState<Tab>("all");
@@ -116,22 +118,43 @@ function Budget() {
     });
   }, [categories]);
 
-  const filtered = useMemo(() => {
-    if (tab === "fixed") return expenses.filter((e) => e.kind === "fixed");
-    if (tab === "variable") return expenses.filter((e) => e.kind === "variable");
-    return expenses;
-  }, [tab, expenses]);
+  const billIds = useMemo(() => new Set(bills.map((b) => b.id)), [bills]);
 
-  const { totalSpent, totalFixed, totalVariable } = useMemo(
-    () => ({
-      totalSpent: expenses.reduce((s, e) => s + e.amount, 0),
-      totalFixed: expenses.filter((e) => e.kind === "fixed").reduce((s, e) => s + e.amount, 0),
-      totalVariable: expenses
-        .filter((e) => e.kind === "variable")
-        .reduce((s, e) => s + e.amount, 0),
-    }),
-    [expenses],
-  );
+  const billsAsExpenses = useMemo((): EditableExpense[] => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    return bills.map((b) => {
+      const maxDay = new Date(y, m + 1, 0).getDate();
+      const d = Math.min(b.due_day, maxDay);
+      return {
+        id: b.id,
+        amount: Number(b.amount),
+        description: b.name,
+        spent_at: `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+        kind: "fixed",
+        category_id: null,
+        recurring: true,
+      };
+    });
+  }, [bills]);
+
+  const filtered = useMemo(() => {
+    if (tab === "fixed") return [...billsAsExpenses, ...expenses.filter((e) => e.kind === "fixed")];
+    if (tab === "variable") return expenses.filter((e) => e.kind === "variable");
+    if (tab === "all") return [...billsAsExpenses, ...expenses];
+    return expenses;
+  }, [tab, expenses, billsAsExpenses]);
+
+  const { totalSpent, totalFixed, totalVariable } = useMemo(() => {
+    const billsTotal = bills.reduce((s, b) => s + Number(b.amount), 0);
+    return {
+      totalSpent: expenses.reduce((s, e) => s + e.amount, 0) + billsTotal,
+      totalFixed:
+        expenses.filter((e) => e.kind === "fixed").reduce((s, e) => s + e.amount, 0) + billsTotal,
+      totalVariable: expenses.filter((e) => e.kind === "variable").reduce((s, e) => s + e.amount, 0),
+    };
+  }, [expenses, bills]);
 
   const { totalIncome, recurringIncome } = useMemo(
     () => ({
@@ -143,9 +166,8 @@ function Budget() {
 
   const byCategory = useMemo(() => {
     const map = new Map<string, { name: string; color: string; total: number; count: number }>();
-    for (const e of expenses.filter((x) => tab === "all" || x.kind === tab)) {
+    for (const e of filtered) {
       const cat = dedupedCategories.find((c) => c.id === e.category_id);
-      // Group by name to merge duplicate categories into one row
       const key = cat?.name.trim().toLowerCase() ?? "_uncat";
       const cur = map.get(key) ?? {
         name: cat?.name ?? "Uncategorized",
@@ -158,18 +180,26 @@ function Budget() {
       map.set(key, cur);
     }
     return Array.from(map.values()).sort((a, b) => b.total - a.total);
-  }, [expenses, dedupedCategories, tab]);
+  }, [filtered, dedupedCategories]);
 
-  const handleEditExpense = useCallback((expense: EditableExpense) => {
-    setEditingExpense(expense);
-    setOpen(true);
-  }, []);
+  const handleEditExpense = useCallback(
+    (expense: EditableExpense) => {
+      if (billIds.has(expense.id)) return;
+      setEditingExpense(expense);
+      setOpen(true);
+    },
+    [billIds],
+  );
 
   const handleDeleteExpense = useCallback(
     (id: string) => {
-      deleteExpense.mutate(id);
+      if (billIds.has(id)) {
+        deleteBill.mutate(id);
+      } else {
+        deleteExpense.mutate(id);
+      }
     },
-    [deleteExpense.mutate],
+    [billIds, deleteBill.mutate, deleteExpense.mutate],
   );
 
   if (isLoading) return <BudgetSkeleton />;
@@ -568,6 +598,7 @@ function ExpenseDialog({
   const [categoryId, setCategoryId] = useState<string>("");
   const [kind, setKind] = useState<"variable" | "fixed">("variable");
   const [date, setDate] = useState("");
+  const [fixedDay, setFixedDay] = useState(String(new Date().getDate()));
 
   const addExpense = useAddExpense();
   const updateExpense = useUpdateExpense();
@@ -581,15 +612,28 @@ function ExpenseDialog({
       setCategoryId(editing.category_id ?? "");
       setKind((editing.kind as "variable" | "fixed") ?? "variable");
       setDate(editing.spent_at?.slice(0, 10) ?? "");
+      if (editing.kind === "fixed" && editing.spent_at) {
+        setFixedDay(String(new Date(editing.spent_at + "T12:00:00").getDate()));
+      }
     } else {
       setAmount("");
       setDescription("");
       setCategoryId("");
       setKind("variable");
       setDate("");
+      setFixedDay(String(new Date().getDate()));
     }
     submittingRef.current = false;
   }, [editing, open]);
+
+  function buildSpentAt(day: string): string {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const maxDay = new Date(y, m + 1, 0).getDate();
+    const d = Math.min(Math.max(1, Number(day) || 1), maxDay);
+    return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
 
   function save() {
     if (submittingRef.current) return;
@@ -628,6 +672,7 @@ function ExpenseDialog({
           kind,
           category_id: categoryId || null,
           recurring: kind === "fixed",
+          ...(kind === "fixed" ? { spent_at: buildSpentAt(fixedDay) } : {}),
         },
         {
           onSuccess: () => {
@@ -714,19 +759,36 @@ function ExpenseDialog({
             ))}
           </div>
 
-          {/* Fixed expense — recurring badge (new entries only) */}
+          {/* Fixed expense — recurring badge + day of month (new entries only) */}
           {kind === "fixed" && !editing && (
-            <div className="rounded-xl bg-positive-soft/30 border border-positive/20 px-4 py-3 flex gap-3 items-start animate-rise">
-              <RepeatIcon className="size-4 text-positive shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-positive">
-                  {t("budget.dialog.expense.fixed.info.title")}
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                  {t("budget.dialog.expense.fixed.info.body")}
-                </p>
+            <>
+              <div className="rounded-xl bg-positive-soft/30 border border-positive/20 px-4 py-3 flex gap-3 items-start animate-rise">
+                <RepeatIcon className="size-4 text-positive shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-positive">
+                    {t("budget.dialog.expense.fixed.info.title")}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                    {t("budget.dialog.expense.fixed.info.body")}
+                  </p>
+                </div>
               </div>
-            </div>
+              <div className="space-y-1.5 animate-rise">
+                <Label className="text-xs text-muted-foreground">
+                  {t("budget.dialog.expense.dayofmonth")}
+                </Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={31}
+                  value={fixedDay}
+                  onChange={(e) => setFixedDay(e.target.value)}
+                  placeholder="1"
+                  className="text-sm"
+                />
+              </div>
+            </>
           )}
 
           {/* Date field — editing mode only */}
