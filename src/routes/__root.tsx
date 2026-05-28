@@ -77,8 +77,7 @@ function getSafeErrorContent(error: Error): { headline: string; detail: string; 
   return {
     headline: "Something didn't load",
     detail: "An unexpected error occurred. Please try again.",
-    // Always include the raw message so a beta-tester can copy-paste it in feedback.
-    hint: msg || undefined,
+    hint: import.meta.env.DEV ? (msg || undefined) : undefined,
   };
 }
 
@@ -131,7 +130,7 @@ function AnalyticsTracker() {
 
   useEffect(() => {
     if (user?.id && user.id !== prevUid.current) {
-      analytics.identify(user.id, { email: user.email ?? undefined });
+      analytics.identify(user.id);
       prevUid.current = user.id;
     } else if (!user && prevUid.current) {
       analytics.reset();

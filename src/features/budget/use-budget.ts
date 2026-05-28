@@ -186,6 +186,7 @@ export function useAddIncome() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard(user!.id, range.start),
       });
+      queryClient.invalidateQueries({ queryKey: ["analytics-incomes", user!.id] });
       toast.success("Income added");
     },
 
@@ -205,6 +206,7 @@ export function useUpdateIncome() {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.incomes(user!.id).all });
+      queryClient.invalidateQueries({ queryKey: ["analytics-incomes", user!.id] });
       toast.success("Income updated");
     },
 
@@ -245,6 +247,7 @@ export function useDeleteIncome() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.incomes(user!.id).all });
+      queryClient.invalidateQueries({ queryKey: ["analytics-incomes", user!.id] });
     },
   });
 }

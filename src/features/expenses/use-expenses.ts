@@ -55,6 +55,8 @@ export function useAddExpense() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard(user!.id, range.start),
       });
+      // Bust analytics so charts reflect the new expense immediately.
+      queryClient.invalidateQueries({ queryKey: ["analytics", user!.id] });
       toast.success("Expense added");
     },
 
@@ -100,6 +102,7 @@ export function useUpdateExpense() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard(user!.id, range.start),
       });
+      queryClient.invalidateQueries({ queryKey: ["analytics", user!.id] });
     },
 
     onSuccess: () => {
@@ -148,6 +151,7 @@ export function useDeleteExpense() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard(user!.id, range.start),
       });
+      queryClient.invalidateQueries({ queryKey: ["analytics", user!.id] });
     },
   });
 }
