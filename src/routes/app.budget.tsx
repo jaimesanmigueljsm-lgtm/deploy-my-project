@@ -141,7 +141,7 @@ function Budget() {
 
   const filtered = useMemo(() => {
     if (tab === "fixed") return [...billsAsExpenses, ...expenses.filter((e) => e.kind === "fixed")];
-    if (tab === "variable") return expenses.filter((e) => e.kind === "variable");
+    if (tab === "variable") return expenses.filter((e) => e.kind !== "fixed");
     if (tab === "all") return [...billsAsExpenses, ...expenses];
     return expenses;
   }, [tab, expenses, billsAsExpenses]);
@@ -152,7 +152,7 @@ function Budget() {
       totalSpent: expenses.reduce((s, e) => s + e.amount, 0) + billsTotal,
       totalFixed:
         expenses.filter((e) => e.kind === "fixed").reduce((s, e) => s + e.amount, 0) + billsTotal,
-      totalVariable: expenses.filter((e) => e.kind === "variable").reduce((s, e) => s + e.amount, 0),
+      totalVariable: expenses.filter((e) => e.kind !== "fixed").reduce((s, e) => s + e.amount, 0),
     };
   }, [expenses, bills]);
 
