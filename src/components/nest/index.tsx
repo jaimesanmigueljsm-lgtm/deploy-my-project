@@ -12,6 +12,7 @@
 import { type ReactNode, type CSSProperties } from "react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCategoryMeta, getColorClasses } from "@/lib/categories";
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 // Use <Skeleton> instead of `animate-pulse bg-muted` everywhere.
@@ -355,6 +356,34 @@ export function CategoryDot({
         className,
       )}
     />
+  );
+}
+
+// ─── CategoryIcon ─────────────────────────────────────────────────────────────
+// Renders the Lucide icon for a category in a colored pill.
+// iconKey: the string stored in categories.icon (DB). color: optional DB override.
+
+export function CategoryIcon({
+  iconKey,
+  color,
+  size = "md",
+  className,
+}: {
+  iconKey: string;
+  color?: string;
+  size?: "sm" | "md";
+  className?: string;
+}) {
+  const meta = getCategoryMeta(iconKey);
+  const Icon = meta.icon;
+  const resolvedColor = color ?? meta.color;
+  const { soft, text } = getColorClasses(resolvedColor);
+  const containerCls = size === "sm" ? "size-7 rounded-lg" : "size-9 rounded-xl";
+  const iconCls = size === "sm" ? "size-3.5" : "size-4";
+  return (
+    <span className={cn("grid place-items-center shrink-0", containerCls, soft, text, className)}>
+      <Icon className={iconCls} />
+    </span>
   );
 }
 

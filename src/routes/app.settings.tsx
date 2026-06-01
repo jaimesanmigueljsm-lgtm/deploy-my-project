@@ -45,7 +45,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { SectionHeader, CategoryDot } from "@/components/nest";
+import { SectionHeader, CategoryIcon } from "@/components/nest";
 import { useT } from "@/i18n";
 import {
   DropdownMenu,
@@ -112,29 +112,29 @@ const AUTO_LOCK_OPTIONS = [
   { value: 0, labelKey: "settings.appLock.autoLock.never" },
 ] as const;
 
-const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fixed" }[] = [
-  { nameKey: "fixed.rent", color: "sky", kind: "fixed" },
-  { nameKey: "fixed.mortgage", color: "sky", kind: "fixed" },
-  { nameKey: "fixed.electricity", color: "warn", kind: "fixed" },
-  { nameKey: "fixed.water", color: "sky", kind: "fixed" },
-  { nameKey: "fixed.gas", color: "warn", kind: "fixed" },
-  { nameKey: "fixed.phone", color: "mint", kind: "fixed" },
-  { nameKey: "fixed.gym", color: "mint", kind: "fixed" },
-  { nameKey: "fixed.subscriptions", color: "violet", kind: "fixed" },
-  { nameKey: "fixed.insurance", color: "sky", kind: "fixed" },
-  { nameKey: "fixed.transport", color: "sky", kind: "fixed" },
-  { nameKey: "fixed.childcare", color: "mint", kind: "fixed" },
-  { nameKey: "variable.others", color: "mint", kind: "variable" },
-  { nameKey: "variable.leisure", color: "violet", kind: "variable" },
-  { nameKey: "variable.beauty", color: "violet", kind: "variable" },
-  { nameKey: "variable.home", color: "sky", kind: "variable" },
-  { nameKey: "variable.health", color: "mint", kind: "variable" },
-  { nameKey: "variable.travel", color: "sky", kind: "variable" },
-  { nameKey: "variable.finance", color: "violet", kind: "variable" },
-  { nameKey: "variable.transport", color: "sky", kind: "variable" },
-  { nameKey: "variable.clothing", color: "warn", kind: "variable" },
-  { nameKey: "variable.pets", color: "mint", kind: "variable" },
-  { nameKey: "variable.loan", color: "violet", kind: "variable" },
+const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fixed"; icon: string }[] = [
+  { nameKey: "fixed.rent",          color: "sky",    kind: "fixed",    icon: "home" },
+  { nameKey: "fixed.mortgage",      color: "sky",    kind: "fixed",    icon: "building-2" },
+  { nameKey: "fixed.electricity",   color: "warn",   kind: "fixed",    icon: "zap" },
+  { nameKey: "fixed.water",         color: "sky",    kind: "fixed",    icon: "droplets" },
+  { nameKey: "fixed.gas",           color: "warn",   kind: "fixed",    icon: "flame" },
+  { nameKey: "fixed.phone",         color: "mint",   kind: "fixed",    icon: "smartphone" },
+  { nameKey: "fixed.gym",           color: "mint",   kind: "fixed",    icon: "dumbbell" },
+  { nameKey: "fixed.subscriptions", color: "violet", kind: "fixed",    icon: "repeat" },
+  { nameKey: "fixed.insurance",     color: "sky",    kind: "fixed",    icon: "shield" },
+  { nameKey: "fixed.transport",     color: "sky",    kind: "fixed",    icon: "bus" },
+  { nameKey: "fixed.childcare",     color: "mint",   kind: "fixed",    icon: "baby" },
+  { nameKey: "variable.others",     color: "mint",   kind: "variable", icon: "more-horizontal" },
+  { nameKey: "variable.leisure",    color: "violet", kind: "variable", icon: "music" },
+  { nameKey: "variable.beauty",     color: "violet", kind: "variable", icon: "sparkles" },
+  { nameKey: "variable.home",       color: "sky",    kind: "variable", icon: "sofa" },
+  { nameKey: "variable.health",     color: "mint",   kind: "variable", icon: "heart" },
+  { nameKey: "variable.travel",     color: "sky",    kind: "variable", icon: "plane" },
+  { nameKey: "variable.finance",    color: "violet", kind: "variable", icon: "landmark" },
+  { nameKey: "variable.transport",  color: "sky",    kind: "variable", icon: "bus" },
+  { nameKey: "variable.clothing",   color: "warn",   kind: "variable", icon: "shirt" },
+  { nameKey: "variable.pets",       color: "mint",   kind: "variable", icon: "paw-print" },
+  { nameKey: "variable.loan",       color: "violet", kind: "variable", icon: "credit-card" },
 ];
 
 const CAT_COLORS = [
@@ -609,6 +609,7 @@ function CategoriesDialog({
       name: t(d.nameKey),
       color: d.color,
       kind: d.kind,
+      icon: d.icon,
     }));
     resetMut.mutate(rows);
   }
@@ -638,7 +639,7 @@ function CategoriesDialog({
             className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-muted/40 transition"
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <CategoryDot color={c.color} size="md" />
+              <CategoryIcon iconKey={c.icon} color={c.color} size="sm" />
               <span className="text-sm truncate">
                 {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
               </span>

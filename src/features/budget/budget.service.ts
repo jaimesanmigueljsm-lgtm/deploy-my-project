@@ -5,7 +5,7 @@ import { AddBillSchema, AddIncomeSchema, UpdateIncomeSchema } from "@/schemas/bu
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind">;
+export type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind" | "icon">;
 export type Bill = Pick<Tables<"bills">, "id" | "name" | "amount" | "due_day" | "paid_this_month">;
 export type Income = Pick<
   Tables<"incomes">,
@@ -21,7 +21,7 @@ export type UpdateIncomePayload = Pick<TablesUpdate<"incomes">, "source" | "amou
 export async function fetchCategories(userId: string): Promise<Category[]> {
   const { data, error } = await supabase
     .from("categories")
-    .select("id, name, color, kind")
+    .select("id, name, color, kind, icon")
     .eq("user_id", userId)
     .order("name");
 
@@ -63,7 +63,7 @@ export async function addCategory(userId: string, payload: AddCategoryPayload): 
       icon: payload.icon ?? "tag",
       user_id: userId,
     })
-    .select("id, name, color, kind")
+    .select("id, name, color, kind, icon")
     .single();
   if (error) throw new Error(error.message);
   return data as Category;

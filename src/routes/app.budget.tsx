@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SectionHeader, EmptyState, CategoryDot } from "@/components/nest";
+import { SectionHeader, EmptyState, CategoryIcon } from "@/components/nest";
 import {
   useBudgetData,
   useAddBill,
@@ -58,7 +58,7 @@ export const Route = createFileRoute("/app/budget")({
   }),
 });
 
-type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind">;
+type Category = Pick<Tables<"categories">, "id" | "name" | "color" | "kind" | "icon">;
 type Income = Pick<Tables<"incomes">, "id" | "source" | "amount" | "recurring" | "received_at">;
 type Bill = Pick<Tables<"bills">, "id" | "name" | "amount" | "due_day" | "paid_this_month">;
 type EditableExpense = Pick<
@@ -167,13 +167,14 @@ function Budget() {
   );
 
   const byCategory = useMemo(() => {
-    const map = new Map<string, { name: string; color: string; total: number; count: number }>();
+    const map = new Map<string, { name: string; color: string; icon: string; total: number; count: number }>();
     for (const e of filtered) {
       const cat = dedupedCategories.find((c) => c.id === e.category_id);
       const key = cat?.name.trim().toLowerCase() ?? "_uncat";
       const cur = map.get(key) ?? {
         name: cat?.name ?? "Uncategorized",
         color: cat?.color ?? "neutral",
+        icon: cat?.icon ?? "tag",
         total: 0,
         count: 0,
       };
@@ -473,7 +474,7 @@ function Budget() {
                   <div key={c.name} className="card-flat p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <CategoryDot color={c.color} />
+                        <CategoryIcon iconKey={c.icon} color={c.color} size="sm" />
                         <span className="text-sm font-medium">
                           {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
                         </span>
@@ -726,18 +727,23 @@ function ExpenseDialog({
             />
           </div>
           {categories.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
               {categories.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setCategoryId(c.id === categoryId ? "" : c.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs border transition ${
+                  className={`flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border transition press-scale ${
                     categoryId === c.id
-                      ? "bg-foreground text-background border-foreground"
-                      : "border-border bg-surface hover:border-foreground/20"
+                      ? "bg-primary/8 border-primary shadow-sm"
+                      : "border-border bg-surface hover:border-primary/20"
                   }`}
                 >
-                  {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
+                  <CategoryIcon iconKey={c.icon} color={c.color} size="sm" />
+                  <span className={`text-[10px] font-medium text-center leading-tight line-clamp-1 ${
+                    categoryId === c.id ? "text-foreground" : "text-muted-foreground"
+                  }`}>
+                    {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
+                  </span>
                 </button>
               ))}
             </div>
@@ -1186,9 +1192,7 @@ const ExpenseRow = memo(function ExpenseRow({
   return (
     <div className="group flex items-center justify-between px-4 py-3.5">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="size-9 rounded-xl bg-muted grid place-items-center">
-          <CategoryDot color={cat?.color ?? "neutral"} />
-        </div>
+        <CategoryIcon iconKey={cat?.icon ?? "tag"} color={cat?.color} />
         <div className="min-w-0">
           <div className="text-sm font-medium truncate">{expense.description}</div>
           <div className="text-xs text-muted-foreground">
