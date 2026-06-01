@@ -136,7 +136,7 @@ const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fi
   { nameKey: "variable.education",  color: "sky",    kind: "variable", icon: "graduation-cap" },
   { nameKey: "variable.leisure",    color: "violet", kind: "variable", icon: "music" },
   { nameKey: "variable.travel",     color: "sky",    kind: "variable", icon: "plane" },
-  { nameKey: "variable.beauty",     color: "violet", kind: "variable", icon: "scissors" },
+  { nameKey: "variable.beauty",     color: "violet", kind: "variable", icon: "sparkles" },
   { nameKey: "variable.clothing",   color: "warn",   kind: "variable", icon: "shirt" },
   { nameKey: "variable.home",       color: "sky",    kind: "variable", icon: "sofa" },
   { nameKey: "variable.pets",       color: "mint",   kind: "variable", icon: "paw-print" },

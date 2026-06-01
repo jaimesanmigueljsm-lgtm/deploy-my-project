@@ -4,8 +4,7 @@ import {
   Repeat, Shield, Bus, Baby, MoreHorizontal, Music, Sparkles, Sofa,
   Heart, Plane, Landmark, Shirt, PawPrint, CreditCard, ShoppingCart,
   Tag, Wallet, Utensils, Zap, Droplets, Flame,
-  ShoppingBag, GraduationCap, Tv, Coffee, Gift, Wifi, Fuel,
-  Stethoscope, Briefcase, Scissors,
+  ShoppingBag, GraduationCap, Tv, Gift, Wifi, Fuel, Stethoscope,
 } from "lucide-react";
 
 export type CategoryColor = "mint" | "sky" | "warn" | "violet";
@@ -33,10 +32,9 @@ export const REGISTRY: Record<string, CategoryMeta> = {
   "bus":             { icon: Bus,            color: "sky",    group: "transport" },
   "fuel":            { icon: Fuel,           color: "warn",   group: "transport" },
   "plane":           { icon: Plane,          color: "sky",    group: "travel" },
-  // Food & Drink
+  // Food
   "shopping-cart":   { icon: ShoppingCart,   color: "mint",   group: "food" },
   "utensils":        { icon: Utensils,       color: "warn",   group: "food" },
-  "coffee":          { icon: Coffee,         color: "warn",   group: "food" },
   // Health
   "heart":           { icon: Heart,          color: "mint",   group: "health" },
   "dumbbell":        { icon: Dumbbell,       color: "mint",   group: "health" },
@@ -49,11 +47,9 @@ export const REGISTRY: Record<string, CategoryMeta> = {
   "repeat":          { icon: Repeat,         color: "violet", group: "finance" },
   "shield":          { icon: Shield,         color: "sky",    group: "finance" },
   "wifi":            { icon: Wifi,           color: "sky",    group: "finance" },
-  "briefcase":       { icon: Briefcase,      color: "sky",    group: "finance" },
   // Lifestyle & Shopping
   "shopping-bag":    { icon: ShoppingBag,    color: "warn",   group: "lifestyle" },
   "shirt":           { icon: Shirt,          color: "warn",   group: "lifestyle" },
-  "scissors":        { icon: Scissors,       color: "violet", group: "lifestyle" },
   "sparkles":        { icon: Sparkles,       color: "violet", group: "lifestyle" },
   "smartphone":      { icon: Smartphone,     color: "mint",   group: "lifestyle" },
   "music":           { icon: Music,          color: "violet", group: "lifestyle" },
@@ -69,13 +65,20 @@ export const REGISTRY: Record<string, CategoryMeta> = {
 
 // Ordered list for the icon picker UI (grouped by category)
 export const ICON_PICKER_KEYS: string[] = [
+  // Housing & utilities
   "home", "building-2", "sofa", "wrench", "zap", "droplets", "flame",
+  // Transport
   "car", "bus", "fuel", "plane",
-  "shopping-cart", "utensils", "coffee",
+  // Food
+  "shopping-cart", "utensils",
+  // Health
   "heart", "dumbbell", "stethoscope", "baby",
-  "credit-card", "banknote", "landmark", "repeat", "shield", "wifi", "briefcase",
-  "shopping-bag", "shirt", "scissors", "sparkles", "smartphone", "music",
+  // Finance & utilities
+  "credit-card", "banknote", "landmark", "repeat", "shield", "wifi",
+  // Lifestyle & shopping
+  "shopping-bag", "shirt", "sparkles", "smartphone", "music",
   "graduation-cap", "tv", "gift", "paw-print",
+  // Other
   "more-horizontal", "tag", "wallet",
 ];
 

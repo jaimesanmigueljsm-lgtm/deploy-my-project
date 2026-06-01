@@ -43,7 +43,6 @@ import {
   MoreHorizontal,
   GraduationCap,
   Wifi,
-  Scissors,
 } from "lucide-react";
 import { useT } from "@/i18n";
 
@@ -77,7 +76,7 @@ const VARIABLE_CATS: CatDef[] = [
   { id: "education",   icon: GraduationCap,  color: "sky",    dbIcon: "graduation-cap" },
   { id: "leisure",     icon: Music,          color: "violet", dbIcon: "music" },
   { id: "travel",      icon: Plane,          color: "sky",    dbIcon: "plane" },
-  { id: "beauty",      icon: Scissors,       color: "violet", dbIcon: "scissors" },
+  { id: "beauty",      icon: Sparkles,       color: "violet", dbIcon: "sparkles" },
   { id: "clothing",    icon: Shirt,          color: "warn",   dbIcon: "shirt" },
   { id: "home",        icon: Sofa,           color: "sky",    dbIcon: "sofa" },
   { id: "pets",        icon: PawPrint,       color: "mint",   dbIcon: "paw-print" },
