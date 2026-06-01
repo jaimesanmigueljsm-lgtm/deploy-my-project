@@ -433,9 +433,7 @@ function FamilyPage() {
     setOpenGoalPicker(true);
   }
 
-  // ── Loading guard ─────────────────────────────────────────────────────────
-  if (profileLoading || (!!familyId && familyLoading && !familyData)) return <FamilySkeleton />;
-
+  // ── Data destructuring — must be before any useMemo and before early return ─
   const isOwner = familyData?.isOwner ?? false;
   const { family, members, memberProfiles, goals } = familyData ?? {
     family: null,
@@ -444,32 +442,28 @@ function FamilyPage() {
     goals: [],
   };
 
-  // ── Stats (derived, no extra query) ───────────────────────────────────────
+  // ── Stats (no hooks, safe here) ───────────────────────────────────────────
   const activeGoals = goals.filter(
     (g) => (g.status ?? "active") === "active" && g.current_amount < g.target_amount,
   ).length;
   const totalSaved = goals.reduce((s, g) => s + g.current_amount, 0);
 
   // ── Goal lifecycle buckets ────────────────────────────────────────────────
-  const displayedGoals = goals.filter(
-    (g) => !g.status || g.status === "active",
-  );
+  const displayedGoals = goals.filter((g) => !g.status || g.status === "active");
   const completedGoals = goals.filter((g) => g.status === "completed");
   const archivedGoals = goals.filter((g) => g.status === "archived");
 
-  // ── Member balances (pure TypeScript, no DB calls) ────────────────────────
+  // ── useMemo hooks — ALL must be before any early return (Rules of Hooks) ──
   const memberBalances = useMemo(
     () => calculateMemberBalances(memberProfiles, sharedExpenses),
     [memberProfiles, sharedExpenses],
   );
 
-  // ── Settlement suggestions ─────────────────────────────────────────────────
   const settlements = useMemo(
     () => calculateSettlements(memberBalances),
     [memberBalances],
   );
 
-  // ── Group progress metrics ─────────────────────────────────────────────────
   const { weeklyExpenseCount, monthlyExpenseTotal, totalGroupSpend } = useMemo(() => {
     const now = Date.now();
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -490,6 +484,9 @@ function FamilyPage() {
     const [topId] = Object.entries(totals).sort(([, a], [, b]) => b - a)[0] ?? [];
     return topId ? (memberProfiles.find((m) => m.user_id === topId) ?? null) : null;
   }, [sharedExpenses, memberProfiles]);
+
+  // ── Loading guard — after all hooks ───────────────────────────────────────
+  if (profileLoading || (!!familyId && familyLoading && !familyData)) return <FamilySkeleton />;
 
   // ── No family ──────────────────────────────────────────────────────────────
   if (!familyId || (!familyLoading && !family)) {
@@ -525,19 +522,14 @@ function FamilyPage() {
             <Users className="size-7 text-muted-foreground" />
           </div>
           <div className="space-y-1.5 max-w-[260px]">
-            <p className="text-base font-semibold">Create your group</p>
-            <p className="text-[12px] text-muted-foreground leading-relaxed">
-              Share expenses, track goals, and see who owes what — all in one place.
-            </p>
+            <p className="text-base font-semibold">{t("family.empty.group.title")}</p>
+            <p className="text-[12px] text-muted-foreground leading-relaxed">{t("family.empty.group.desc")}</p>
           </div>
           <div className="flex flex-col gap-2 w-full max-w-[220px]">
             <Button size="sm" onClick={() => setOpenCreate(true)} className="w-full">
               <Plus className="size-3.5 mr-1.5" />
               {t("family.create.button")}
             </Button>
-            {receivedInvitations.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">or wait for a group invite</p>
-            )}
           </div>
         </div>
 
@@ -545,7 +537,10 @@ function FamilyPage() {
           open={openCreate}
           onClose={() => setOpenCreate(false)}
           userId={userId}
-          onCreated={() => void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) })}
+          onCreated={(newId) => {
+            void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+            void qc.invalidateQueries({ queryKey: FK.groups(userId) });
+          }}
           t={t}
         />
       </div>
@@ -590,7 +585,7 @@ function FamilyPage() {
                     className={`w-full text-left px-3 py-2.5 text-sm flex items-center justify-between hover:bg-muted/40 transition ${g.family_id === familyId ? "font-semibold" : ""}`}
                   >
                     <span className="truncate">{g.family_name}</span>
-                    <span className="text-[11px] text-muted-foreground ml-2 shrink-0">{g.member_count} members</span>
+                    <span className="text-[11px] text-muted-foreground ml-2 shrink-0">{t("family.summary.members_count").replace("{n}", String(g.member_count))}</span>
                   </button>
                 ))}
                 <div className="border-t border-border-subtle mt-1 pt-1">
@@ -598,7 +593,7 @@ function FamilyPage() {
                     onClick={() => { setShowGroupSwitcher(false); setOpenCreate(true); }}
                     className="w-full text-left px-3 py-2.5 text-sm text-positive flex items-center gap-1.5 hover:bg-muted/40 transition"
                   >
-                    <Plus className="size-3.5" /> New group
+                    <Plus className="size-3.5" /> {t("family.new_group")}
                   </button>
                 </div>
               </div>
@@ -626,6 +621,7 @@ function FamilyPage() {
         mostActive={mostActiveContributor?.full_name ?? mostActiveContributor?.first_name ?? null}
         currency={currency}
         convert={convert}
+        t={t}
       />
 
       {/* Received invitations */}
@@ -775,15 +771,15 @@ function FamilyPage() {
       {/* Settlement suggestions */}
       {sharedExpenses.length > 0 && (
         <section>
-          <SectionHeader title="Who owes who" />
+          <SectionHeader title={t("family.section.settlements")} />
           {settlements.length === 0 ? (
             <div className="card-flat px-4 py-3.5 flex items-center gap-3">
               <div className="size-8 rounded-full bg-positive-soft grid place-items-center shrink-0">
                 <CheckCircle2 className="size-4 text-positive" />
               </div>
               <div>
-                <p className="text-sm font-medium">All balanced</p>
-                <p className="text-[11px] text-muted-foreground">Everyone's even — no payments needed</p>
+                <p className="text-sm font-medium">{t("family.settlements.all_balanced")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("family.settlements.all_balanced.desc")}</p>
               </div>
             </div>
           ) : (
@@ -791,8 +787,8 @@ function FamilyPage() {
               {settlements.map((s, i) => {
                 const fromMember = memberProfiles.find((m) => m.user_id === s.from_user_id);
                 const toMember = memberProfiles.find((m) => m.user_id === s.to_user_id);
-                const fromName = fromMember?.full_name ?? fromMember?.first_name ?? "Someone";
-                const toName = toMember?.full_name ?? toMember?.first_name ?? "Someone";
+                const fromName = fromMember?.full_name ?? fromMember?.first_name ?? t("family.role.member");
+                const toName = toMember?.full_name ?? toMember?.first_name ?? t("family.role.member");
                 const isMe = s.from_user_id === userId;
                 return (
                   <div key={i} className="flex items-center justify-between px-4 py-3.5">
@@ -802,11 +798,11 @@ function FamilyPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">
-                          <span className={isMe ? "text-warn font-semibold" : ""}>{isMe ? "You" : fromName}</span>
+                          <span className={isMe ? "text-warn font-semibold" : ""}>{isMe ? t("family.you.label") : fromName}</span>
                           <span className="text-muted-foreground mx-1.5">→</span>
-                          <span>{toMember?.user_id === userId ? "you" : toName}</span>
+                          <span>{toMember?.user_id === userId ? t("family.you.label") : toName}</span>
                         </p>
-                        <p className="text-[11px] text-muted-foreground">Suggested payment</p>
+                        <p className="text-[11px] text-muted-foreground">{t("family.settlements.suggestion")}</p>
                       </div>
                     </div>
                     <span className={`text-sm font-semibold num shrink-0 ${isMe ? "text-warn" : "text-foreground"}`}>
@@ -839,13 +835,11 @@ function FamilyPage() {
               <Target className="size-6 text-positive" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold">Start saving together</p>
-              <p className="text-[12px] text-muted-foreground leading-relaxed">
-                Create a shared goal and track progress as a group — holidays, home, emergency fund.
-              </p>
+              <p className="text-sm font-semibold">{t("family.empty.goals.title")}</p>
+              <p className="text-[12px] text-muted-foreground leading-relaxed">{t("family.empty.goals.desc")}</p>
             </div>
             <Button size="sm" onClick={() => { setEditingGoal(null); setOpenGoal(true); }} className="mt-1">
-              <Plus className="size-3.5 mr-1.5" /> Create first goal
+              <Plus className="size-3.5 mr-1.5" /> {t("family.add.goal")}
             </Button>
           </div>
         ) : (
@@ -929,12 +923,12 @@ function FamilyPage() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
                             <div className="size-10 rounded-xl bg-positive text-white grid place-items-center shrink-0">
-                              <Trophy className="size-4.5" />
+                              <Trophy className="size-4" />
                             </div>
                             <div className="min-w-0">
                               <div className="text-sm font-semibold truncate text-positive">{g.name}</div>
                               <div className="text-[11px] text-positive/70 num font-medium">
-                                Goal reached · {money(convert(g.current_amount), currency)}
+                                {t("family.goal.reached")} · {money(convert(g.current_amount), currency)}
                               </div>
                             </div>
                           </div>
@@ -943,7 +937,7 @@ function FamilyPage() {
                             disabled={archiveGoalMutation.isPending}
                             className="shrink-0 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition px-2 py-1 rounded-lg hover:bg-muted/40"
                           >
-                            <Archive className="size-3" /> Archive
+                            <Archive className="size-3" /> {t("family.goal.archive_btn")}
                           </button>
                         </div>
                         <div className="h-1.5 rounded-full bg-positive/30 overflow-hidden mt-3">
@@ -967,8 +961,8 @@ function FamilyPage() {
             <div className="flex items-center gap-3">
               {sharedExpenses.length > 0 && monthlyExpenseTotal > 0 && (
                 <span className="text-[11px] text-muted-foreground num">
-                  {money(convert(monthlyExpenseTotal), currency)} this month
-                  {weeklyExpenseCount > 0 && ` · ${weeklyExpenseCount} this week`}
+                  {t("family.expenses.this_month").replace("{amount}", money(convert(monthlyExpenseTotal), currency))}
+                  {weeklyExpenseCount > 0 && ` · ${t("family.expenses.this_week").replace("{n}", String(weeklyExpenseCount))}`}
                 </span>
               )}
               <button onClick={() => setOpenAddExpense(true)} className="text-xs font-medium text-positive">
@@ -983,13 +977,11 @@ function FamilyPage() {
               <Receipt className="size-6 text-muted-foreground" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold">Split your first expense</p>
-              <p className="text-[12px] text-muted-foreground leading-relaxed">
-                Add shared costs and the app will calculate who owes what automatically.
-              </p>
+              <p className="text-sm font-semibold">{t("family.empty.expenses.title")}</p>
+              <p className="text-[12px] text-muted-foreground leading-relaxed">{t("family.empty.expenses.desc")}</p>
             </div>
             <Button size="sm" variant="outline" onClick={() => setOpenAddExpense(true)} className="mt-1">
-              <Plus className="size-3.5 mr-1.5" /> Add expense
+              <Plus className="size-3.5 mr-1.5" /> + Add
             </Button>
           </div>
         ) : (
@@ -1125,6 +1117,18 @@ function FamilyPage() {
           t={t}
         />
       )}
+
+      <CreateFamilyDialog
+        open={openCreate}
+        onClose={() => setOpenCreate(false)}
+        userId={userId}
+        onCreated={(newId) => {
+          void qc.invalidateQueries({ queryKey: FK.groups(userId) });
+          void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+          switchGroup(newId);
+        }}
+        t={t}
+      />
 
       <AddExpenseDialog
         open={openAddExpense}
@@ -1459,7 +1463,7 @@ function CreateFamilyDialog({
   open: boolean;
   onClose: () => void;
   userId: string;
-  onCreated: () => void;
+  onCreated: (newFamilyId: string) => void;
   t: (k: string) => string;
 }) {
   const [name, setName] = useState("");
@@ -1469,10 +1473,10 @@ function CreateFamilyDialog({
     if (!name.trim()) return;
     setSaving(true);
     try {
-      await createFamily(userId, name.trim());
+      const newId = await createFamily(userId, name.trim());
       toast.success(t("family.toast.created"));
       setName("");
-      onCreated();
+      onCreated(newId);
       onClose();
     } catch (e) {
       toast.error((e as Error).message);
@@ -2215,6 +2219,7 @@ function GroupSummaryCards({
   mostActive,
   currency,
   convert,
+  t,
 }: {
   memberCount: number;
   totalGroupSpend: number;
@@ -2223,45 +2228,54 @@ function GroupSummaryCards({
   mostActive: string | null;
   currency: string;
   convert: (n: number) => number;
+  t: (k: string, p?: Record<string, string>) => string;
 }) {
   return (
     <div className="grid grid-cols-2 gap-2.5">
       <div className="card-flat p-4 space-y-1">
         <div className="flex items-center gap-1.5">
           <Receipt className="size-3.5 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Shared spend</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("family.summary.shared_spend")}</span>
         </div>
         <p className="text-lg font-semibold num">{money(convert(totalGroupSpend), currency)}</p>
-        <p className="text-[10px] text-muted-foreground">total expenses</p>
+        <p className="text-[10px] text-muted-foreground">{t("family.summary.total_expenses")}</p>
       </div>
 
       <div className="card-flat p-4 space-y-1">
         <div className="flex items-center gap-1.5">
           <Target className="size-3.5 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Group savings</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("family.summary.group_savings")}</span>
         </div>
         <p className="text-lg font-semibold num text-positive">{money(convert(totalSaved), currency)}</p>
-        <p className="text-[10px] text-muted-foreground">across all goals</p>
+        <p className="text-[10px] text-muted-foreground">{t("family.summary.across_goals")}</p>
       </div>
 
       <div className={`card-flat p-4 space-y-1 ${pendingSettlements > 0 ? "border-warn/30 bg-warn-soft/10" : ""}`}>
         <div className="flex items-center gap-1.5">
           <Wallet className={`size-3.5 ${pendingSettlements > 0 ? "text-warn" : "text-muted-foreground"}`} />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Balances</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("family.summary.balances")}</span>
         </div>
         <p className={`text-lg font-semibold ${pendingSettlements > 0 ? "text-warn" : "text-positive"}`}>
-          {pendingSettlements > 0 ? `${pendingSettlements} pending` : "Settled ✓"}
+          {pendingSettlements > 0
+            ? t("family.summary.pending").replace("{n}", String(pendingSettlements))
+            : t("family.summary.settled")}
         </p>
-        <p className="text-[10px] text-muted-foreground">{pendingSettlements > 0 ? "payments to make" : "all even"}</p>
+        <p className="text-[10px] text-muted-foreground">
+          {pendingSettlements > 0 ? t("family.summary.payments_to_make") : t("family.summary.all_even")}
+        </p>
       </div>
 
       <div className="card-flat p-4 space-y-1">
         <div className="flex items-center gap-1.5">
           <Star className="size-3.5 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Most active</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("family.summary.most_active")}</span>
         </div>
-        <p className="text-sm font-semibold truncate">{mostActive ?? `${memberCount} members`}</p>
-        <p className="text-[10px] text-muted-foreground">{mostActive ? "top contributor" : "in this group"}</p>
+        <p className="text-sm font-semibold truncate">
+          {mostActive ?? t("family.summary.members_count").replace("{n}", String(memberCount))}
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          {mostActive ? t("family.summary.top_contributor") : t("family.summary.members_count").replace("{n}", String(memberCount))}
+        </p>
       </div>
     </div>
   );
