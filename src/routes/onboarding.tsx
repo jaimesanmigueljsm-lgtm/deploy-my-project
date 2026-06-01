@@ -23,6 +23,7 @@ import {
   Bus,
   Baby,
   ShoppingCart,
+  ShoppingBag,
   Utensils,
   Music,
   Heart,
@@ -40,6 +41,9 @@ import {
   Landmark,
   Shirt,
   MoreHorizontal,
+  GraduationCap,
+  Wifi,
+  Scissors,
 } from "lucide-react";
 import { useT } from "@/i18n";
 
@@ -49,33 +53,37 @@ export const Route = createFileRoute("/onboarding")({
 
 type CatDef = { id: string; icon: React.ElementType; color: string; dbIcon: string };
 
-// electricity / water / gas removed; car / loans / household added
 const FIXED_CATS: CatDef[] = [
-  { id: "rent", icon: Home, color: "sky", dbIcon: "home" },
-  { id: "mortgage", icon: Building2, color: "sky", dbIcon: "building-2" },
-  { id: "car", icon: Car, color: "sky", dbIcon: "car" },
-  { id: "loans", icon: Banknote, color: "warn", dbIcon: "banknote" },
-  { id: "household", icon: Wrench, color: "sky", dbIcon: "wrench" },
-  { id: "phone", icon: Smartphone, color: "mint", dbIcon: "smartphone" },
-  { id: "gym", icon: Dumbbell, color: "mint", dbIcon: "dumbbell" },
-  { id: "subscriptions", icon: Repeat, color: "violet", dbIcon: "repeat" },
-  { id: "insurance", icon: Shield, color: "sky", dbIcon: "shield" },
-  { id: "transport", icon: Bus, color: "sky", dbIcon: "bus" },
-  { id: "childcare", icon: Baby, color: "mint", dbIcon: "baby" },
+  { id: "rent",          icon: Home,       color: "sky",    dbIcon: "home" },
+  { id: "mortgage",      icon: Building2,  color: "sky",    dbIcon: "building-2" },
+  { id: "car",           icon: Car,        color: "sky",    dbIcon: "car" },
+  { id: "loans",         icon: Banknote,   color: "warn",   dbIcon: "banknote" },
+  { id: "internet",      icon: Wifi,       color: "sky",    dbIcon: "wifi" },
+  { id: "household",     icon: Wrench,     color: "sky",    dbIcon: "wrench" },
+  { id: "phone",         icon: Smartphone, color: "mint",   dbIcon: "smartphone" },
+  { id: "gym",           icon: Dumbbell,   color: "mint",   dbIcon: "dumbbell" },
+  { id: "subscriptions", icon: Repeat,     color: "violet", dbIcon: "repeat" },
+  { id: "insurance",     icon: Shield,     color: "sky",    dbIcon: "shield" },
+  { id: "transport",     icon: Bus,        color: "sky",    dbIcon: "bus" },
+  { id: "childcare",     icon: Baby,       color: "mint",   dbIcon: "baby" },
 ];
 
 const VARIABLE_CATS: CatDef[] = [
-  { id: "others", icon: MoreHorizontal, color: "mint", dbIcon: "more-horizontal" },
-  { id: "leisure", icon: Music, color: "violet", dbIcon: "music" },
-  { id: "beauty", icon: Sparkles, color: "violet", dbIcon: "sparkles" },
-  { id: "home", icon: Sofa, color: "sky", dbIcon: "sofa" },
-  { id: "health", icon: Heart, color: "mint", dbIcon: "heart" },
-  { id: "travel", icon: Plane, color: "sky", dbIcon: "plane" },
-  { id: "finance", icon: Landmark, color: "violet", dbIcon: "landmark" },
-  { id: "transport", icon: Bus, color: "sky", dbIcon: "bus" },
-  { id: "clothing", icon: Shirt, color: "warn", dbIcon: "shirt" },
-  { id: "pets", icon: PawPrint, color: "mint", dbIcon: "paw-print" },
-  { id: "loan", icon: CreditCard, color: "violet", dbIcon: "credit-card" },
+  { id: "groceries",   icon: ShoppingCart,   color: "mint",   dbIcon: "shopping-cart" },
+  { id: "restaurants", icon: Utensils,       color: "warn",   dbIcon: "utensils" },
+  { id: "transport",   icon: Bus,            color: "sky",    dbIcon: "bus" },
+  { id: "shopping",    icon: ShoppingBag,    color: "warn",   dbIcon: "shopping-bag" },
+  { id: "health",      icon: Heart,          color: "mint",   dbIcon: "heart" },
+  { id: "education",   icon: GraduationCap,  color: "sky",    dbIcon: "graduation-cap" },
+  { id: "leisure",     icon: Music,          color: "violet", dbIcon: "music" },
+  { id: "travel",      icon: Plane,          color: "sky",    dbIcon: "plane" },
+  { id: "beauty",      icon: Scissors,       color: "violet", dbIcon: "scissors" },
+  { id: "clothing",    icon: Shirt,          color: "warn",   dbIcon: "shirt" },
+  { id: "home",        icon: Sofa,           color: "sky",    dbIcon: "sofa" },
+  { id: "pets",        icon: PawPrint,       color: "mint",   dbIcon: "paw-print" },
+  { id: "finance",     icon: Landmark,       color: "violet", dbIcon: "landmark" },
+  { id: "loan",        icon: CreditCard,     color: "violet", dbIcon: "credit-card" },
+  { id: "others",      icon: MoreHorizontal, color: "mint",   dbIcon: "more-horizontal" },
 ];
 
 const PRIORITY_DEFS = [

@@ -4,6 +4,8 @@ import {
   Repeat, Shield, Bus, Baby, MoreHorizontal, Music, Sparkles, Sofa,
   Heart, Plane, Landmark, Shirt, PawPrint, CreditCard, ShoppingCart,
   Tag, Wallet, Utensils, Zap, Droplets, Flame,
+  ShoppingBag, GraduationCap, Tv, Coffee, Gift, Wifi, Fuel,
+  Stethoscope, Briefcase, Scissors,
 } from "lucide-react";
 
 export type CategoryColor = "mint" | "sky" | "warn" | "violet";
@@ -18,35 +20,64 @@ export interface CategoryMeta {
 // iconKey (stored in categories.icon DB column) → visual config.
 // Colors are canonical here, not in the DB.
 export const REGISTRY: Record<string, CategoryMeta> = {
+  // Housing
   "home":            { icon: Home,           color: "sky",    group: "housing" },
   "building-2":      { icon: Building2,      color: "sky",    group: "housing" },
-  "wrench":          { icon: Wrench,         color: "sky",    group: "housing" },
   "sofa":            { icon: Sofa,           color: "sky",    group: "housing" },
+  "wrench":          { icon: Wrench,         color: "sky",    group: "housing" },
   "zap":             { icon: Zap,            color: "warn",   group: "housing" },
   "droplets":        { icon: Droplets,       color: "sky",    group: "housing" },
   "flame":           { icon: Flame,          color: "warn",   group: "housing" },
+  // Transport
   "car":             { icon: Car,            color: "sky",    group: "transport" },
   "bus":             { icon: Bus,            color: "sky",    group: "transport" },
+  "fuel":            { icon: Fuel,           color: "warn",   group: "transport" },
   "plane":           { icon: Plane,          color: "sky",    group: "travel" },
+  // Food & Drink
+  "shopping-cart":   { icon: ShoppingCart,   color: "mint",   group: "food" },
+  "utensils":        { icon: Utensils,       color: "warn",   group: "food" },
+  "coffee":          { icon: Coffee,         color: "warn",   group: "food" },
+  // Health
+  "heart":           { icon: Heart,          color: "mint",   group: "health" },
+  "dumbbell":        { icon: Dumbbell,       color: "mint",   group: "health" },
+  "stethoscope":     { icon: Stethoscope,    color: "mint",   group: "health" },
+  "baby":            { icon: Baby,           color: "mint",   group: "health" },
+  // Finance & Utilities
+  "credit-card":     { icon: CreditCard,     color: "violet", group: "finance" },
   "banknote":        { icon: Banknote,       color: "warn",   group: "finance" },
+  "landmark":        { icon: Landmark,       color: "violet", group: "finance" },
   "repeat":          { icon: Repeat,         color: "violet", group: "finance" },
   "shield":          { icon: Shield,         color: "sky",    group: "finance" },
-  "landmark":        { icon: Landmark,       color: "violet", group: "finance" },
-  "credit-card":     { icon: CreditCard,     color: "violet", group: "finance" },
-  "smartphone":      { icon: Smartphone,     color: "mint",   group: "lifestyle" },
-  "dumbbell":        { icon: Dumbbell,       color: "mint",   group: "health" },
-  "baby":            { icon: Baby,           color: "mint",   group: "health" },
-  "heart":           { icon: Heart,          color: "mint",   group: "health" },
-  "music":           { icon: Music,          color: "violet", group: "lifestyle" },
-  "sparkles":        { icon: Sparkles,       color: "violet", group: "lifestyle" },
+  "wifi":            { icon: Wifi,           color: "sky",    group: "finance" },
+  "briefcase":       { icon: Briefcase,      color: "sky",    group: "finance" },
+  // Lifestyle & Shopping
+  "shopping-bag":    { icon: ShoppingBag,    color: "warn",   group: "lifestyle" },
   "shirt":           { icon: Shirt,          color: "warn",   group: "lifestyle" },
+  "scissors":        { icon: Scissors,       color: "violet", group: "lifestyle" },
+  "sparkles":        { icon: Sparkles,       color: "violet", group: "lifestyle" },
+  "smartphone":      { icon: Smartphone,     color: "mint",   group: "lifestyle" },
+  "music":           { icon: Music,          color: "violet", group: "lifestyle" },
+  "graduation-cap":  { icon: GraduationCap,  color: "sky",    group: "lifestyle" },
+  "tv":              { icon: Tv,             color: "violet", group: "lifestyle" },
+  "gift":            { icon: Gift,           color: "violet", group: "lifestyle" },
   "paw-print":       { icon: PawPrint,       color: "mint",   group: "lifestyle" },
-  "shopping-cart":   { icon: ShoppingCart,   color: "mint",   group: "food" },
-  "utensils":        { icon: Utensils,       color: "mint",   group: "food" },
+  // Other
   "more-horizontal": { icon: MoreHorizontal, color: "mint",   group: "other" },
   "tag":             { icon: Tag,            color: "mint",   group: "other" },
   "wallet":          { icon: Wallet,         color: "mint",   group: "other" },
 };
+
+// Ordered list for the icon picker UI (grouped by category)
+export const ICON_PICKER_KEYS: string[] = [
+  "home", "building-2", "sofa", "wrench", "zap", "droplets", "flame",
+  "car", "bus", "fuel", "plane",
+  "shopping-cart", "utensils", "coffee",
+  "heart", "dumbbell", "stethoscope", "baby",
+  "credit-card", "banknote", "landmark", "repeat", "shield", "wifi", "briefcase",
+  "shopping-bag", "shirt", "scissors", "sparkles", "smartphone", "music",
+  "graduation-cap", "tv", "gift", "paw-print",
+  "more-horizontal", "tag", "wallet",
+];
 
 const FALLBACK: CategoryMeta = { icon: Tag, color: "mint", group: "other" };
 

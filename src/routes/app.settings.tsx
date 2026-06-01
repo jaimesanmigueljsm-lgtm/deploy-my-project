@@ -46,6 +46,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { SectionHeader, CategoryIcon } from "@/components/nest";
+import { ICON_PICKER_KEYS } from "@/lib/categories";
 import { useT } from "@/i18n";
 import {
   DropdownMenu,
@@ -113,28 +114,35 @@ const AUTO_LOCK_OPTIONS = [
 ] as const;
 
 const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fixed"; icon: string }[] = [
+  // Fixed
   { nameKey: "fixed.rent",          color: "sky",    kind: "fixed",    icon: "home" },
   { nameKey: "fixed.mortgage",      color: "sky",    kind: "fixed",    icon: "building-2" },
   { nameKey: "fixed.electricity",   color: "warn",   kind: "fixed",    icon: "zap" },
   { nameKey: "fixed.water",         color: "sky",    kind: "fixed",    icon: "droplets" },
   { nameKey: "fixed.gas",           color: "warn",   kind: "fixed",    icon: "flame" },
+  { nameKey: "fixed.internet",      color: "sky",    kind: "fixed",    icon: "wifi" },
   { nameKey: "fixed.phone",         color: "mint",   kind: "fixed",    icon: "smartphone" },
   { nameKey: "fixed.gym",           color: "mint",   kind: "fixed",    icon: "dumbbell" },
   { nameKey: "fixed.subscriptions", color: "violet", kind: "fixed",    icon: "repeat" },
   { nameKey: "fixed.insurance",     color: "sky",    kind: "fixed",    icon: "shield" },
   { nameKey: "fixed.transport",     color: "sky",    kind: "fixed",    icon: "bus" },
   { nameKey: "fixed.childcare",     color: "mint",   kind: "fixed",    icon: "baby" },
-  { nameKey: "variable.others",     color: "mint",   kind: "variable", icon: "more-horizontal" },
-  { nameKey: "variable.leisure",    color: "violet", kind: "variable", icon: "music" },
-  { nameKey: "variable.beauty",     color: "violet", kind: "variable", icon: "sparkles" },
-  { nameKey: "variable.home",       color: "sky",    kind: "variable", icon: "sofa" },
-  { nameKey: "variable.health",     color: "mint",   kind: "variable", icon: "heart" },
-  { nameKey: "variable.travel",     color: "sky",    kind: "variable", icon: "plane" },
-  { nameKey: "variable.finance",    color: "violet", kind: "variable", icon: "landmark" },
+  // Variable
+  { nameKey: "variable.groceries",  color: "mint",   kind: "variable", icon: "shopping-cart" },
+  { nameKey: "variable.restaurants",color: "warn",   kind: "variable", icon: "utensils" },
   { nameKey: "variable.transport",  color: "sky",    kind: "variable", icon: "bus" },
+  { nameKey: "variable.shopping",   color: "warn",   kind: "variable", icon: "shopping-bag" },
+  { nameKey: "variable.health",     color: "mint",   kind: "variable", icon: "heart" },
+  { nameKey: "variable.education",  color: "sky",    kind: "variable", icon: "graduation-cap" },
+  { nameKey: "variable.leisure",    color: "violet", kind: "variable", icon: "music" },
+  { nameKey: "variable.travel",     color: "sky",    kind: "variable", icon: "plane" },
+  { nameKey: "variable.beauty",     color: "violet", kind: "variable", icon: "scissors" },
   { nameKey: "variable.clothing",   color: "warn",   kind: "variable", icon: "shirt" },
+  { nameKey: "variable.home",       color: "sky",    kind: "variable", icon: "sofa" },
   { nameKey: "variable.pets",       color: "mint",   kind: "variable", icon: "paw-print" },
+  { nameKey: "variable.finance",    color: "violet", kind: "variable", icon: "landmark" },
   { nameKey: "variable.loan",       color: "violet", kind: "variable", icon: "credit-card" },
+  { nameKey: "variable.others",     color: "mint",   kind: "variable", icon: "more-horizontal" },
 ];
 
 const CAT_COLORS = [
@@ -561,6 +569,7 @@ function CategoriesDialog({
   const [addSection, setAddSection] = useState<"variable" | "fixed" | null>(null);
   const [addName, setAddName] = useState("");
   const [addColor, setAddColor] = useState("mint");
+  const [addIcon, setAddIcon] = useState("tag");
   const [confirmReset, setConfirmReset] = useState(false);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: queryKeys.categories(userId) });
@@ -597,11 +606,12 @@ function CategoriesDialog({
     setAddSection(section);
     setAddName("");
     setAddColor("mint");
+    setAddIcon("tag");
   }
 
   function saveAdd() {
     if (!addName.trim() || !addSection) return;
-    addMut.mutate({ name: addName.trim(), color: addColor, kind: addSection });
+    addMut.mutate({ name: addName.trim(), color: addColor, kind: addSection, icon: addIcon });
   }
 
   function doReset() {
@@ -667,6 +677,21 @@ function CategoriesDialog({
                 if (e.key === "Escape") setAddSection(null);
               }}
             />
+            {/* Icon picker */}
+            <div className="grid grid-cols-7 gap-1 max-h-32 overflow-y-auto">
+              {ICON_PICKER_KEYS.map((iconKey) => (
+                <button
+                  key={iconKey}
+                  type="button"
+                  onClick={() => setAddIcon(iconKey)}
+                  className={`rounded-lg transition ${
+                    addIcon === iconKey ? "ring-2 ring-offset-1 ring-foreground scale-105" : "opacity-40 hover:opacity-80"
+                  }`}
+                >
+                  <CategoryIcon iconKey={iconKey} color={addColor} size="sm" />
+                </button>
+              ))}
+            </div>
             <div className="flex items-center gap-2">
               {CAT_COLORS.map((cl) => (
                 <button

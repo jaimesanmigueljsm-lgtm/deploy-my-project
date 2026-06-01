@@ -700,7 +700,7 @@ function ExpenseDialog({
         if (!v) onClose();
       }}
     >
-      <DialogContent className="rounded-2xl">
+      <DialogContent className="rounded-2xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {editing ? t("budget.dialog.expense.edit.title") : t("budget.dialog.expense.title")}
@@ -727,7 +727,7 @@ function ExpenseDialog({
             />
           </div>
           {categories.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-3 gap-2">
               {categories.map((c) => (
                 <button
                   key={c.id}
