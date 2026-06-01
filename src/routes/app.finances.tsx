@@ -330,6 +330,7 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
               <Label>Quantity</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="10"
@@ -339,6 +340,7 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
               <Label>Avg cost</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 value={avgCost}
                 onChange={(e) => setAvgCost(e.target.value)}
                 placeholder="100"
@@ -348,6 +350,7 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
               <Label>Price now</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 value={currentPrice}
                 onChange={(e) => setCurrentPrice(e.target.value)}
                 placeholder="110"

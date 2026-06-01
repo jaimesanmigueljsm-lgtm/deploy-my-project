@@ -1432,6 +1432,7 @@ function GoalDialog({
               <Label>{t("family.dialog.goal.target")}</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
                 placeholder="3000"
@@ -1442,6 +1443,7 @@ function GoalDialog({
                 <Label>{t("family.dialog.goal.saved")}</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   value={current}
                   onChange={(e) => setCurrent(e.target.value)}
                   placeholder="0"

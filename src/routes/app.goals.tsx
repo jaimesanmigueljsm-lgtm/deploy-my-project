@@ -509,6 +509,7 @@ function GoalDialog({
               </Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="any"
                 placeholder="20000"
                 value={form.target_amount}
@@ -519,6 +520,7 @@ function GoalDialog({
               <Label>{t("goals.dialog.already_saved")}</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="any"
                 value={form.current_amount}
                 onChange={(e) => setForm({ ...form, current_amount: e.target.value })}
@@ -530,6 +532,7 @@ function GoalDialog({
               <Label>{t("goals.dialog.monthly")}</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="any"
                 placeholder="500"
                 value={form.monthly_contribution}
@@ -661,6 +664,7 @@ function ContributionDialog({
             </Label>
             <Input
               type="number"
+              inputMode="decimal"
               step="any"
               autoFocus
               placeholder={goal?.monthly_contribution ? String(goal.monthly_contribution) : "100"}
