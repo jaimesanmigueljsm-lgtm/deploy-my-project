@@ -22,7 +22,7 @@ export function notificationRoute(type: NotificationType): string {
     case "goal_updated":
       return "/app/family";
     default:
-      return "/app/home";
+      return "/app";
   }
 }
 
