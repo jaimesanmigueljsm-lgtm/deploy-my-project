@@ -54,6 +54,8 @@ import {
 } from "@/features/goals/use-goals";
 import { useT } from "@/i18n";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
+import { useUserFamilies, useFamilyGoals, useCreateSharedGoal, useAddSharedContribution, type SharedGoal, type UserFamily } from "@/features/goals/use-shared-goals";
+import { Users, Globe } from "lucide-react";
 
 export const Route = createFileRoute("/app/goals")({
   component: Goals,
@@ -82,6 +84,8 @@ function Goals() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
   const [contribOpen, setContribOpen] = useState<Goal | null>(null);
+  const [activeTab, setActiveTab] = useState<"personal" | "shared">("personal");
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
 
   const goals = goalsQ.data ?? [];
   const contribs = contribsQ.data ?? [];
@@ -89,6 +93,12 @@ function Goals() {
   const currency = profileQ.data?.currency ?? "EUR";
   const convert = useCurrencyConvert();
   const isLoading = goalsQ.isLoading || contribsQ.isLoading;
+
+  const familiesQ = useUserFamilies();
+  const families = familiesQ.data ?? [];
+  const effectiveGroupId = activeGroupId ?? families[0]?.family_id ?? null;
+  const sharedGoalsQ = useFamilyGoals(effectiveGroupId);
+  const sharedGoals = sharedGoalsQ.data ?? [];
 
   const stats = useMemo(() => {
     const total = goals.reduce((s, g) => s + Number(g.target_amount), 0);
@@ -119,7 +129,42 @@ function Goals() {
         </button>
       </header>
 
-      {/* HERO */}
+      {/* TAB SWITCHER */}
+      <div className="flex gap-1 p-1 bg-muted rounded-2xl">
+        <button
+          onClick={() => setActiveTab("personal")}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm font-medium transition-all duration-200",
+            activeTab === "personal"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Target className="size-3.5" />
+          {t("goals.tab.personal")}
+        </button>
+        <button
+          onClick={() => setActiveTab("shared")}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm font-medium transition-all duration-200",
+            activeTab === "shared"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Users className="size-3.5" />
+          {t("goals.tab.shared")}
+          {sharedGoals.length > 0 && (
+            <span className="size-4 rounded-full bg-foreground text-background text-[10px] font-bold grid place-items-center">
+              {sharedGoals.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === "personal" && (
+        <>
+          {/* HERO */}
       <div className="card-soft p-5 gradient-hero relative overflow-hidden">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -236,6 +281,20 @@ function Goals() {
         onClose={() => setContribOpen(null)}
         t={t}
       />
+        </>
+      )}
+
+      {activeTab === "shared" && (
+        <SharedGoalsSection
+          families={families}
+          activeGroupId={effectiveGroupId}
+          onGroupChange={setActiveGroupId}
+          goals={sharedGoals}
+          isLoading={sharedGoalsQ.isLoading || familiesQ.isLoading}
+          familyId={effectiveGroupId}
+          t={t}
+        />
+      )}
     </div>
   );
 }
@@ -699,6 +758,337 @@ function ContributionDialog({
           </Button>
           <Button onClick={save} disabled={addContribution.isPending}>
             {addContribution.isPending ? t("common.loading") : t("goals.contrib.cta")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Shared Goals Section ─────────────────────────────────────────────────────
+
+function SharedGoalsSection({
+  families,
+  activeGroupId,
+  onGroupChange,
+  goals,
+  isLoading,
+  familyId,
+  t,
+}: {
+  families: UserFamily[];
+  activeGroupId: string | null;
+  onGroupChange: (id: string) => void;
+  goals: SharedGoal[];
+  isLoading: boolean;
+  familyId: string | null;
+  t: (k: string) => string;
+}) {
+  const [addOpen, setAddOpen] = useState(false);
+  const createGoal = useCreateSharedGoal(familyId);
+  const addContrib = useAddSharedContribution(familyId);
+  const [contribGoal, setContribGoal] = useState<SharedGoal | null>(null);
+  const profileQ = useProfile();
+  const currency = profileQ.data?.currency ?? "EUR";
+  const convert = useCurrencyConvert();
+
+  if (families.length === 0) {
+    return (
+      <EmptyState
+        icon={<Users className="size-5" />}
+        title={t("goals.shared.empty.title")}
+        description={t("goals.shared.empty.desc")}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Group selector — only show if user has more than 1 group */}
+      {families.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {families.map((f) => (
+            <button
+              key={f.family_id}
+              onClick={() => onGroupChange(f.family_id)}
+              className={cn(
+                "shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all",
+                activeGroupId === f.family_id
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {f.family_name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Active group name */}
+      {families.length > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe className="size-4 text-muted-foreground" />
+            <span className="text-sm font-medium">
+              {families.find((f) => f.family_id === activeGroupId)?.family_name ?? families[0]?.family_name}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              · {families.find((f) => f.family_id === activeGroupId)?.member_count ?? 0} {t("goals.shared.members")}
+            </span>
+          </div>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="size-8 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition"
+          >
+            <Plus className="size-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Goals */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-32 rounded-2xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      ) : goals.length === 0 ? (
+        <EmptyState
+          icon={<Target className="size-5" />}
+          title={t("goals.shared.goals.empty.title")}
+          description={t("goals.shared.goals.empty.desc")}
+          action={
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="size-3.5 mr-1" /> {t("goals.shared.add")}
+            </Button>
+          }
+        />
+      ) : (
+        <div className="space-y-3">
+          {goals.map((g) => (
+            <SharedGoalCard
+              key={g.id}
+              goal={g}
+              currency={currency}
+              convert={convert}
+              onContribute={() => setContribGoal(g)}
+              t={t}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Add shared goal dialog */}
+      <AddSharedGoalDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onCreate={({ name, targetAmount, deadline }) =>
+          createGoal.mutate({ name, targetAmount, deadline }, { onSuccess: () => setAddOpen(false) })
+        }
+        isPending={createGoal.isPending}
+        currency={currency}
+        t={t}
+      />
+
+      {/* Contribute dialog */}
+      <SharedContribDialog
+        goal={contribGoal}
+        currency={currency}
+        convert={convert}
+        onClose={() => setContribGoal(null)}
+        onSubmit={(delta) =>
+          contribGoal &&
+          addContrib.mutate(
+            { goalId: contribGoal.id, currentAmount: contribGoal.current_amount, delta },
+            { onSuccess: () => setContribGoal(null) },
+          )
+        }
+        isPending={addContrib.isPending}
+        t={t}
+      />
+    </div>
+  );
+}
+
+function SharedGoalCard({
+  goal,
+  currency,
+  convert,
+  onContribute,
+  t,
+}: {
+  goal: SharedGoal;
+  currency: string;
+  convert: (n: number) => number;
+  onContribute: () => void;
+  t: (k: string) => string;
+}) {
+  const pct =
+    goal.target_amount > 0
+      ? Math.min(100, (goal.current_amount / goal.target_amount) * 100)
+      : 0;
+
+  return (
+    <div className="card-flat p-4 space-y-3 hover:shadow-soft transition-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="size-11 rounded-2xl bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 grid place-items-center shrink-0">
+            <Users className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-sm truncate">{goal.name}</h3>
+            <p className="text-[11px] text-muted-foreground num truncate">
+              {money(convert(goal.current_amount), currency)} {t("common.of")}{" "}
+              {money(convert(goal.target_amount), currency)}
+            </p>
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-base font-semibold num">{Math.round(pct)}%</div>
+          {pct >= 100 && <Trophy className="size-3.5 text-warn ml-auto mt-0.5" />}
+        </div>
+      </div>
+
+      <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700 bg-violet-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+
+      {goal.deadline && (
+        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+          <Calendar className="size-3" />
+          {new Date(goal.deadline).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+        </p>
+      )}
+
+      <Button size="sm" variant="default" className="w-full" onClick={onContribute}>
+        <Plus className="size-3.5 mr-1" /> {t("goals.contrib.cta")}
+      </Button>
+    </div>
+  );
+}
+
+function AddSharedGoalDialog({
+  open,
+  onOpenChange,
+  onCreate,
+  isPending,
+  currency,
+  t,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onCreate: (data: { name: string; targetAmount: number; deadline: string | null }) => void;
+  isPending: boolean;
+  currency: string;
+  t: (k: string) => string;
+}) {
+  const [name, setName] = useState("");
+  const [target, setTarget] = useState("");
+  const [deadline, setDeadline] = useState("");
+
+  useEffect(() => {
+    if (!open) { setName(""); setTarget(""); setDeadline(""); }
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("goals.shared.dialog.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("goals.dialog.name")}</Label>
+            <Input
+              placeholder={t("goals.shared.dialog.name.placeholder")}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>{t("goals.dialog.target")} ({currency})</Label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="any"
+              placeholder="5000"
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>{t("goals.deadline")}</Label>
+            <Input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+          <Button
+            onClick={() => onCreate({ name, targetAmount: Number(target), deadline: deadline || null })}
+            disabled={!name || !target || isPending}
+          >
+            {isPending ? t("common.loading") : t("goals.shared.add")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SharedContribDialog({
+  goal,
+  currency,
+  convert,
+  onClose,
+  onSubmit,
+  isPending,
+  t,
+}: {
+  goal: SharedGoal | null;
+  currency: string;
+  convert: (n: number) => number;
+  onClose: () => void;
+  onSubmit: (delta: number) => void;
+  isPending: boolean;
+  t: (k: string) => string;
+}) {
+  const [amount, setAmount] = useState("");
+  useEffect(() => { setAmount(""); }, [goal]);
+
+  return (
+    <Dialog open={!!goal} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("goals.contrib.title")} — {goal?.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("goals.contrib.amount")} ({currency})</Label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="any"
+              autoFocus
+              placeholder="100"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button
+            onClick={() => onSubmit(Number(amount))}
+            disabled={!amount || Number(amount) <= 0 || isPending}
+          >
+            {isPending ? t("common.loading") : t("goals.contrib.cta")}
           </Button>
         </DialogFooter>
       </DialogContent>
