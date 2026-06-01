@@ -84,6 +84,32 @@ export interface SharedGoal {
   current_amount: number;
   deadline: string | null;
   notes?: string | null;
+  status?: "active" | "completed" | "archived";
+}
+
+export interface UserFamily {
+  family_id: string;
+  family_name: string;
+  member_role: string;
+  member_count: number;
+  owner_name: string;
+}
+
+export interface SharedExpense {
+  id: string;
+  family_id: string;
+  paid_by: string;
+  description: string;
+  amount: number;
+  category: string | null;
+  notes: string | null;
+  created_at: string;
+  shared_expense_participants: Array<{ user_id: string }>;
+}
+
+export interface MemberBalance {
+  user_id: string;
+  balance: number; // positive = owed money, negative = owes money
 }
 
 export interface FamilyData {
@@ -407,4 +433,99 @@ export async function updateMemberRelationship(
     p_relationship: relationship ?? null,
   });
   if (error) throw new Error(error.message);
+}
+
+// ─── Multi-group ──────────────────────────────────────────────────────────────
+
+export async function getUserFamilies(): Promise<UserFamily[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_user_families");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as UserFamily[];
+}
+
+export async function leaveFamilyGroup(familyId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("leave_family_group", {
+    p_family_id: familyId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+// ─── Shared expenses ──────────────────────────────────────────────────────────
+
+export async function fetchSharedExpenses(familyId: string): Promise<SharedExpense[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("shared_expenses")
+    .select(`*, shared_expense_participants ( user_id )`)
+    .eq("family_id", familyId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) return []; // graceful if table doesn't exist yet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((e) => ({ ...e, amount: Number(e.amount) })) as SharedExpense[];
+}
+
+export async function addSharedExpense(
+  familyId: string,
+  paidBy: string,
+  description: string,
+  amount: number,
+  participantIds: string[],
+  category?: string | null,
+  notes?: string | null,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: expense, error: expErr } = await (supabase as any)
+    .from("shared_expenses")
+    .insert({
+      family_id: familyId,
+      paid_by: paidBy,
+      description: description.trim(),
+      amount,
+      category: category?.trim() || null,
+      notes: notes?.trim() || null,
+    })
+    .select("id")
+    .single();
+  if (expErr) throw new Error(expErr.message);
+
+  if (participantIds.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: partErr } = await (supabase as any)
+      .from("shared_expense_participants")
+      .insert(participantIds.map((uid: string) => ({ expense_id: expense.id, user_id: uid })));
+    if (partErr) throw new Error(partErr.message);
+  }
+}
+
+export async function deleteSharedExpense(expenseId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from("shared_expenses").delete().eq("id", expenseId);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Balance calculation (pure TypeScript — no DB triggers) ───────────────────
+
+export function calculateMemberBalances(
+  members: FamilyMemberProfile[],
+  expenses: SharedExpense[],
+): MemberBalance[] {
+  const balances: Record<string, number> = {};
+  for (const m of members) balances[m.user_id] = 0;
+
+  for (const e of expenses) {
+    const participants = e.shared_expense_participants ?? [];
+    const n = participants.length;
+    if (n === 0) continue;
+    const share = e.amount / n;
+
+    if (balances[e.paid_by] !== undefined) balances[e.paid_by] += e.amount;
+    for (const p of participants) {
+      if (balances[p.user_id] !== undefined) balances[p.user_id] -= share;
+    }
+  }
+
+  return members.map((m) => ({ user_id: m.user_id, balance: balances[m.user_id] ?? 0 }));
 }

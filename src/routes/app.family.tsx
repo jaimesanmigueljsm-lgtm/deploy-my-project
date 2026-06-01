@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SectionError } from "@/components/section-error";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -22,6 +22,10 @@ import {
   Sparkles,
   Zap,
   CircleDollarSign,
+  ChevronDown,
+  Receipt,
+  CheckCircle2,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,13 +57,21 @@ import {
   getFamilyActivity,
   logFamilyActivity,
   updateMemberRelationship,
+  getUserFamilies,
+  fetchSharedExpenses,
+  addSharedExpense,
+  deleteSharedExpense,
+  calculateMemberBalances,
   type UserSearchResult,
   type ReceivedInvitation,
   type SentInvitation,
   type SharedGoal,
   type FamilyMemberProfile,
   type FamilyActivity,
+  type UserFamily,
+  type SharedExpense,
 } from "@/features/family/family.service";
+import { useActiveFamily } from "@/hooks/use-active-family";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -118,6 +130,8 @@ function formatActivity(
       return t("family.activity.family_renamed")
         .replace("{name}", name)
         .replace("{newName}", String(meta.newName ?? ""));
+    case "expense_added":
+      return `${name} added an expense: ${meta.description ?? ""} (${money(convert(Number(meta.amount ?? 0)), currency)})`;
     default:
       return name;
   }
@@ -128,6 +142,8 @@ const FK = {
   received: (userId: string) => ["family", "received", userId] as const,
   sent: (familyId: string) => ["family", "sent", familyId] as const,
   activity: (familyId: string) => ["family", "activity", familyId] as const,
+  expenses: (familyId: string) => ["family", "expenses", familyId] as const,
+  groups: (userId: string) => ["family", "groups", userId] as const,
 };
 
 export const Route = createFileRoute("/app/family")({
@@ -144,9 +160,12 @@ function FamilyPage() {
   const qc = useQueryClient();
 
   const userId = user?.id ?? "";
-  const familyId = profile?.family_id ?? null;
   const currency = profile?.currency ?? "EUR";
   const convert = useCurrencyConvert();
+
+  // Multi-group switcher: localStorage first, falls back to profile.family_id
+  const { activeFamilyId, switchGroup } = useActiveFamily(profile?.family_id ?? null);
+  const familyId = activeFamilyId;
   const myDisplayName = profile?.full_name ?? profile?.first_name ?? t("family.role.member");
 
   const { data: receivedInvitations = [] } = useQuery({
@@ -177,6 +196,21 @@ function FamilyPage() {
     queryFn: () => getFamilyActivity(familyId!),
     enabled: !!familyId,
     staleTime: 15_000,
+    placeholderData: keepPreviousData,
+  });
+
+  const { data: userGroups = [] } = useQuery({
+    queryKey: FK.groups(userId),
+    queryFn: getUserFamilies,
+    enabled: !!userId,
+    staleTime: 30_000,
+  });
+
+  const { data: sharedExpenses = [] } = useQuery({
+    queryKey: FK.expenses(familyId ?? ""),
+    queryFn: () => fetchSharedExpenses(familyId!),
+    enabled: !!familyId,
+    staleTime: 20_000,
     placeholderData: keepPreviousData,
   });
 
@@ -245,6 +279,16 @@ function FamilyPage() {
           filter: `family_id=eq.${familyId}`,
         },
         () => void qc.invalidateQueries({ queryKey: FK.activity(familyId) }),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shared_expenses",
+          filter: `family_id=eq.${familyId}`,
+        },
+        () => void qc.invalidateQueries({ queryKey: FK.expenses(familyId) }),
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -326,6 +370,32 @@ function FamilyPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const addExpenseMutation = useMutation({
+    mutationFn: ({
+      description,
+      amount,
+      participantIds,
+      category,
+    }: {
+      description: string;
+      amount: number;
+      participantIds: string[];
+      category?: string;
+    }) => addSharedExpense(familyId!, userId, description, amount, participantIds, category),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: FK.expenses(familyId ?? "") });
+      void logFamilyActivity(familyId!, "expense_added", myDisplayName, {}).catch(() => {});
+      void qc.invalidateQueries({ queryKey: FK.activity(familyId ?? "") });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteExpenseMutation = useMutation({
+    mutationFn: (expenseId: string) => deleteSharedExpense(expenseId),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.expenses(familyId ?? "") }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // ── Dialog state ──────────────────────────────────────────────────────────
   const [openCreate, setOpenCreate] = useState(false);
   const [openInvite, setOpenInvite] = useState(false);
@@ -335,6 +405,9 @@ function FamilyPage() {
   const [viewingMember, setViewingMember] = useState<FamilyMemberProfile | null>(null);
   const [editingGoal, setEditingGoal] = useState<SharedGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<SharedGoal | null>(null);
+  const [openAddExpense, setOpenAddExpense] = useState(false);
+  const [showCompletedGoals, setShowCompletedGoals] = useState(false);
+  const [showGroupSwitcher, setShowGroupSwitcher] = useState(false);
 
   function quickContribute() {
     if (goals.length === 0) return;
@@ -357,8 +430,23 @@ function FamilyPage() {
   };
 
   // ── Stats (derived, no extra query) ───────────────────────────────────────
-  const activeGoals = goals.filter((g) => g.current_amount < g.target_amount).length;
+  const activeGoals = goals.filter(
+    (g) => (g.status ?? "active") === "active" && g.current_amount < g.target_amount,
+  ).length;
   const totalSaved = goals.reduce((s, g) => s + g.current_amount, 0);
+
+  // ── Goal lifecycle buckets ────────────────────────────────────────────────
+  const displayedGoals = goals.filter(
+    (g) => !g.status || g.status === "active",
+  );
+  const completedGoals = goals.filter((g) => g.status === "completed");
+  const archivedGoals = goals.filter((g) => g.status === "archived");
+
+  // ── Member balances (pure TypeScript, no DB calls) ────────────────────────
+  const memberBalances = useMemo(
+    () => calculateMemberBalances(memberProfiles, sharedExpenses),
+    [memberProfiles, sharedExpenses],
+  );
 
   // ── No family ──────────────────────────────────────────────────────────────
   if (!familyId || (!familyLoading && !family)) {
@@ -419,24 +507,53 @@ function FamilyPage() {
     <div className="px-4 pt-5 space-y-5 animate-rise pb-6">
       {/* Header */}
       <header className="flex items-center justify-between pt-2">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
             {t("family.subtitle")}
           </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight flex items-center gap-2">
-            {family.name}
-            {isOwner && (
-              <button
-                onClick={() => setOpenWhoAreWe(true)}
-                className="size-6 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
-                aria-label={t("common.edit")}
-              >
-                <Pencil className="size-3.5" />
-              </button>
+          {/* Group switcher */}
+          <div className="relative">
+            <button
+              onClick={() => setShowGroupSwitcher((v) => !v)}
+              className="flex items-center gap-1.5 text-[22px] font-semibold mt-0.5 tracking-tight hover:opacity-80 transition"
+            >
+              <span className="truncate max-w-[180px]">{family.name}</span>
+              {userGroups.length > 1 && <ChevronDown className="size-4 text-muted-foreground shrink-0" />}
+              {isOwner && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setOpenWhoAreWe(true); }}
+                  className="size-6 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition ml-1"
+                  aria-label={t("common.edit")}
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+              )}
+            </button>
+            {showGroupSwitcher && (
+              <div className="absolute top-full left-0 mt-1 z-50 bg-background border border-border rounded-xl shadow-lg py-1 min-w-[200px]">
+                {userGroups.map((g) => (
+                  <button
+                    key={g.family_id}
+                    onClick={() => { switchGroup(g.family_id); setShowGroupSwitcher(false); }}
+                    className={`w-full text-left px-3 py-2.5 text-sm flex items-center justify-between hover:bg-muted/40 transition ${g.family_id === familyId ? "font-semibold" : ""}`}
+                  >
+                    <span className="truncate">{g.family_name}</span>
+                    <span className="text-[11px] text-muted-foreground ml-2 shrink-0">{g.member_count} members</span>
+                  </button>
+                ))}
+                <div className="border-t border-border-subtle mt-1 pt-1">
+                  <button
+                    onClick={() => { setShowGroupSwitcher(false); setOpenCreate(true); }}
+                    className="w-full text-left px-3 py-2.5 text-sm text-positive flex items-center gap-1.5 hover:bg-muted/40 transition"
+                  >
+                    <Plus className="size-3.5" /> New group
+                  </button>
+                </div>
+              </div>
             )}
-          </h1>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {isOwner && (
             <button
               onClick={() => setOpenInvite(true)}
@@ -571,7 +688,19 @@ function FamilyPage() {
                           </span>
                         </>
                       )}
-                    </div>
+                      {(() => {
+                        const b = memberBalances.find((x) => x.user_id === m.user_id);
+                        if (!b || Math.abs(b.balance) < 0.01) return null;
+                        const pos = b.balance > 0;
+                        return (
+                          <>
+                            <span className="opacity-40">·</span>
+                            <span className={`font-medium num ${pos ? "text-positive" : "text-negative"}`}>
+                              {pos ? "+" : "−"}{money(convert(Math.abs(b.balance)), currency)}
+                            </span>
+                          </>
+                        );
+                      })()}</div>
                   </div>
                 </div>
                 <svg
@@ -595,10 +724,7 @@ function FamilyPage() {
           title={t("family.section.goals")}
           action={
             <button
-              onClick={() => {
-                setEditingGoal(null);
-                setOpenGoal(true);
-              }}
+              onClick={() => { setEditingGoal(null); setOpenGoal(true); }}
               className="text-xs font-medium text-positive"
             >
               {t("family.add.goal")}
@@ -613,9 +739,8 @@ function FamilyPage() {
           />
         ) : (
           <div className="space-y-2">
-            {goals.map((g) => {
-              const pct =
-                g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0;
+            {displayedGoals.map((g) => {
+              const pct = g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0;
               const remaining = Math.max(0, g.target_amount - g.current_amount);
               const monthly = monthlyNeeded(g);
               return (
@@ -641,9 +766,7 @@ function FamilyPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-sm font-semibold num text-positive">
-                        {Math.round(pct)}%
-                      </span>
+                      <span className="text-sm font-semibold num text-positive">{Math.round(pct)}%</span>
                       <button
                         onClick={() => setContributingGoal(g)}
                         aria-label={t("family.goal.contribute")}
@@ -652,10 +775,7 @@ function FamilyPage() {
                         <CircleDollarSign className="size-5" />
                       </button>
                       <button
-                        onClick={() => {
-                          setEditingGoal(g);
-                          setOpenGoal(true);
-                        }}
+                        onClick={() => { setEditingGoal(g); setOpenGoal(true); }}
                         aria-label={t("common.edit")}
                         className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
                       >
@@ -664,28 +784,114 @@ function FamilyPage() {
                     </div>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-positive transition-all duration-700"
-                      style={{ width: `${pct}%` }}
-                    />
+                    <div className="h-full rounded-full bg-positive transition-all duration-700" style={{ width: `${pct}%` }} />
                   </div>
                   {(remaining > 0 || monthly !== null) && (
                     <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
-                      {remaining > 0 && (
-                        <span>
-                          {money(convert(remaining), currency)} {t("family.goal.remaining")}
-                        </span>
-                      )}
+                      {remaining > 0 && <span>{money(convert(remaining), currency)} {t("family.goal.remaining")}</span>}
                       {monthly !== null && (
                         <span className="text-positive font-medium">
-                          {t("family.goal.monthly").replace(
-                            "{amount}",
-                            money(convert(Math.ceil(monthly)), currency),
-                          )}
+                          {t("family.goal.monthly").replace("{amount}", money(convert(Math.ceil(monthly)), currency))}
                         </span>
                       )}
                     </p>
                   )}
+                </div>
+              );
+            })}
+
+            {/* Completed goals — collapsible */}
+            {completedGoals.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setShowCompletedGoals((v) => !v)}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition py-1 w-full"
+                >
+                  <CheckCircle2 className="size-3.5 text-positive" />
+                  {completedGoals.length} completed goal{completedGoals.length !== 1 ? "s" : ""}
+                  <ChevronRight className={`size-3 ml-auto transition-transform ${showCompletedGoals ? "rotate-90" : ""}`} />
+                </button>
+                {showCompletedGoals && (
+                  <div className="space-y-2 mt-1">
+                    {completedGoals.map((g) => (
+                      <div key={g.id} className="card-flat p-4 opacity-70">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="size-9 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
+                            <CheckCircle2 className="size-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium truncate line-through">{g.name}</div>
+                            <div className="text-[11px] text-muted-foreground num">
+                              {money(convert(g.current_amount), currency)} raised
+                            </div>
+                          </div>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-2">
+                          <div className="h-full rounded-full bg-positive w-full" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Shared expenses */}
+      <section>
+        <SectionHeader
+          title="Shared expenses"
+          action={
+            <button
+              onClick={() => setOpenAddExpense(true)}
+              className="text-xs font-medium text-positive"
+            >
+              + Add
+            </button>
+          }
+        />
+        {sharedExpenses.length === 0 ? (
+          <div className="card-flat p-5 text-center space-y-1.5">
+            <Receipt className="size-5 text-muted-foreground mx-auto" />
+            <p className="text-sm text-muted-foreground">No shared expenses yet</p>
+            <p className="text-[11px] text-muted-foreground opacity-70">Add one to track who paid and split costs</p>
+          </div>
+        ) : (
+          <div className="card-flat divide-y divide-border-subtle">
+            {sharedExpenses.map((e) => {
+              const payer = memberProfiles.find((m) => m.user_id === e.paid_by);
+              const payerName = payer?.full_name ?? payer?.first_name ?? "Someone";
+              const n = e.shared_expense_participants?.length ?? 0;
+              const isMyExpense = e.paid_by === userId;
+              return (
+                <div key={e.id} className="flex items-center justify-between px-4 py-3.5 gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="size-9 rounded-xl bg-muted grid place-items-center shrink-0">
+                      <Receipt className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{e.description}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        Paid by {isMyExpense ? "you" : payerName}
+                        {n > 0 && <span className="ml-1">· split {n}</span>}
+                        {e.category && <span className="ml-1">· {e.category}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-semibold num">{money(convert(e.amount), currency)}</span>
+                    {isMyExpense && (
+                      <button
+                        onClick={() => deleteExpenseMutation.mutate(e.id)}
+                        disabled={deleteExpenseMutation.isPending}
+                        className="size-7 grid place-items-center rounded-lg text-muted-foreground hover:text-negative transition"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -785,6 +991,18 @@ function FamilyPage() {
           t={t}
         />
       )}
+
+      <AddExpenseDialog
+        open={openAddExpense}
+        onClose={() => setOpenAddExpense(false)}
+        members={memberProfiles}
+        currency={currency}
+        currentUserId={userId}
+        onSave={(description, amount, participantIds, category) => {
+          addExpenseMutation.mutate({ description, amount, participantIds, category });
+          setOpenAddExpense(false);
+        }}
+      />
     </div>
   );
 }
@@ -1847,6 +2065,122 @@ function WhoAreWeDialog({
           <Button variant="outline" onClick={onClose} className="w-full">
             {t("common.close")}
           </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── AddExpenseDialog ─────────────────────────────────────────────────────────
+
+function AddExpenseDialog({
+  open,
+  onClose,
+  members,
+  currency,
+  currentUserId,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  members: FamilyMemberProfile[];
+  currency: string;
+  currentUserId: string;
+  onSave: (description: string, amount: number, participantIds: string[], category?: string) => void;
+}) {
+  const currencySymbol = getCurrencySymbol(currency);
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(members.map((m) => m.user_id)));
+
+  // Reset when opened
+  useEffect(() => {
+    if (open) {
+      setDescription("");
+      setAmount("");
+      setCategory("");
+      setSelected(new Set(members.map((m) => m.user_id)));
+    }
+  }, [open, members]);
+
+  function toggle(uid: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  }
+
+  function save() {
+    const amt = Number(amount);
+    if (!description.trim() || amt <= 0) return;
+    onSave(description.trim(), amt, Array.from(selected), category.trim() || undefined);
+  }
+
+  const share = selected.size > 0 && Number(amount) > 0 ? Number(amount) / selected.size : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Add shared expense</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="card-sunken p-5 flex items-baseline gap-2">
+            <span className="text-xl text-muted-foreground">{currencySymbol}</span>
+            <Input
+              type="number"
+              inputMode="decimal"
+              autoFocus
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0"
+              className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
+            />
+          </div>
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description (e.g. Dinner, Hotel…)"
+          />
+          <Input
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="Category (optional)"
+          />
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Split among</p>
+            <div className="card-flat divide-y divide-border-subtle rounded-xl overflow-hidden">
+              {members.map((m) => {
+                const displayName = m.full_name ?? m.first_name ?? "Member";
+                const checked = selected.has(m.user_id);
+                return (
+                  <button
+                    key={m.user_id}
+                    type="button"
+                    onClick={() => toggle(m.user_id)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/40 transition"
+                  >
+                    <span className="text-sm">{displayName}{m.user_id === currentUserId ? " (you)" : ""}</span>
+                    <div className={`size-4 rounded border-2 flex items-center justify-center transition ${checked ? "bg-foreground border-foreground" : "border-border"}`}>
+                      {checked && <svg className="size-2.5 text-background" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {share > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Each pays {getCurrencySymbol(currency)}{share.toFixed(2)} ({selected.size} people)
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+            <Button onClick={save} disabled={!description.trim() || Number(amount) <= 0} className="flex-1">Add expense</Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
