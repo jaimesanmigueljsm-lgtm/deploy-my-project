@@ -956,21 +956,28 @@ function IncomeDialog({
               placeholder={t("budget.dialog.income.source.placeholder")}
             />
             {categories.filter((c) => c.kind === "income").length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {categories.filter((c) => c.kind === "income").map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setSource(source === (CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name) ? "" : (CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name))}
-                    className={`px-3 py-1.5 rounded-full text-xs border transition ${
-                      source === (CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name)
-                        ? "bg-foreground text-background border-foreground"
-                        : "border-border bg-surface hover:border-foreground/20"
-                    }`}
-                  >
-                    {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
-                  </button>
-                ))}
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                {categories.filter((c) => c.kind === "income").map((c) => {
+                  const label = CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name;
+                  const selected = source === label;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setSource(selected ? "" : label)}
+                      className={`flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border transition press-scale ${
+                        selected
+                          ? "bg-primary/8 border-primary shadow-sm"
+                          : "border-border bg-surface hover:border-primary/20"
+                      }`}
+                    >
+                      <CategoryIcon iconKey={c.icon} color={c.color} size="sm" />
+                      <span className={`text-[10px] font-medium text-center leading-tight line-clamp-1 ${
+                        selected ? "text-foreground" : "text-muted-foreground"
+                      }`}>{label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1130,33 +1137,48 @@ function SavingsDialog({
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">{t("savings.field.type")}</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {(categories.filter((c) => c.kind === "savings").length > 0
-                ? categories.filter((c) => c.kind === "savings").map((c) => ({
-                    key: c.id,
-                    value: CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name,
-                    label: CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name,
-                  }))
-                : SAVINGS_TYPES.map((tp) => ({
-                    key: tp,
-                    value: tp,
-                    label: SAVINGS_BUILTIN_TYPES.includes(tp) ? t(`savings.type.${tp}`) : tp,
-                  }))
-              ).map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => setType(item.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs border transition ${
-                    type === item.value
-                      ? "bg-foreground text-background border-foreground"
-                      : "border-border bg-surface hover:border-foreground/20"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+            {categories.filter((c) => c.kind === "savings").length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {categories.filter((c) => c.kind === "savings").map((c) => {
+                  const label = CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name;
+                  const selected = type === label;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setType(selected ? "" : label)}
+                      className={`flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border transition press-scale ${
+                        selected
+                          ? "bg-primary/8 border-primary shadow-sm"
+                          : "border-border bg-surface hover:border-primary/20"
+                      }`}
+                    >
+                      <CategoryIcon iconKey={c.icon} color={c.color} size="sm" />
+                      <span className={`text-[10px] font-medium text-center leading-tight line-clamp-1 ${
+                        selected ? "text-foreground" : "text-muted-foreground"
+                      }`}>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {SAVINGS_TYPES.map((tp) => (
+                  <button
+                    key={tp}
+                    type="button"
+                    onClick={() => setType(tp)}
+                    className={`px-3 py-1.5 rounded-full text-xs border transition ${
+                      type === tp
+                        ? "bg-foreground text-background border-foreground"
+                        : "border-border bg-surface hover:border-foreground/20"
+                    }`}
+                  >
+                    {t(`savings.type.${tp}`)}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">

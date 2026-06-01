@@ -581,6 +581,27 @@ function CategoriesDialog({
     enabled: open && !!userId,
   });
 
+  const seedMut = useMutation({
+    mutationFn: (rows: AddCategoryPayload[]) =>
+      Promise.all(rows.map((r) => addCategory(userId, r).catch(() => null))),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories(userId) }),
+  });
+
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!open || isLoading || seededRef.current) return;
+    const hasIncome = cats.some((c) => c.kind === "income");
+    const hasSavings = cats.some((c) => c.kind === "savings");
+    if (hasIncome && hasSavings) return;
+    seededRef.current = true;
+    const toSeed = DEFAULT_CAT_DEFS.filter(
+      (d) =>
+        (d.kind === "income" && !hasIncome) ||
+        (d.kind === "savings" && !hasSavings),
+    ).map((d) => ({ name: t(d.nameKey), color: d.color, kind: d.kind, icon: d.icon }));
+    if (toSeed.length > 0) seedMut.mutate(toSeed);
+  }, [open, isLoading, cats]);
+
   const [addSection, setAddSection] = useState<"variable" | "fixed" | "income" | "savings" | null>(null);
   const [addName, setAddName] = useState("");
   const [addColor, setAddColor] = useState("mint");

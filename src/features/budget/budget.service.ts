@@ -49,6 +49,7 @@ export async function addCategory(userId: string, payload: AddCategoryPayload): 
     .from("categories")
     .select("id")
     .eq("user_id", userId)
+    .eq("kind", payload.kind)
     .ilike("name", payload.name.trim())
     .maybeSingle();
 
