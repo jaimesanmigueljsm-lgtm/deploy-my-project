@@ -71,9 +71,9 @@ type TabDef = {
 const tabs: TabDef[] = [
   { to: "/app", labelKey: "nav.home", icon: Home, exact: true },
   { to: "/app/budget", labelKey: "nav.budget", icon: Wallet },
-  { to: "/app/goals", labelKey: "nav.goals", icon: Target },
   { to: "/app/analytics", labelKey: "nav.insights", icon: BarChart3 },
-  { to: "/app/family", labelKey: "nav.family", icon: Users },
+  { to: "/app/goals", labelKey: "nav.goals", icon: Target },
+  { to: "/app/family", labelKey: "nav.groups", icon: Users },
   { to: "/app/settings", labelKey: "nav.you", icon: User },
 ];
 

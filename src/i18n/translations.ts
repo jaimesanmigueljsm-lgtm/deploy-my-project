@@ -57,6 +57,7 @@ const en: Dict = {
   "nav.invest": "Invest",
   "nav.insights": "Insights",
   "nav.family": "Family",
+  "nav.groups": "Groups",
   "nav.you": "You",
 
   // ── Common ────────────────────────────────────────────────────────────────
@@ -886,6 +887,7 @@ const es: Dict = {
   "nav.invest": "Invertir",
   "nav.insights": "Análisis",
   "nav.family": "Familia",
+  "nav.groups": "Grupos",
   "nav.you": "Tú",
 
   // ── Common ────────────────────────────────────────────────────────────────
@@ -1712,6 +1714,7 @@ const fr: Dict = {
   "nav.invest": "Investir",
   "nav.insights": "Analyses",
   "nav.family": "Famille",
+  "nav.groups": "Groupes",
   "nav.you": "Vous",
   "common.continue": "Continuer",
   "common.back": "Retour",
@@ -2280,6 +2283,7 @@ const de: Dict = {
   "nav.invest": "Anlegen",
   "nav.insights": "Insights",
   "nav.family": "Familie",
+  "nav.groups": "Gruppen",
   "nav.you": "Du",
   "common.continue": "Weiter",
   "common.back": "Zurück",
@@ -2844,6 +2848,7 @@ const pt: Dict = {
   "nav.invest": "Investir",
   "nav.insights": "Análises",
   "nav.family": "Família",
+  "nav.groups": "Grupos",
   "nav.you": "Tu",
   "common.continue": "Continuar",
   "common.back": "Voltar",
@@ -3411,6 +3416,7 @@ const it: Dict = {
   "nav.invest": "Investi",
   "nav.insights": "Analisi",
   "nav.family": "Famiglia",
+  "nav.groups": "Gruppi",
   "nav.you": "Tu",
   "common.continue": "Continua",
   "common.back": "Indietro",
