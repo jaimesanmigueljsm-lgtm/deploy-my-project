@@ -42,29 +42,30 @@ export async function fetchMonthIncomeTotal(
   start: string,
   end: string,
 ): Promise<number> {
-  const { data, error } = await supabase
-    .from("incomes")
-    .select("amount")
-    .eq("user_id", userId)
-    .gte("received_at", start)
-    .lte("received_at", end);
-
-  if (error) throw new Error(error.message);
-  const periodTotal = (data ?? []).reduce((sum, r) => sum + Number(r.amount), 0);
-
-  // No income recorded this month — fall back to the sum of recurring incomes
-  // so the dashboard always reflects the user's expected monthly income.
-  if (periodTotal === 0) {
-    const { data: recurring, error: recErr } = await supabase
+  // Both queries run in parallel — no waterfall when the month has no entries yet.
+  const [monthRes, recurringRes] = await Promise.all([
+    supabase
       .from("incomes")
       .select("amount")
       .eq("user_id", userId)
-      .eq("recurring", true);
-    if (recErr) throw new Error(recErr.message);
-    return (recurring ?? []).reduce((sum, r) => sum + Number(r.amount), 0);
-  }
+      .gte("received_at", start)
+      .lte("received_at", end),
+    supabase
+      .from("incomes")
+      .select("amount")
+      .eq("user_id", userId)
+      .eq("recurring", true),
+  ]);
 
-  return periodTotal;
+  if (monthRes.error) throw new Error(monthRes.error.message);
+  if (recurringRes.error) throw new Error(recurringRes.error.message);
+
+  const periodTotal = (monthRes.data ?? []).reduce((sum, r) => sum + Number(r.amount), 0);
+  if (periodTotal > 0) return periodTotal;
+
+  // No income recorded this month — fall back to recurring so the dashboard
+  // always reflects the user's expected monthly income.
+  return (recurringRes.data ?? []).reduce((sum, r) => sum + Number(r.amount), 0);
 }
 
 export async function fetchDashboardGoals(userId: string): Promise<DashboardGoal[]> {
