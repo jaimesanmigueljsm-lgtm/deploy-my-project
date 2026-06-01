@@ -120,6 +120,11 @@ function Analytics() {
     [expenses, categories, start, end],
   );
 
+  const chartSeries = useMemo(
+    () => buildIncomeExpenseSeries(expenses, incomes, months),
+    [expenses, incomes, months],
+  );
+
   // ── Tu ahorro: current-month snapshot (independent of period selector) ────
   const currentMonthStart = useMemo(() => range.end.slice(0, 7) + "-01", [range.end]);
 
@@ -233,7 +238,7 @@ function Analytics() {
       <section>
         <SectionHeader title={t("analytics.section.incomeVsExpenses")} />
         <IncomeExpenseBarChart
-          data={sixMonthSeries}
+          data={chartSeries}
           currency={currency}
           convert={convert}
           incomeLabel={t("analytics.chart.income")}
