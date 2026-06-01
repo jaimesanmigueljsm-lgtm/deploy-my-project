@@ -22,9 +22,9 @@ import { queryKeys } from "@/lib/query-keys";
 export const Route = createFileRoute("/app")({
   beforeLoad: async ({ context: { queryClient } }) => {
     if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/auth" });
-    const uid = data.session.user.id;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw redirect({ to: "/auth" });
+    const uid = user.id;
     // Pre-seed the full profile into the React Query cache using the same key
     // that useProfile() reads. This ensures child routes see profile data
     // immediately on mount with no loading state or extra network request.
