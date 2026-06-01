@@ -956,7 +956,7 @@ function FamilyPage() {
       {/* Shared expenses */}
       <section>
         <SectionHeader
-          title="Shared expenses"
+          title={t("family.section.expenses")}
           action={
             <div className="flex items-center gap-3">
               {sharedExpenses.length > 0 && monthlyExpenseTotal > 0 && (
@@ -1000,8 +1000,8 @@ function FamilyPage() {
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{e.description}</div>
                       <div className="text-[11px] text-muted-foreground">
-                        Paid by {isMyExpense ? "you" : payerName}
-                        {n > 0 && <span className="ml-1">· split {n}</span>}
+                        {t("family.expenses.paid_by")} {isMyExpense ? t("family.you.label") : payerName}
+                        {n > 0 && <span className="ml-1">· {t("family.expenses.split")} {n}</span>}
                         {e.category && <span className="ml-1">· {e.category}</span>}
                       </div>
                     </div>
@@ -1136,6 +1136,7 @@ function FamilyPage() {
         members={memberProfiles}
         currency={currency}
         currentUserId={userId}
+        t={t}
         onSave={(description, amount, participantIds, category) => {
           addExpenseMutation.mutate({ description, amount, participantIds, category });
           setOpenAddExpense(false);
@@ -2289,6 +2290,7 @@ function AddExpenseDialog({
   members,
   currency,
   currentUserId,
+  t,
   onSave,
 }: {
   open: boolean;
@@ -2296,6 +2298,7 @@ function AddExpenseDialog({
   members: FamilyMemberProfile[];
   currency: string;
   currentUserId: string;
+  t: (k: string) => string;
   onSave: (description: string, amount: number, participantIds: string[], category?: string) => void;
 }) {
   const currencySymbol = getCurrencySymbol(currency);
@@ -2335,7 +2338,7 @@ function AddExpenseDialog({
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Add shared expense</DialogTitle>
+          <DialogTitle>{t("family.dialog.expense.add.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="card-sunken p-5 flex items-baseline gap-2">
@@ -2353,15 +2356,15 @@ function AddExpenseDialog({
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description (e.g. Dinner, Hotel…)"
+            placeholder={t("family.dialog.expense.description.placeholder")}
           />
           <Input
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            placeholder="Category (optional)"
+            placeholder={t("family.dialog.expense.category.placeholder")}
           />
           <div className="space-y-1.5">
-            <p className="text-xs text-muted-foreground">Split among</p>
+            <p className="text-xs text-muted-foreground">{t("family.dialog.expense.split_among")}</p>
             <div className="card-flat divide-y divide-border-subtle rounded-xl overflow-hidden">
               {members.map((m) => {
                 const displayName = m.full_name ?? m.first_name ?? "Member";
@@ -2373,7 +2376,7 @@ function AddExpenseDialog({
                     onClick={() => toggle(m.user_id)}
                     className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/40 transition"
                   >
-                    <span className="text-sm">{displayName}{m.user_id === currentUserId ? " (you)" : ""}</span>
+                    <span className="text-sm">{displayName}{m.user_id === currentUserId ? ` ${t("family.you.label")}` : ""}</span>
                     <div className={`size-4 rounded border-2 flex items-center justify-center transition ${checked ? "bg-foreground border-foreground" : "border-border"}`}>
                       {checked && <svg className="size-2.5 text-background" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                     </div>
@@ -2383,13 +2386,13 @@ function AddExpenseDialog({
             </div>
             {share > 0 && (
               <p className="text-[11px] text-muted-foreground">
-                Each pays {getCurrencySymbol(currency)}{share.toFixed(2)} ({selected.size} people)
+                {t("family.dialog.expense.each_pays")} {getCurrencySymbol(currency)}{share.toFixed(2)} ({selected.size} {t("family.dialog.expense.people")})
               </p>
             )}
           </div>
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-            <Button onClick={save} disabled={!description.trim() || Number(amount) <= 0} className="flex-1">Add expense</Button>
+            <Button variant="outline" onClick={onClose} className="flex-1">{t("common.cancel")}</Button>
+            <Button onClick={save} disabled={!description.trim() || Number(amount) <= 0} className="flex-1">{t("family.dialog.expense.add_btn")}</Button>
           </div>
         </div>
       </DialogContent>
