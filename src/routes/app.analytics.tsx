@@ -28,10 +28,6 @@ import {
   SmartInsightsFeed,
   SmartInsightsSkeleton,
 } from "@/features/dashboard/components/smart-insights";
-import {
-  RecommendationCards,
-  RecommendationsSkeleton,
-} from "@/features/dashboard/components/recommendation-cards";
 import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -366,22 +362,6 @@ function Analytics() {
               </section>
             )}
 
-            {(engineLoading || (engine && engine.recommendations.length > 0)) && (
-              <section>
-                <SectionHeader
-                  title={t("dashboard.section.recommendations")}
-                  subtitle={t("dashboard.section.recommendations.sub.engine")}
-                />
-                {engineLoading || !engine ? (
-                  <RecommendationsSkeleton />
-                ) : (
-                  <RecommendationCards
-                    recommendations={engine.recommendations}
-                    currency={currency}
-                  />
-                )}
-              </section>
-            )}
           </>
         )}
       </div>
