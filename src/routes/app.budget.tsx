@@ -46,6 +46,10 @@ import { useT } from "@/i18n";
 import { CATEGORY_NAME_TO_KEY } from "@/i18n/translations";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import type { Tables } from "@/integrations/supabase/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { addCategory, type AddCategoryPayload } from "@/features/budget/budget.service";
+import { queryKeys } from "@/lib/query-keys";
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: "€", USD: "$", GBP: "£", CHF: "Fr", JPY: "¥",
@@ -56,6 +60,27 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 const SAVINGS_BUILTIN_TYPES = ["checking", "savings", "cash", "emergency", "other"];
+
+const DEFAULT_INCOME_SAVINGS_DEFS: {
+  nameKey: string;
+  color: string;
+  kind: "income" | "savings";
+  icon: string;
+}[] = [
+  { nameKey: "income.salary",            color: "mint",   kind: "income",  icon: "wallet" },
+  { nameKey: "income.freelance",         color: "sky",    kind: "income",  icon: "smartphone" },
+  { nameKey: "income.dividends",         color: "violet", kind: "income",  icon: "landmark" },
+  { nameKey: "income.rental",            color: "sky",    kind: "income",  icon: "home" },
+  { nameKey: "income.sidehustle",        color: "warn",   kind: "income",  icon: "gift" },
+  { nameKey: "income.bonus",             color: "mint",   kind: "income",  icon: "sparkles" },
+  { nameKey: "income.other",             color: "mint",   kind: "income",  icon: "more-horizontal" },
+  { nameKey: "savings.cat.checking",     color: "sky",    kind: "savings", icon: "credit-card" },
+  { nameKey: "savings.cat.savings",      color: "mint",   kind: "savings", icon: "banknote" },
+  { nameKey: "savings.cat.cash",         color: "warn",   kind: "savings", icon: "wallet" },
+  { nameKey: "savings.cat.emergency",    color: "mint",   kind: "savings", icon: "shield" },
+  { nameKey: "savings.cat.investment",   color: "violet", kind: "savings", icon: "landmark" },
+  { nameKey: "savings.cat.other",        color: "mint",   kind: "savings", icon: "more-horizontal" },
+];
 
 export const Route = createFileRoute("/app/budget")({
   component: Budget,
@@ -129,6 +154,28 @@ function Budget() {
       return true;
     });
   }, [categories]);
+
+  // Auto-seed default income/savings categories the first time Budget loads
+  // if the user has never set them up (avoids requiring a Settings visit first).
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const seedMut = useMutation({
+    mutationFn: (rows: AddCategoryPayload[]) =>
+      Promise.all(rows.map((r) => addCategory(user!.id, r).catch(() => null))),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories(user!.id) }),
+  });
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (isLoading || seededRef.current || !user) return;
+    const hasIncome = categories.some((c) => c.kind === "income");
+    const hasSavings = categories.some((c) => c.kind === "savings");
+    if (hasIncome && hasSavings) return;
+    seededRef.current = true;
+    const toSeed = DEFAULT_INCOME_SAVINGS_DEFS.filter(
+      (d) => (d.kind === "income" && !hasIncome) || (d.kind === "savings" && !hasSavings),
+    ).map((d) => ({ name: t(d.nameKey), color: d.color, kind: d.kind, icon: d.icon }));
+    if (toSeed.length > 0) seedMut.mutate(toSeed);
+  }, [isLoading, categories, user]);
 
   const billIds = useMemo(() => new Set(bills.map((b) => b.id)), [bills]);
 
