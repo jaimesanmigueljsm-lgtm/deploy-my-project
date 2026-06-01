@@ -1188,12 +1188,22 @@ function SavingsDialog({
               <div className="grid grid-cols-3 gap-2">
                 {categories.filter((c) => c.kind === "savings").map((c) => {
                   const label = CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name;
-                  const selected = type === label;
+                  // Map icon back to DB value: credit-card->checking, banknote->savings, wallet->cash, shield->emergency, landmark->investment, more-horizontal->other
+                  const iconToDbValue: Record<string, string> = {
+                    "credit-card": "checking",
+                    "banknote": "savings",
+                    "wallet": "cash",
+                    "shield": "emergency",
+                    "landmark": "other", // investment maps to "other" in DB
+                    "more-horizontal": "other"
+                  };
+                  const dbValue = iconToDbValue[c.icon] || c.icon;
+                  const selected = type === dbValue;
                   return (
                     <button
                       key={c.id}
                       type="button"
-                      onClick={() => setType(selected ? "" : label)}
+                      onClick={() => setType(selected ? "savings" : dbValue)}
                       className={`flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border transition press-scale ${
                         selected
                           ? "bg-primary/8 border-primary shadow-sm"
