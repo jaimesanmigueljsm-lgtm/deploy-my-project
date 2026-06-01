@@ -346,9 +346,10 @@ export async function createSharedGoal(
 
 export async function updateSharedGoal(
   goalId: string,
-  updates: { name?: string; target_amount?: number; deadline?: string | null },
+  updates: { name?: string; target_amount?: number; deadline?: string | null; status?: string },
 ): Promise<void> {
-  const { error } = await supabase.from("shared_goals").update(updates).eq("id", goalId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from("shared_goals").update(updates).eq("id", goalId);
   if (error) throw new Error(error.message);
 }
 
@@ -506,6 +507,12 @@ export async function deleteSharedExpense(expenseId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export interface Settlement {
+  from_user_id: string;
+  to_user_id: string;
+  amount: number;
+}
+
 // ─── Balance calculation (pure TypeScript — no DB triggers) ───────────────────
 
 export function calculateMemberBalances(
@@ -528,4 +535,42 @@ export function calculateMemberBalances(
   }
 
   return members.map((m) => ({ user_id: m.user_id, balance: balances[m.user_id] ?? 0 }));
+}
+
+/**
+ * Simple greedy settlement suggestions.
+ * Pairs the largest debtor with the largest creditor repeatedly.
+ * Pure TypeScript — no DB calls.
+ */
+export function calculateSettlements(balances: MemberBalance[]): Settlement[] {
+  const debtors: Array<{ user_id: string; amount: number }> = [];
+  const creditors: Array<{ user_id: string; amount: number }> = [];
+
+  for (const b of balances) {
+    if (b.balance < -0.01) debtors.push({ user_id: b.user_id, amount: -b.balance });
+    else if (b.balance > 0.01) creditors.push({ user_id: b.user_id, amount: b.balance });
+  }
+
+  debtors.sort((a, b) => b.amount - a.amount);
+  creditors.sort((a, b) => b.amount - a.amount);
+
+  const settlements: Settlement[] = [];
+  let i = 0, j = 0;
+
+  while (i < debtors.length && j < creditors.length) {
+    const amount = Math.min(debtors[i].amount, creditors[j].amount);
+    if (amount > 0.01) {
+      settlements.push({
+        from_user_id: debtors[i].user_id,
+        to_user_id: creditors[j].user_id,
+        amount: Math.round(amount * 100) / 100,
+      });
+    }
+    debtors[i].amount -= amount;
+    creditors[j].amount -= amount;
+    if (debtors[i].amount < 0.01) i++;
+    if (creditors[j].amount < 0.01) j++;
+  }
+
+  return settlements;
 }

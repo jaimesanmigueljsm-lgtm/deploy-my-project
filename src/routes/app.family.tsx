@@ -26,6 +26,13 @@ import {
   Receipt,
   CheckCircle2,
   ChevronRight,
+  Trophy,
+  ArrowRight,
+  Wallet,
+  Star,
+  PartyPopper,
+  Archive,
+  TrendingDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +69,7 @@ import {
   addSharedExpense,
   deleteSharedExpense,
   calculateMemberBalances,
+  calculateSettlements,
   type UserSearchResult,
   type ReceivedInvitation,
   type SentInvitation,
@@ -70,6 +78,7 @@ import {
   type FamilyActivity,
   type UserFamily,
   type SharedExpense,
+  type Settlement,
 } from "@/features/family/family.service";
 import { useActiveFamily } from "@/hooks/use-active-family";
 import { queryKeys } from "@/lib/query-keys";
@@ -396,6 +405,12 @@ function FamilyPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const archiveGoalMutation = useMutation({
+    mutationFn: (goalId: string) => updateSharedGoal(goalId, { status: "archived" }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.data(familyId ?? "") }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // ── Dialog state ──────────────────────────────────────────────────────────
   const [openCreate, setOpenCreate] = useState(false);
   const [openInvite, setOpenInvite] = useState(false);
@@ -448,6 +463,34 @@ function FamilyPage() {
     [memberProfiles, sharedExpenses],
   );
 
+  // ── Settlement suggestions ─────────────────────────────────────────────────
+  const settlements = useMemo(
+    () => calculateSettlements(memberBalances),
+    [memberBalances],
+  );
+
+  // ── Group progress metrics ─────────────────────────────────────────────────
+  const { weeklyExpenseCount, monthlyExpenseTotal, totalGroupSpend } = useMemo(() => {
+    const now = Date.now();
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+    return {
+      weeklyExpenseCount: sharedExpenses.filter((e) => new Date(e.created_at).getTime() >= weekAgo).length,
+      monthlyExpenseTotal: sharedExpenses
+        .filter((e) => new Date(e.created_at).getTime() >= monthStart)
+        .reduce((s, e) => s + e.amount, 0),
+      totalGroupSpend: sharedExpenses.reduce((s, e) => s + e.amount, 0),
+    };
+  }, [sharedExpenses]);
+
+  const mostActiveContributor = useMemo(() => {
+    if (sharedExpenses.length === 0) return null;
+    const totals: Record<string, number> = {};
+    for (const e of sharedExpenses) totals[e.paid_by] = (totals[e.paid_by] ?? 0) + e.amount;
+    const [topId] = Object.entries(totals).sort(([, a], [, b]) => b - a)[0] ?? [];
+    return topId ? (memberProfiles.find((m) => m.user_id === topId) ?? null) : null;
+  }, [sharedExpenses, memberProfiles]);
+
   // ── No family ──────────────────────────────────────────────────────────────
   if (!familyId || (!familyLoading && !family)) {
     return (
@@ -477,17 +520,26 @@ function FamilyPage() {
           </section>
         )}
 
-        <EmptyState
-          icon={<Users className="size-5" />}
-          title={t("family.empty.title")}
-          description={t("family.empty.desc")}
-          action={
-            <Button size="sm" onClick={() => setOpenCreate(true)}>
-              <Plus className="size-3.5 mr-1" />
+        <div className="card-flat p-7 flex flex-col items-center text-center gap-4">
+          <div className="size-16 rounded-2xl bg-muted grid place-items-center">
+            <Users className="size-7 text-muted-foreground" />
+          </div>
+          <div className="space-y-1.5 max-w-[260px]">
+            <p className="text-base font-semibold">Create your group</p>
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
+              Share expenses, track goals, and see who owes what — all in one place.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 w-full max-w-[220px]">
+            <Button size="sm" onClick={() => setOpenCreate(true)} className="w-full">
+              <Plus className="size-3.5 mr-1.5" />
               {t("family.create.button")}
             </Button>
-          }
-        />
+            {receivedInvitations.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">or wait for a group invite</p>
+            )}
+          </div>
+        </div>
 
         <CreateFamilyDialog
           open={openCreate}
@@ -565,13 +617,15 @@ function FamilyPage() {
         </div>
       </header>
 
-      {/* Stats strip */}
-      <FamilyStatsStrip
+      {/* Group summary cards */}
+      <GroupSummaryCards
         memberCount={members.length}
-        activeGoals={activeGoals}
+        totalGroupSpend={totalGroupSpend}
         totalSaved={totalSaved}
+        pendingSettlements={settlements.length}
+        mostActive={mostActiveContributor?.full_name ?? mostActiveContributor?.first_name ?? null}
         currency={currency}
-        t={t}
+        convert={convert}
       />
 
       {/* Received invitations */}
@@ -718,6 +772,54 @@ function FamilyPage() {
         </div>
       </section>
 
+      {/* Settlement suggestions */}
+      {sharedExpenses.length > 0 && (
+        <section>
+          <SectionHeader title="Who owes who" />
+          {settlements.length === 0 ? (
+            <div className="card-flat px-4 py-3.5 flex items-center gap-3">
+              <div className="size-8 rounded-full bg-positive-soft grid place-items-center shrink-0">
+                <CheckCircle2 className="size-4 text-positive" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">All balanced</p>
+                <p className="text-[11px] text-muted-foreground">Everyone's even — no payments needed</p>
+              </div>
+            </div>
+          ) : (
+            <div className="card-flat divide-y divide-border-subtle">
+              {settlements.map((s, i) => {
+                const fromMember = memberProfiles.find((m) => m.user_id === s.from_user_id);
+                const toMember = memberProfiles.find((m) => m.user_id === s.to_user_id);
+                const fromName = fromMember?.full_name ?? fromMember?.first_name ?? "Someone";
+                const toName = toMember?.full_name ?? toMember?.first_name ?? "Someone";
+                const isMe = s.from_user_id === userId;
+                return (
+                  <div key={i} className="flex items-center justify-between px-4 py-3.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`size-8 rounded-full grid place-items-center shrink-0 ${isMe ? "bg-warn-soft" : "bg-muted"}`}>
+                        <Wallet className={`size-3.5 ${isMe ? "text-warn" : "text-muted-foreground"}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          <span className={isMe ? "text-warn font-semibold" : ""}>{isMe ? "You" : fromName}</span>
+                          <span className="text-muted-foreground mx-1.5">→</span>
+                          <span>{toMember?.user_id === userId ? "you" : toName}</span>
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">Suggested payment</p>
+                      </div>
+                    </div>
+                    <span className={`text-sm font-semibold num shrink-0 ${isMe ? "text-warn" : "text-foreground"}`}>
+                      {money(convert(s.amount), currency)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Shared goals */}
       <section>
         <SectionHeader
@@ -732,11 +834,20 @@ function FamilyPage() {
           }
         />
         {goals.length === 0 ? (
-          <EmptyState
-            icon={<Target className="size-5" />}
-            title={t("family.goal.empty.title")}
-            description={t("family.goal.empty.desc")}
-          />
+          <div className="card-flat p-6 flex flex-col items-center text-center gap-3">
+            <div className="size-14 rounded-2xl bg-positive-soft grid place-items-center">
+              <Target className="size-6 text-positive" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Start saving together</p>
+              <p className="text-[12px] text-muted-foreground leading-relaxed">
+                Create a shared goal and track progress as a group — holidays, home, emergency fund.
+              </p>
+            </div>
+            <Button size="sm" onClick={() => { setEditingGoal(null); setOpenGoal(true); }} className="mt-1">
+              <Plus className="size-3.5 mr-1.5" /> Create first goal
+            </Button>
+          </div>
         ) : (
           <div className="space-y-2">
             {displayedGoals.map((g) => {
@@ -814,19 +925,28 @@ function FamilyPage() {
                 {showCompletedGoals && (
                   <div className="space-y-2 mt-1">
                     {completedGoals.map((g) => (
-                      <div key={g.id} className="card-flat p-4 opacity-70">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="size-9 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
-                            <CheckCircle2 className="size-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium truncate line-through">{g.name}</div>
-                            <div className="text-[11px] text-muted-foreground num">
-                              {money(convert(g.current_amount), currency)} raised
+                      <div key={g.id} className="rounded-2xl border border-positive/20 bg-positive-soft/20 p-4 animate-rise">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="size-10 rounded-xl bg-positive text-white grid place-items-center shrink-0">
+                              <Trophy className="size-4.5" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold truncate text-positive">{g.name}</div>
+                              <div className="text-[11px] text-positive/70 num font-medium">
+                                Goal reached · {money(convert(g.current_amount), currency)}
+                              </div>
                             </div>
                           </div>
+                          <button
+                            onClick={() => archiveGoalMutation.mutate(g.id)}
+                            disabled={archiveGoalMutation.isPending}
+                            className="shrink-0 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition px-2 py-1 rounded-lg hover:bg-muted/40"
+                          >
+                            <Archive className="size-3" /> Archive
+                          </button>
                         </div>
-                        <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-2">
+                        <div className="h-1.5 rounded-full bg-positive/30 overflow-hidden mt-3">
                           <div className="h-full rounded-full bg-positive w-full" />
                         </div>
                       </div>
@@ -844,19 +964,33 @@ function FamilyPage() {
         <SectionHeader
           title="Shared expenses"
           action={
-            <button
-              onClick={() => setOpenAddExpense(true)}
-              className="text-xs font-medium text-positive"
-            >
-              + Add
-            </button>
+            <div className="flex items-center gap-3">
+              {sharedExpenses.length > 0 && monthlyExpenseTotal > 0 && (
+                <span className="text-[11px] text-muted-foreground num">
+                  {money(convert(monthlyExpenseTotal), currency)} this month
+                  {weeklyExpenseCount > 0 && ` · ${weeklyExpenseCount} this week`}
+                </span>
+              )}
+              <button onClick={() => setOpenAddExpense(true)} className="text-xs font-medium text-positive">
+                + Add
+              </button>
+            </div>
           }
         />
         {sharedExpenses.length === 0 ? (
-          <div className="card-flat p-5 text-center space-y-1.5">
-            <Receipt className="size-5 text-muted-foreground mx-auto" />
-            <p className="text-sm text-muted-foreground">No shared expenses yet</p>
-            <p className="text-[11px] text-muted-foreground opacity-70">Add one to track who paid and split costs</p>
+          <div className="card-flat p-6 flex flex-col items-center text-center gap-3">
+            <div className="size-14 rounded-2xl bg-muted grid place-items-center">
+              <Receipt className="size-6 text-muted-foreground" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Split your first expense</p>
+              <p className="text-[12px] text-muted-foreground leading-relaxed">
+                Add shared costs and the app will calculate who owes what automatically.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => setOpenAddExpense(true)} className="mt-1">
+              <Plus className="size-3.5 mr-1.5" /> Add expense
+            </Button>
           </div>
         ) : (
           <div className="card-flat divide-y divide-border-subtle">
@@ -2068,6 +2202,68 @@ function WhoAreWeDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── GroupSummaryCards ────────────────────────────────────────────────────────
+
+function GroupSummaryCards({
+  memberCount,
+  totalGroupSpend,
+  totalSaved,
+  pendingSettlements,
+  mostActive,
+  currency,
+  convert,
+}: {
+  memberCount: number;
+  totalGroupSpend: number;
+  totalSaved: number;
+  pendingSettlements: number;
+  mostActive: string | null;
+  currency: string;
+  convert: (n: number) => number;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2.5">
+      <div className="card-flat p-4 space-y-1">
+        <div className="flex items-center gap-1.5">
+          <Receipt className="size-3.5 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Shared spend</span>
+        </div>
+        <p className="text-lg font-semibold num">{money(convert(totalGroupSpend), currency)}</p>
+        <p className="text-[10px] text-muted-foreground">total expenses</p>
+      </div>
+
+      <div className="card-flat p-4 space-y-1">
+        <div className="flex items-center gap-1.5">
+          <Target className="size-3.5 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Group savings</span>
+        </div>
+        <p className="text-lg font-semibold num text-positive">{money(convert(totalSaved), currency)}</p>
+        <p className="text-[10px] text-muted-foreground">across all goals</p>
+      </div>
+
+      <div className={`card-flat p-4 space-y-1 ${pendingSettlements > 0 ? "border-warn/30 bg-warn-soft/10" : ""}`}>
+        <div className="flex items-center gap-1.5">
+          <Wallet className={`size-3.5 ${pendingSettlements > 0 ? "text-warn" : "text-muted-foreground"}`} />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Balances</span>
+        </div>
+        <p className={`text-lg font-semibold ${pendingSettlements > 0 ? "text-warn" : "text-positive"}`}>
+          {pendingSettlements > 0 ? `${pendingSettlements} pending` : "Settled ✓"}
+        </p>
+        <p className="text-[10px] text-muted-foreground">{pendingSettlements > 0 ? "payments to make" : "all even"}</p>
+      </div>
+
+      <div className="card-flat p-4 space-y-1">
+        <div className="flex items-center gap-1.5">
+          <Star className="size-3.5 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Most active</span>
+        </div>
+        <p className="text-sm font-semibold truncate">{mostActive ?? `${memberCount} members`}</p>
+        <p className="text-[10px] text-muted-foreground">{mostActive ? "top contributor" : "in this group"}</p>
+      </div>
+    </div>
   );
 }
 
