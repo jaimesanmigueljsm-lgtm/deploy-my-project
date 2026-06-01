@@ -137,6 +137,23 @@ const en: Dict = {
   "variable.clothing": "Clothing",
   "variable.loan": "Loan",
 
+  // Income categories
+  "income.salary": "Salary",
+  "income.freelance": "Freelance",
+  "income.dividends": "Dividends",
+  "income.rental": "Rental",
+  "income.sidehustle": "Side hustle",
+  "income.bonus": "Bonus",
+  "income.other": "Other income",
+
+  // Savings categories
+  "savings.cat.checking": "Checking",
+  "savings.cat.savings": "Savings account",
+  "savings.cat.cash": "Cash",
+  "savings.cat.emergency": "Emergency fund",
+  "savings.cat.investment": "Investment",
+  "savings.cat.other": "Other savings",
+
   // Priorities
   "priority.savings": "Save more",
   "priority.debt": "Pay off debt",
@@ -624,6 +641,8 @@ const en: Dict = {
   "settings.categories.title": "Your categories",
   "settings.categories.section.variable": "Variable",
   "settings.categories.section.fixed": "Fixed",
+  "settings.categories.section.income": "Income",
+  "settings.categories.section.savings": "Savings",
   "settings.categories.add": "+ Add",
   "settings.categories.add.placeholder": "Category name",
   "settings.categories.save": "Save",
@@ -907,6 +926,23 @@ const es: Dict = {
   "variable.finance": "Finanzas",
   "variable.clothing": "Ropa",
   "variable.loan": "Préstamo",
+
+  // Income categories
+  "income.salary": "Nómina",
+  "income.freelance": "Freelance",
+  "income.dividends": "Dividendos",
+  "income.rental": "Alquiler",
+  "income.sidehustle": "Trabajo extra",
+  "income.bonus": "Bono",
+  "income.other": "Otros ingresos",
+
+  // Savings categories
+  "savings.cat.checking": "Cuenta corriente",
+  "savings.cat.savings": "Cuenta de ahorro",
+  "savings.cat.cash": "Efectivo",
+  "savings.cat.emergency": "Fondo de emergencia",
+  "savings.cat.investment": "Inversión",
+  "savings.cat.other": "Otros ahorros",
 
   // Priorities
   "priority.savings": "Ahorrar más",
@@ -1398,6 +1434,8 @@ const es: Dict = {
   "settings.categories.title": "Tus categorías",
   "settings.categories.section.variable": "Variables",
   "settings.categories.section.fixed": "Fijas",
+  "settings.categories.section.income": "Ingresos",
+  "settings.categories.section.savings": "Ahorros",
   "settings.categories.add": "+ Añadir",
   "settings.categories.add.placeholder": "Nombre de categoría",
   "settings.categories.save": "Guardar",
@@ -1668,6 +1706,24 @@ const fr: Dict = {
   "variable.finance": "Finances",
   "variable.clothing": "Vêtements",
   "variable.loan": "Prêt",
+
+  // Income categories
+  "income.salary": "Salaire",
+  "income.freelance": "Freelance",
+  "income.dividends": "Dividendes",
+  "income.rental": "Location",
+  "income.sidehustle": "Activité secondaire",
+  "income.bonus": "Prime",
+  "income.other": "Autres revenus",
+
+  // Savings categories
+  "savings.cat.checking": "Compte courant",
+  "savings.cat.savings": "Compte épargne",
+  "savings.cat.cash": "Espèces",
+  "savings.cat.emergency": "Fonds d'urgence",
+  "savings.cat.investment": "Investissement",
+  "savings.cat.other": "Autres épargnes",
+
   "priority.savings": "Épargner davantage",
   "priority.debt": "Rembourser les dettes",
   "priority.family": "Sécurité familiale",
@@ -1928,6 +1984,8 @@ const fr: Dict = {
   "settings.categories.title": "Vos catégories",
   "settings.categories.section.variable": "Variables",
   "settings.categories.section.fixed": "Fixes",
+  "settings.categories.section.income": "Revenus",
+  "settings.categories.section.savings": "Épargnes",
   "settings.categories.add": "+ Ajouter",
   "settings.categories.add.placeholder": "Nom de la catégorie",
   "settings.categories.save": "Enregistrer",
@@ -2127,6 +2185,24 @@ const de: Dict = {
   "variable.finance": "Finanzen",
   "variable.clothing": "Kleidung",
   "variable.loan": "Kredit",
+
+  // Income categories
+  "income.salary": "Gehalt",
+  "income.freelance": "Freelance",
+  "income.dividends": "Dividenden",
+  "income.rental": "Miete",
+  "income.sidehustle": "Nebenverdienst",
+  "income.bonus": "Bonus",
+  "income.other": "Sonstige Einnahmen",
+
+  // Savings categories
+  "savings.cat.checking": "Girokonto",
+  "savings.cat.savings": "Sparkonto",
+  "savings.cat.cash": "Bargeld",
+  "savings.cat.emergency": "Notfallfonds",
+  "savings.cat.investment": "Investitionen",
+  "savings.cat.other": "Sonstiges Erspartes",
+
   "priority.savings": "Mehr sparen",
   "priority.debt": "Schulden abbezahlen",
   "priority.family": "Familiensicherheit",
@@ -2385,6 +2461,8 @@ const de: Dict = {
   "settings.categories.title": "Deine Kategorien",
   "settings.categories.section.variable": "Variabel",
   "settings.categories.section.fixed": "Fix",
+  "settings.categories.section.income": "Einnahmen",
+  "settings.categories.section.savings": "Ersparnisse",
   "settings.categories.add": "+ Hinzufügen",
   "settings.categories.add.placeholder": "Kategoriename",
   "settings.categories.save": "Speichern",
@@ -2583,6 +2661,24 @@ const pt: Dict = {
   "variable.finance": "Finanças",
   "variable.clothing": "Roupa",
   "variable.loan": "Empréstimo",
+
+  // Income categories
+  "income.salary": "Salário",
+  "income.freelance": "Freelance",
+  "income.dividends": "Dividendos",
+  "income.rental": "Arrendamento",
+  "income.sidehustle": "Trabalho extra",
+  "income.bonus": "Bónus",
+  "income.other": "Outros rendimentos",
+
+  // Savings categories
+  "savings.cat.checking": "Conta à ordem",
+  "savings.cat.savings": "Conta poupança",
+  "savings.cat.cash": "Dinheiro",
+  "savings.cat.emergency": "Fundo de emergência",
+  "savings.cat.investment": "Investimento",
+  "savings.cat.other": "Outras poupanças",
+
   "priority.savings": "Poupar mais",
   "priority.debt": "Pagar dívidas",
   "priority.family": "Segurança familiar",
@@ -2843,6 +2939,8 @@ const pt: Dict = {
   "settings.categories.title": "As tuas categorias",
   "settings.categories.section.variable": "Variáveis",
   "settings.categories.section.fixed": "Fixas",
+  "settings.categories.section.income": "Rendimentos",
+  "settings.categories.section.savings": "Poupanças",
   "settings.categories.add": "+ Adicionar",
   "settings.categories.add.placeholder": "Nome da categoria",
   "settings.categories.save": "Guardar",
@@ -3042,6 +3140,24 @@ const it: Dict = {
   "variable.finance": "Finanze",
   "variable.clothing": "Abbigliamento",
   "variable.loan": "Prestito",
+
+  // Income categories
+  "income.salary": "Stipendio",
+  "income.freelance": "Freelance",
+  "income.dividends": "Dividendi",
+  "income.rental": "Affitto",
+  "income.sidehustle": "Attività secondaria",
+  "income.bonus": "Bonus",
+  "income.other": "Altri redditi",
+
+  // Savings categories
+  "savings.cat.checking": "Conto corrente",
+  "savings.cat.savings": "Conto risparmio",
+  "savings.cat.cash": "Contanti",
+  "savings.cat.emergency": "Fondo emergenza",
+  "savings.cat.investment": "Investimento",
+  "savings.cat.other": "Altri risparmi",
+
   "priority.savings": "Risparmiare di più",
   "priority.debt": "Saldare i debiti",
   "priority.family": "Sicurezza familiare",
@@ -3303,6 +3419,8 @@ const it: Dict = {
   "settings.categories.title": "Le tue categorie",
   "settings.categories.section.variable": "Variabili",
   "settings.categories.section.fixed": "Fisse",
+  "settings.categories.section.income": "Entrate",
+  "settings.categories.section.savings": "Risparmi",
   "settings.categories.add": "+ Aggiungi",
   "settings.categories.add.placeholder": "Nome categoria",
   "settings.categories.save": "Salva",
@@ -3402,7 +3520,7 @@ export const CATEGORY_NAME_TO_KEY: Record<string, string> = (() => {
   const map: Record<string, string> = {};
   for (const dict of Object.values({ en, es, fr, de, pt, it })) {
     for (const [key, value] of Object.entries(dict)) {
-      if (key.startsWith("fixed.") || key.startsWith("variable.")) {
+      if (key.startsWith("fixed.") || key.startsWith("variable.") || key.startsWith("income.") || key.startsWith("savings.cat.")) {
         map[value] = key;
       }
     }

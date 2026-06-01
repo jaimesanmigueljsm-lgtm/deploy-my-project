@@ -47,6 +47,16 @@ import { CATEGORY_NAME_TO_KEY } from "@/i18n/translations";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import type { Tables } from "@/integrations/supabase/types";
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: "€", USD: "$", GBP: "£", CHF: "Fr", JPY: "¥",
+  CAD: "C$", AUD: "A$", NZD: "NZ$", SEK: "kr", NOK: "kr",
+  DKK: "kr", PLN: "zł", CZK: "Kč", HUF: "Ft", RON: "lei",
+  TRY: "₺", INR: "₹", CNY: "¥", HKD: "HK$", SGD: "S$",
+  BRL: "R$", MXN: "$", ARS: "$", ZAR: "R", AED: "د.إ",
+};
+
+const SAVINGS_BUILTIN_TYPES = ["checking", "savings", "cash", "emergency", "other"];
+
 export const Route = createFileRoute("/app/budget")({
   component: Budget,
   errorComponent: SectionError,
@@ -339,7 +349,7 @@ function Budget() {
                       <div className="min-w-0">
                         <div className="text-sm font-medium truncate">{acc.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          {t(`savings.type.${acc.type}`)}
+                          {SAVINGS_BUILTIN_TYPES.includes(acc.type) ? t(`savings.type.${acc.type}`) : acc.type}
                           {acc.institution_name ? ` · ${acc.institution_name}` : ""}
                           {acc.is_emergency_fund ? ` · ${t("savings.badge.emergency")}` : ""}
                         </div>
@@ -545,6 +555,7 @@ function Budget() {
         }}
         categories={dedupedCategories}
         editing={editingExpense}
+        currency={currency}
         t={t}
       />
       <IncomeDialog
@@ -554,6 +565,8 @@ function Budget() {
           setEditingIncome(null);
         }}
         editing={editingIncome}
+        categories={dedupedCategories}
+        currency={currency}
         t={t}
       />
       <SavingsDialog
@@ -563,6 +576,7 @@ function Budget() {
           setEditingSavings(null);
         }}
         editing={editingSavings}
+        categories={dedupedCategories}
         currency={currency}
         t={t}
       />
@@ -588,12 +602,14 @@ function ExpenseDialog({
   onClose,
   categories,
   editing,
+  currency,
   t,
 }: {
   open: boolean;
   onClose: () => void;
   categories: Category[];
   editing: EditableExpense | null;
+  currency: string;
   t: (k: string) => string;
 }) {
   const [amount, setAmount] = useState("");
@@ -708,7 +724,7 @@ function ExpenseDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div className="card-sunken p-5 flex items-baseline gap-2">
-            <span className="text-xl text-muted-foreground">€</span>
+            <span className="text-xl text-muted-foreground">{CURRENCY_SYMBOLS[currency] ?? currency}</span>
             <Input
               type="number"
               inputMode="decimal"
@@ -726,9 +742,9 @@ function ExpenseDialog({
               placeholder={t("budget.dialog.expense.description.placeholder")}
             />
           </div>
-          {categories.length > 0 && (
+          {categories.filter((c) => c.kind === kind).length > 0 && (
             <div className="grid grid-cols-3 gap-2">
-              {categories.map((c) => (
+              {categories.filter((c) => c.kind === kind).map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setCategoryId(c.id === categoryId ? "" : c.id)}
@@ -757,7 +773,7 @@ function ExpenseDialog({
             ).map(([k, l]) => (
               <button
                 key={k}
-                onClick={() => setKind(k)}
+                onClick={() => { setKind(k); setCategoryId(""); }}
                 className={`flex-1 py-2 text-xs font-medium rounded-lg transition ${
                   kind === k ? "bg-foreground text-background" : "text-muted-foreground"
                 }`}
@@ -838,11 +854,15 @@ function IncomeDialog({
   open,
   onClose,
   editing,
+  categories,
+  currency,
   t,
 }: {
   open: boolean;
   onClose: () => void;
   editing: Income | null;
+  categories: Category[];
+  currency: string;
   t: (k: string) => string;
 }) {
   const [source, setSource] = useState("");
@@ -907,8 +927,6 @@ function IncomeDialog({
     }
   }
 
-  const presets = ["Salary", "Freelance", "Dividends", "Rental", "Side hustle", "Bonus"];
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="rounded-2xl">
@@ -919,7 +937,7 @@ function IncomeDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div className="card-sunken p-5 flex items-baseline gap-2">
-            <span className="text-xl text-muted-foreground">€</span>
+            <span className="text-xl text-muted-foreground">{CURRENCY_SYMBOLS[currency] ?? currency}</span>
             <Input
               type="number"
               inputMode="decimal"
@@ -937,18 +955,24 @@ function IncomeDialog({
               onChange={(e) => setSource(e.target.value)}
               placeholder={t("budget.dialog.income.source.placeholder")}
             />
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {presets.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setSource(p)}
-                  className="px-3 py-1 rounded-full text-[11px] border border-border bg-surface hover:border-foreground/20 transition"
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+            {categories.filter((c) => c.kind === "income").length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {categories.filter((c) => c.kind === "income").map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSource(source === (CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name) ? "" : (CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name))}
+                    className={`px-3 py-1.5 rounded-full text-xs border transition ${
+                      source === (CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name)
+                        ? "bg-foreground text-background border-foreground"
+                        : "border-border bg-surface hover:border-foreground/20"
+                    }`}
+                  >
+                    {CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex gap-1.5 card-flat p-1 rounded-xl">
             {(
@@ -1006,17 +1030,19 @@ function SavingsDialog({
   open,
   onClose,
   editing,
+  categories,
   currency,
   t,
 }: {
   open: boolean;
   onClose: () => void;
   editing: SavingsAccount | null;
+  categories: Category[];
   currency: string;
   t: (k: string) => string;
 }) {
   const [name, setName] = useState("");
-  const [type, setType] = useState<SavingsAccountType>("savings");
+  const [type, setType] = useState<string>("savings");
   const [balance, setBalance] = useState("");
   const [institution, setInstitution] = useState("");
   const [isEmergency, setIsEmergency] = useState(false);
@@ -1083,7 +1109,7 @@ function SavingsDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div className="card-sunken p-5 flex items-baseline gap-2">
-            <span className="text-xl text-muted-foreground">€</span>
+            <span className="text-xl text-muted-foreground">{CURRENCY_SYMBOLS[currency] ?? currency}</span>
             <Input
               type="number"
               inputMode="decimal"
@@ -1105,18 +1131,29 @@ function SavingsDialog({
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">{t("savings.field.type")}</Label>
             <div className="flex flex-wrap gap-1.5">
-              {SAVINGS_TYPES.map((tp) => (
+              {(categories.filter((c) => c.kind === "savings").length > 0
+                ? categories.filter((c) => c.kind === "savings").map((c) => ({
+                    key: c.id,
+                    value: CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name,
+                    label: CATEGORY_NAME_TO_KEY[c.name] ? t(CATEGORY_NAME_TO_KEY[c.name]) : c.name,
+                  }))
+                : SAVINGS_TYPES.map((tp) => ({
+                    key: tp,
+                    value: tp,
+                    label: SAVINGS_BUILTIN_TYPES.includes(tp) ? t(`savings.type.${tp}`) : tp,
+                  }))
+              ).map((item) => (
                 <button
-                  key={tp}
+                  key={item.key}
                   type="button"
-                  onClick={() => setType(tp)}
+                  onClick={() => setType(item.value)}
                   className={`px-3 py-1.5 rounded-full text-xs border transition ${
-                    type === tp
+                    type === item.value
                       ? "bg-foreground text-background border-foreground"
                       : "border-border bg-surface hover:border-foreground/20"
                   }`}
                 >
-                  {t(`savings.type.${tp}`)}
+                  {item.label}
                 </button>
               ))}
             </div>

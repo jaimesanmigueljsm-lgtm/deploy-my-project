@@ -40,7 +40,7 @@ export async function fetchCategories(userId: string): Promise<Category[]> {
 export type AddCategoryPayload = {
   name: string;
   color: string;
-  kind: "variable" | "fixed";
+  kind: "variable" | "fixed" | "income" | "savings";
   icon?: string;
 };
 

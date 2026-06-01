@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type SavingsAccountType = "checking" | "savings" | "cash" | "emergency" | "other";
+export type SavingsAccountType = string;
 
 export interface SavingsAccount {
   id: string;

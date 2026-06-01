@@ -113,7 +113,7 @@ const AUTO_LOCK_OPTIONS = [
   { value: 0, labelKey: "settings.appLock.autoLock.never" },
 ] as const;
 
-const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fixed"; icon: string }[] = [
+const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fixed" | "income" | "savings"; icon: string }[] = [
   // Fixed
   { nameKey: "fixed.rent",          color: "sky",    kind: "fixed",    icon: "home" },
   { nameKey: "fixed.mortgage",      color: "sky",    kind: "fixed",    icon: "building-2" },
@@ -143,6 +143,21 @@ const DEFAULT_CAT_DEFS: { nameKey: string; color: string; kind: "variable" | "fi
   { nameKey: "variable.finance",    color: "violet", kind: "variable", icon: "landmark" },
   { nameKey: "variable.loan",       color: "violet", kind: "variable", icon: "credit-card" },
   { nameKey: "variable.others",     color: "mint",   kind: "variable", icon: "more-horizontal" },
+  // Income
+  { nameKey: "income.salary",       color: "mint",   kind: "income",   icon: "wallet" },
+  { nameKey: "income.freelance",    color: "sky",    kind: "income",   icon: "smartphone" },
+  { nameKey: "income.dividends",    color: "violet", kind: "income",   icon: "landmark" },
+  { nameKey: "income.rental",       color: "sky",    kind: "income",   icon: "home" },
+  { nameKey: "income.sidehustle",   color: "warn",   kind: "income",   icon: "gift" },
+  { nameKey: "income.bonus",        color: "mint",   kind: "income",   icon: "sparkles" },
+  { nameKey: "income.other",        color: "mint",   kind: "income",   icon: "more-horizontal" },
+  // Savings
+  { nameKey: "savings.cat.checking",    color: "sky",    kind: "savings",  icon: "credit-card" },
+  { nameKey: "savings.cat.savings",     color: "mint",   kind: "savings",  icon: "banknote" },
+  { nameKey: "savings.cat.cash",        color: "warn",   kind: "savings",  icon: "wallet" },
+  { nameKey: "savings.cat.emergency",   color: "mint",   kind: "savings",  icon: "shield" },
+  { nameKey: "savings.cat.investment",  color: "violet", kind: "savings",  icon: "landmark" },
+  { nameKey: "savings.cat.other",       color: "mint",   kind: "savings",  icon: "more-horizontal" },
 ];
 
 const CAT_COLORS = [
@@ -566,7 +581,7 @@ function CategoriesDialog({
     enabled: open && !!userId,
   });
 
-  const [addSection, setAddSection] = useState<"variable" | "fixed" | null>(null);
+  const [addSection, setAddSection] = useState<"variable" | "fixed" | "income" | "savings" | null>(null);
   const [addName, setAddName] = useState("");
   const [addColor, setAddColor] = useState("mint");
   const [addIcon, setAddIcon] = useState("tag");
@@ -602,7 +617,7 @@ function CategoriesDialog({
     onError: (err: Error) => toast.error(err.message),
   });
 
-  function openAdd(section: "variable" | "fixed") {
+  function openAdd(section: "variable" | "fixed" | "income" | "savings") {
     setAddSection(section);
     setAddName("");
     setAddColor("mint");
@@ -632,12 +647,17 @@ function CategoriesDialog({
 
   const variable = cats.filter((c) => c.kind === "variable");
   const fixed = cats.filter((c) => c.kind === "fixed");
+  const income = cats.filter((c) => c.kind === "income");
+  const savings = cats.filter((c) => c.kind === "savings");
 
-  function renderSection(items: Category[], section: "variable" | "fixed") {
-    const label =
-      section === "variable"
-        ? t("settings.categories.section.variable")
-        : t("settings.categories.section.fixed");
+  function renderSection(items: Category[], section: "variable" | "fixed" | "income" | "savings") {
+    const sectionLabels: Record<string, string> = {
+      variable: t("settings.categories.section.variable"),
+      fixed: t("settings.categories.section.fixed"),
+      income: t("settings.categories.section.income"),
+      savings: t("settings.categories.section.savings"),
+    };
+    const label = sectionLabels[section] ?? section;
     return (
       <div className="space-y-0.5">
         <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium px-1 pb-1">
@@ -762,6 +782,10 @@ function CategoriesDialog({
             {renderSection(variable, "variable")}
             <div className="border-t border-border-subtle" />
             {renderSection(fixed, "fixed")}
+            <div className="border-t border-border-subtle" />
+            {renderSection(income, "income")}
+            <div className="border-t border-border-subtle" />
+            {renderSection(savings, "savings")}
           </div>
         )}
 
