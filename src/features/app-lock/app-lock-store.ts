@@ -11,7 +11,7 @@ const DEFAULT_META: LockMeta = {
   failedCount: 0,
   lockoutUntil: 0,
   lastActiveAt: 0,
-  autoLockMs: 120_000,
+  autoLockMs: 300_000,
   hideBalances: false,
   biometricEnabled: false,
 };

@@ -168,7 +168,7 @@ function FamilyPage() {
   const { data: sentInvitations = [] } = useQuery({
     queryKey: FK.sent(familyId ?? ""),
     queryFn: () => getFamilySentInvitations(familyId!),
-    enabled: !!familyId && familyData?.isOwner === true,
+    enabled: !!familyId,
     staleTime: 20_000,
   });
 

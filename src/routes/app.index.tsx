@@ -330,6 +330,7 @@ function SpendingPieChart({
               )}
               onMouseEnter={(_, idx) => setActiveIndex(idx)}
               onMouseLeave={() => setActiveIndex(null)}
+              onClick={(_, idx) => setActiveIndex(activeIndex === idx ? null : idx)}
             >
               {dist.map((_d, i) => (
                 <Cell
@@ -359,10 +360,11 @@ function SpendingPieChart({
         {dist.slice(0, 5).map((d, i) => (
           <div
             key={d.name}
-            className="flex items-center justify-between text-xs transition-opacity"
+            className="flex items-center justify-between text-xs transition-opacity cursor-pointer"
             style={{ opacity: activeIndex === null || activeIndex === i ? 1 : 0.4 }}
             onMouseEnter={() => setActiveIndex(i)}
             onMouseLeave={() => setActiveIndex(null)}
+            onClick={() => setActiveIndex(activeIndex === i ? null : i)}
           >
             <div className="flex items-center gap-2 min-w-0">
               <span

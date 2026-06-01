@@ -33,8 +33,8 @@ export function isFeatureEnabled(
   flag: FeatureFlag,
   profileFlags?: Record<string, boolean> | null,
 ): boolean {
-  // 1. URL param override (dev/QA only)
-  if (typeof window !== "undefined") {
+  // 1. URL param override (dev only — stripped from production builds)
+  if (import.meta.env.DEV && typeof window !== "undefined") {
     const val = new URLSearchParams(window.location.search).get(`flag_${flag}`);
     if (val !== null) return val !== "false";
   }

@@ -21,6 +21,22 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: "Unauthorized" }, 401);
 
+    // Rate limit: 1 generation per 5 minutes per user
+    const { data: latestRec } = await supabase
+      .from("recommendations")
+      .select("created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestRec) {
+      const ageMs = Date.now() - new Date(latestRec.created_at).getTime();
+      if (ageMs < 5 * 60 * 1000) {
+        return json({ ok: true, count: 0, cached: true });
+      }
+    }
+
     // Gather context
     const start = new Date(); start.setMonth(start.getMonth() - 2);
     const sinceStr = new Date(start.getFullYear(), start.getMonth(), 1).toISOString().slice(0, 10);
