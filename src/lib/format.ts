@@ -27,6 +27,14 @@ export function shortMoney(n: number, currency = "EUR") {
   return money(n, currency);
 }
 
+export function getCurrencySymbol(currency = "EUR"): string {
+  return (
+    new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 })
+      .formatToParts(0)
+      .find((p) => p.type === "currency")?.value ?? currency
+  );
+}
+
 export function pct(n: number, digits = 1) {
   const sign = n > 0 ? "+" : "";
   return `${sign}${n.toFixed(digits)}%`;

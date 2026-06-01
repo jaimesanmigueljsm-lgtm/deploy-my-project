@@ -31,7 +31,7 @@ import { SectionHeader, EmptyState } from "@/components/nest";
 import { useT } from "@/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/features/profile/use-profile";
-import { money, shortMoney } from "@/lib/format";
+import { money, shortMoney, getCurrencySymbol } from "@/lib/format";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -1585,7 +1585,7 @@ function ContributionDialog({
           </div>
 
           <div className="card-sunken p-5 flex items-baseline gap-2">
-            <span className="text-xl text-muted-foreground">€</span>
+            <span className="text-xl text-muted-foreground">{getCurrencySymbol(currency)}</span>
             <Input
               type="number"
               inputMode="decimal"
