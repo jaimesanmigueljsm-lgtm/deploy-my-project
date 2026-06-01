@@ -61,7 +61,6 @@ import { financialUsernameSchema } from "@/schemas/profile.schema";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { SecurityCenter } from "@/features/security/SecurityCenter";
 import { queryKeys } from "@/lib/query-keys";
-import { readUserBaseCurrencyOrNull, writeUserBaseCurrency } from "@/lib/exchange-rates";
 import {
   fetchCategories,
   addCategory,
@@ -312,11 +311,7 @@ function Settings() {
               {CURRENCIES.map((c) => (
                 <DropdownMenuItem
                   key={c.code}
-                  onClick={() => {
-                    const base = readUserBaseCurrencyOrNull(user?.id) ?? profile.currency ?? "EUR";
-                    if (user?.id) writeUserBaseCurrency(user.id, base);
-                    updateProfile.mutate({ currency: c.code });
-                  }}
+                  onClick={() => updateProfile.mutate({ currency: c.code })}
                   className="gap-3"
                 >
                   <span className="w-6 text-right text-sm font-mono shrink-0">{c.symbol}</span>
@@ -327,6 +322,9 @@ function Settings() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          <p className="px-4 py-2.5 text-[11px] text-muted-foreground leading-relaxed">
+            {t("settings.currency.warning")}
+          </p>
           <RowToggle
             icon={
               profile.theme === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />

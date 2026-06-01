@@ -99,8 +99,23 @@ const COLOR_CLS: Record<string, string> = {
   violet: "bg-violet-soft text-violet",
 };
 
-// Step order: savings → income → día-a-día → fixed cats → fixed amounts → priorities
-const TOTAL_STEPS = 6;
+const ONBOARDING_CURRENCIES = [
+  { code: "EUR", symbol: "€", name: "Euro" },
+  { code: "USD", symbol: "$", name: "US Dollar" },
+  { code: "GBP", symbol: "£", name: "British Pound" },
+  { code: "MXN", symbol: "$", name: "Mexican Peso" },
+  { code: "ARS", symbol: "$", name: "Argentine Peso" },
+  { code: "COP", symbol: "$", name: "Colombian Peso" },
+  { code: "CLP", symbol: "$", name: "Chilean Peso" },
+  { code: "BRL", symbol: "R$", name: "Brazilian Real" },
+  { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
+  { code: "AUD", symbol: "A$", name: "Australian Dollar" },
+  { code: "CHF", symbol: "Fr", name: "Swiss Franc" },
+  { code: "INR", symbol: "₹", name: "Indian Rupee" },
+] as const;
+
+// Step order: currency → savings → income → día-a-día → fixed cats → fixed amounts → priorities
+const TOTAL_STEPS = 7;
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -110,6 +125,7 @@ function Onboarding() {
   const [loading, setLoading] = useState(false);
   const finishingRef = useRef(false);
 
+  const [currency, setCurrency] = useState("EUR");
   const [savingsTarget, setSavingsTarget] = useState("");
   const [income, setIncome] = useState("");
   const [selectedFixed, setSelectedFixed] = useState<string[]>([]);
@@ -139,13 +155,17 @@ function Onboarding() {
     };
   }, [navigate]);
 
+  const currencySymbol =
+    ONBOARDING_CURRENCIES.find((c) => c.code === currency)?.symbol ?? "€";
+
   const canNext =
-    (step === 0 && Number(savingsTarget) > 0) ||
-    (step === 1 && Number(income) > 0) ||
-    step === 2 || // variable — optional selection
-    step === 3 || // fixed cats — optional
-    step === 4 || // fixed amounts — always skippable
-    (step === 5 && priorities.length > 0);
+    step === 0 || // currency — always has a default
+    (step === 1 && Number(savingsTarget) > 0) ||
+    (step === 2 && Number(income) > 0) ||
+    step === 3 || // variable — optional selection
+    step === 4 || // fixed cats — optional
+    step === 5 || // fixed amounts — always skippable
+    (step === 6 && priorities.length > 0);
 
   const last = step === TOTAL_STEPS - 1;
 
@@ -189,6 +209,7 @@ function Onboarding() {
         .update({
           monthly_savings_target: Number(savingsTarget),
           priorities,
+          currency,
           onboarded: true,
         })
         .eq("id", user.id)
@@ -336,22 +357,30 @@ function Onboarding() {
         key={step}
         className="flex-1 flex flex-col px-6 pt-10 pb-8 max-w-md w-full mx-auto animate-rise"
       >
-        {step === 0 && <StepSavings t={t} value={savingsTarget} onChange={setSavingsTarget} />}
-        {step === 1 && <StepIncome t={t} value={income} onChange={setIncome} />}
-        {/* Step 2: día a día (variable) — moved before fixed */}
-        {step === 2 && <StepVariable t={t} selected={selectedVariable} onToggle={toggleVariable} />}
-        {/* Step 3: fixed categories selection */}
-        {step === 3 && <StepFixed t={t} selected={selectedFixed} onToggle={toggleFixed} />}
-        {/* Step 4: estimated amounts for selected fixed categories */}
-        {step === 4 && (
+        {step === 0 && (
+          <StepCurrency t={t} selected={currency} onSelect={setCurrency} />
+        )}
+        {step === 1 && (
+          <StepSavings t={t} value={savingsTarget} onChange={setSavingsTarget} currencySymbol={currencySymbol} />
+        )}
+        {step === 2 && (
+          <StepIncome t={t} value={income} onChange={setIncome} currencySymbol={currencySymbol} />
+        )}
+        {/* Step 3: día a día (variable) */}
+        {step === 3 && <StepVariable t={t} selected={selectedVariable} onToggle={toggleVariable} />}
+        {/* Step 4: fixed categories selection */}
+        {step === 4 && <StepFixed t={t} selected={selectedFixed} onToggle={toggleFixed} />}
+        {/* Step 5: estimated amounts for selected fixed categories */}
+        {step === 5 && (
           <StepFixedAmounts
             t={t}
             selectedFixed={selectedFixed}
             amounts={fixedAmounts}
             onAmountChange={setFixedAmount}
+            currencySymbol={currencySymbol}
           />
         )}
-        {step === 5 && <StepPriorities t={t} selected={priorities} onToggle={togglePriority} />}
+        {step === 6 && <StepPriorities t={t} selected={priorities} onToggle={togglePriority} />}
 
         <Button
           disabled={!canNext || loading}
@@ -374,19 +403,74 @@ function Onboarding() {
 
 /* ───────────────────────── Step 1: Savings target ─────────────────────── */
 
+/* ───────────────────────── Step 0: Currency ───────────────────────────── */
+
+function StepCurrency({
+  t,
+  selected,
+  onSelect,
+}: {
+  t: (k: string) => string;
+  selected: string;
+  onSelect: (code: string) => void;
+}) {
+  return (
+    <>
+      <StepHeading
+        title={t("onboarding.currency.title")}
+        subtitle={t("onboarding.currency.subtitle")}
+      />
+      <div className="mt-6 flex-1 space-y-2 overflow-y-auto pb-2">
+        {ONBOARDING_CURRENCIES.map((c) => {
+          const active = selected === c.code;
+          return (
+            <button
+              key={c.code}
+              type="button"
+              onClick={() => onSelect(c.code)}
+              className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl border transition-all press-scale ${
+                active
+                  ? "bg-primary/8 border-primary shadow-sm"
+                  : "bg-surface border-border hover:border-primary/30"
+              }`}
+            >
+              <span className="size-10 rounded-xl bg-muted grid place-items-center text-lg font-bold num shrink-0 text-foreground">
+                {c.symbol}
+              </span>
+              <div className="flex-1 text-left min-w-0">
+                <div className="text-sm font-semibold leading-tight">{c.name}</div>
+                <div className="text-xs text-muted-foreground font-mono mt-0.5">{c.code}</div>
+              </div>
+              {active && (
+                <span className="size-5 rounded-full bg-primary grid place-items-center shrink-0">
+                  <Check className="size-3 text-primary-foreground" />
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/* ───────────────────────── Step 1: Savings target ─────────────────────── */
+
 function StepSavings({
   t,
   value,
   onChange,
+  currencySymbol,
 }: {
   t: (k: string) => string;
   value: string;
   onChange: (v: string) => void;
+  currencySymbol: string;
 }) {
   const chips = [
-    { label: t("onboarding.step1.chip.100"), amount: "100" },
-    { label: t("onboarding.step1.chip.200"), amount: "200" },
-    { label: t("onboarding.step1.chip.400"), amount: "400" },
+    { label: "100", amount: "100" },
+    { label: "200", amount: "200" },
+    { label: "400", amount: "400" },
     { label: t("onboarding.step1.chip.whatever"), amount: "50" },
   ];
 
@@ -395,7 +479,7 @@ function StepSavings({
       <StepHeading title={t("onboarding.step1.title")} subtitle={t("onboarding.step1.subtitle")} />
       <div className="mt-8 flex-1 space-y-4">
         <div className="card-soft p-6 flex items-baseline gap-2">
-          <span className="text-2xl text-muted-foreground">€</span>
+          <span className="text-2xl text-muted-foreground">{currencySymbol}</span>
           <Input
             type="number"
             inputMode="decimal"
@@ -435,17 +519,19 @@ function StepIncome({
   t,
   value,
   onChange,
+  currencySymbol,
 }: {
   t: (k: string) => string;
   value: string;
   onChange: (v: string) => void;
+  currencySymbol: string;
 }) {
   return (
     <>
       <StepHeading title={t("onboarding.step2.title")} subtitle={t("onboarding.step2.subtitle")} />
       <div className="mt-8 flex-1">
         <div className="card-soft p-6 flex items-baseline gap-2">
-          <span className="text-2xl text-muted-foreground">€</span>
+          <span className="text-2xl text-muted-foreground">{currencySymbol}</span>
           <Input
             type="number"
             inputMode="decimal"
@@ -524,11 +610,13 @@ function StepFixedAmounts({
   selectedFixed,
   amounts,
   onAmountChange,
+  currencySymbol,
 }: {
   t: (k: string) => string;
   selectedFixed: string[];
   amounts: Record<string, string>;
   onAmountChange: (id: string, val: string) => void;
+  currencySymbol: string;
 }) {
   return (
     <>
@@ -554,7 +642,7 @@ function StepFixedAmounts({
                 </span>
                 <span className="flex-1 text-sm font-medium">{t(`fixed.${id}`)}</span>
                 <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-muted-foreground text-sm">€</span>
+                  <span className="text-muted-foreground text-sm">{currencySymbol}</span>
                   <input
                     type="number"
                     inputMode="decimal"
