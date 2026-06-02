@@ -86,6 +86,7 @@ function GroupsPage() {
     queryFn: getUserFamilies,
     enabled: !!userId,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 
   const { data: sharedExpenses = [] } = useQuery({

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
@@ -29,6 +29,8 @@ export function useUserFamilies() {
     queryKey: keys.families(user?.id ?? ""),
     queryFn: () => getUserFamilies(),
     enabled: !!user,
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -38,6 +40,8 @@ export function useFamilyGoals(familyId: string | null) {
     queryKey: keys.familyData(familyId ?? ""),
     queryFn: () => loadFamilyData(familyId!, user!.id),
     enabled: !!user && !!familyId,
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
     select: (data) => data.goals,
   });
 }

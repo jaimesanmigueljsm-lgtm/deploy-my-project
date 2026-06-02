@@ -15,6 +15,16 @@ export default defineConfig({
   vite: {
     build: {
       manifest: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-router': ['@tanstack/react-router', '@tanstack/react-query'],
+            'vendor-charts': ['recharts'],
+            'vendor-supabase': ['@supabase/supabase-js'],
+          },
+        },
+      },
     },
   },
 });
