@@ -325,6 +325,17 @@ export async function createFamily(_userId: string, name: string): Promise<strin
   return data as string;
 }
 
+export async function deleteFamily(familyId: string, userId: string): Promise<void> {
+  // SECURITY DEFINER RPC: atomically deletes family and all related data.
+  // Only the owner can delete. Cascades to members, invitations, goals, expenses, activity.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("delete_family", {
+    p_family_id: familyId,
+    p_user_id: userId,
+  });
+  if (error) throw new Error(error.message);
+}
+
 // ─── Shared goal mutations ────────────────────────────────────────────────────
 
 export async function createSharedGoal(

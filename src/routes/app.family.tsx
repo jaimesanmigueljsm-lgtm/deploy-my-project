@@ -23,7 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   loadFamilyData, getMyInvitations, getFamilySentInvitations,
   searchUserByUsername, sendFamilyInvite, acceptFamilyInvite,
-  rejectFamilyInvite, createFamily, updateFamilyName,
+  rejectFamilyInvite, createFamily, updateFamilyName, deleteFamily,
   removeFamilyMember, leaveFamily, notifyFamilyMembers,
   getUserFamilies, fetchSharedExpenses, addSharedExpense,
   deleteSharedExpense, calculateMemberBalances, calculateSettlements,
@@ -441,7 +441,8 @@ function GroupsPage() {
         userId={userId} t={t}
         onLeave={() => { void leaveFamily(userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }); }}
         onRemoveMember={(memberId, memberUserId) => { void removeFamilyMember(memberId).then(() => { void qc.invalidateQueries({ queryKey: FK.data(family.id) }); void qc.invalidateQueries({ queryKey: queryKeys.profile(memberUserId) }); }); }}
-        onRename={(newName) => { void updateFamilyName(family.id, newName).then(() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })); }} />
+        onRename={(newName) => { void updateFamilyName(family.id, newName).then(() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })); }}
+        onDelete={() => { void deleteFamily(family.id, userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }); }} />
     </div>
   );
 }
@@ -755,13 +756,14 @@ function AddExpenseDialog({ open, onClose, members, currency, currentUserId, t, 
 
 // ─── PlanSettingsDialog ───────────────────────────────────────────────────
 
-function PlanSettingsDialog({ open, onClose, family, isOwner, memberProfiles, userId, t, onLeave, onRemoveMember, onRename }: {
+function PlanSettingsDialog({ open, onClose, family, isOwner, memberProfiles, userId, t, onLeave, onRemoveMember, onRename, onDelete }: {
   open: boolean; onClose: () => void;
   family: { id: string; name: string; owner_id: string } | null;
   isOwner: boolean; memberProfiles: FamilyMemberProfile[];
   userId: string; t: (k: string) => string;
   onLeave: () => void; onRemoveMember: (memberId: string, userId: string) => void;
   onRename: (name: string) => void;
+  onDelete: () => void;
 }) {
   const [newName, setNewName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -821,10 +823,15 @@ function PlanSettingsDialog({ open, onClose, family, isOwner, memberProfiles, us
         </div>
         <DialogFooter className="flex-col gap-2">
           <Button variant="outline" onClick={onClose} className="w-full">{t("common.close")}</Button>
-          {!isOwner && (
+          {!isOwner ? (
             <Button variant="ghost" className="w-full text-negative hover:text-negative hover:bg-negative/10"
               onClick={() => { if (!confirm(t("groups.settings.leave.confirm").replace("{name}", family.name))) return; onLeave(); onClose(); }}>
               <LogOut className="size-3.5 mr-1" />{t("groups.settings.leave")}
+            </Button>
+          ) : (
+            <Button variant="ghost" className="w-full text-negative hover:text-negative hover:bg-negative/10"
+              onClick={() => { if (!confirm(t("groups.settings.delete.confirm").replace("{name}", family.name))) return; onDelete(); onClose(); }}>
+              <Trash2 className="size-3.5 mr-1" />{t("groups.settings.delete")}
             </Button>
           )}
         </DialogFooter>

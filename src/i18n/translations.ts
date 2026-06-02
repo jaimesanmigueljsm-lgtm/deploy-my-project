@@ -660,6 +660,8 @@ const en: Dict = {
   "groups.settings.remove.confirm": "Remove this member?",
   "groups.settings.leave": "Leave plan",
   "groups.settings.leave.confirm": "Leave '{name}'?",
+  "groups.settings.delete": "Delete plan",
+  "groups.settings.delete.confirm": "Delete '{name}'? This will remove all expenses, members, and data permanently.",
   "groups.expenses.empty.title": "No expenses yet",
   "groups.expenses.empty.desc": "Add your first expense to split costs.",
   "common.optional": "optional",
@@ -1589,6 +1591,8 @@ const es: Dict = {
   "groups.settings.remove.confirm": "¿Eliminar este miembro?",
   "groups.settings.leave": "Salir del plan",
   "groups.settings.leave.confirm": "¿Salir de '{name}'?",
+  "groups.settings.delete": "Eliminar plan",
+  "groups.settings.delete.confirm": "¿Eliminar '{name}'? Esto eliminará todos los gastos, miembros y datos permanentemente.",
   "groups.expenses.empty.title": "Sin gastos todavía",
   "groups.expenses.empty.desc": "Añade tu primer gasto para dividir costos.",
 
@@ -2412,6 +2416,8 @@ const fr: Dict = {
   "groups.settings.remove.confirm": "Retirer ce membre ?",
   "groups.settings.leave": "Quitter le plan",
   "groups.settings.leave.confirm": "Quitter '{name}' ?",
+  "groups.settings.delete": "Supprimer le plan",
+  "groups.settings.delete.confirm": "Supprimer '{name}' ? Cela supprimera toutes les dépenses, membres et données de façon permanente.",
   "groups.expenses.empty.title": "Aucune dépense",
   "groups.expenses.empty.desc": "Ajoutez votre première dépense pour partager les coûts.",
 
@@ -3078,6 +3084,8 @@ const de: Dict = {
   "groups.settings.remove.confirm": "Dieses Mitglied entfernen?",
   "groups.settings.leave": "Plan verlassen",
   "groups.settings.leave.confirm": "'{name}' verlassen?",
+  "groups.settings.delete": "Plan löschen",
+  "groups.settings.delete.confirm": "'{name}' löschen? Dies entfernt alle Ausgaben, Mitglieder und Daten dauerhaft.",
   "groups.expenses.empty.title": "Noch keine Ausgaben",
   "groups.expenses.empty.desc": "Füge deine erste Ausgabe hinzu, um Kosten zu teilen.",
 
@@ -3745,6 +3753,8 @@ const pt: Dict = {
   "groups.settings.remove.confirm": "Remover este membro?",
   "groups.settings.leave": "Sair do plano",
   "groups.settings.leave.confirm": "Sair de '{name}'?",
+  "groups.settings.delete": "Eliminar plano",
+  "groups.settings.delete.confirm": "Eliminar '{name}'? Isto removerá todas as despesas, membros e dados permanentemente.",
   "groups.expenses.empty.title": "Ainda sem despesas",
   "groups.expenses.empty.desc": "Adicione a sua primeira despesa para dividir custos.",
 
@@ -4414,6 +4424,8 @@ const it: Dict = {
   "groups.settings.remove.confirm": "Rimuovere questo membro?",
   "groups.settings.leave": "Lascia piano",
   "groups.settings.leave.confirm": "Lasciare '{name}'?",
+  "groups.settings.delete": "Elimina piano",
+  "groups.settings.delete.confirm": "Eliminare '{name}'? Questo rimuoverà tutte le spese, membri e dati in modo permanente.",
   "groups.expenses.empty.title": "Nessuna spesa ancora",
   "groups.expenses.empty.desc": "Aggiungi la tua prima spesa per dividere i costi.",
 
