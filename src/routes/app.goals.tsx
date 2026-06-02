@@ -988,6 +988,7 @@ function SharedGoalsSection({
         <CreateGroupDialog
           open={createGroupOpen}
           onOpenChange={setCreateGroupOpen}
+          onSuccess={(newFamilyId) => onGroupChange(newFamilyId)}
           t={t}
         />
       </>
@@ -1144,6 +1145,7 @@ function SharedGoalsSection({
       <CreateGroupDialog
         open={createGroupOpen}
         onOpenChange={setCreateGroupOpen}
+        onSuccess={(newFamilyId) => onGroupChange(newFamilyId)}
         t={t}
       />
 
@@ -1426,10 +1428,12 @@ function SharedContribDialog({
 function CreateGroupDialog({
   open,
   onOpenChange,
+  onSuccess,
   t,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  onSuccess?: (familyId: string) => void;
   t: (k: string) => string;
 }) {
   const createGroup = useCreateFamily();
@@ -1438,6 +1442,15 @@ function CreateGroupDialog({
   useEffect(() => {
     if (!open) setName("");
   }, [open]);
+
+  function handleCreate() {
+    createGroup.mutate(name, {
+      onSuccess: (familyId) => {
+        onSuccess?.(familyId);
+        onOpenChange(false);
+      }
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1460,7 +1473,7 @@ function CreateGroupDialog({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
           <Button
-            onClick={() => createGroup.mutate(name, { onSuccess: () => onOpenChange(false) })}
+            onClick={handleCreate}
             disabled={!name.trim() || createGroup.isPending}
           >
             {createGroup.isPending ? t("common.loading") : t("goals.shared.group.create")}
