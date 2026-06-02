@@ -157,6 +157,7 @@ function GroupsPage() {
   const [openAddExpense, setOpenAddExpense] = useState(false);
   const [openSettings, setOpenSettings] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const isOwner = familyData?.isOwner ?? false;
@@ -395,7 +396,9 @@ function GroupsPage() {
             {sharedExpenses.map(expense => (
               <ExpenseCard key={expense.id} expense={expense} memberProfiles={memberProfiles}
                 userId={userId} currency={currency} convert={convert}
-                onDelete={() => deleteExpenseMutation.mutate(expense.id)} t={t} />
+                onDelete={() => deleteExpenseMutation.mutate(expense.id)}
+                isDeleting={deleteExpenseMutation.isPending}
+                t={t} />
             ))}
           </div>
         )}
@@ -409,8 +412,27 @@ function GroupsPage() {
             <p className="font-semibold text-sm">{t("groups.all_settled")}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{t("groups.all_settled.desc")}</p>
           </div>
-          <Button size="sm" className="bg-positive hover:bg-positive/90 text-white w-full">
-            <CheckCircle2 className="size-3.5 mr-1" /> {t("groups.complete_plan")}
+          <Button
+            size="sm"
+            className="bg-positive hover:bg-positive/90 text-white w-full"
+            disabled={completing}
+            onClick={async () => {
+              if (!confirm(t("groups.complete_plan.confirm"))) return;
+              setCompleting(true);
+              try {
+                await updateFamilyName(family.id, `✓ ${family.name}`);
+                toast.success(t("groups.complete_plan.success"));
+                void qc.invalidateQueries({ queryKey: FK.data(family.id) });
+                void qc.invalidateQueries({ queryKey: FK.groups(userId) });
+              } catch (e: unknown) {
+                toast.error(e instanceof Error ? e.message : String(e));
+              } finally {
+                setCompleting(false);
+              }
+            }}
+          >
+            <CheckCircle2 className="size-3.5 mr-1" />
+            {completing ? t("common.loading") : t("groups.complete_plan")}
           </Button>
         </div>
       )}
@@ -439,20 +461,20 @@ function GroupsPage() {
       <PlanSettingsDialog open={openSettings} onClose={() => setOpenSettings(false)}
         family={family} isOwner={isOwner} memberProfiles={memberProfiles}
         userId={userId} t={t}
-        onLeave={() => { void leaveFamily(userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }); }}
-        onRemoveMember={(memberId, memberUserId) => { void removeFamilyMember(memberId).then(() => { void qc.invalidateQueries({ queryKey: FK.data(family.id) }); void qc.invalidateQueries({ queryKey: queryKeys.profile(memberUserId) }); }); }}
-        onRename={(newName) => { void updateFamilyName(family.id, newName).then(() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })); }}
-        onDelete={() => { void deleteFamily(family.id, userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }); }} />
+        onLeave={() => { void leaveFamily(userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e))); }}
+        onRemoveMember={(memberId, memberUserId) => { void removeFamilyMember(memberId).then(() => { void qc.invalidateQueries({ queryKey: FK.data(family.id) }); void qc.invalidateQueries({ queryKey: queryKeys.profile(memberUserId) }); }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e))); }}
+        onRename={(newName) => { void updateFamilyName(family.id, newName).then(() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e))); }}
+        onDelete={() => { void deleteFamily(family.id, userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e))); }} />
     </div>
   );
 }
 
 // ─── ExpenseCard ───────────────────────────────────────────────────────────
 
-function ExpenseCard({ expense, memberProfiles, userId, currency, convert, onDelete, t }: {
+function ExpenseCard({ expense, memberProfiles, userId, currency, convert, onDelete, isDeleting, t }: {
   expense: SharedExpense; memberProfiles: FamilyMemberProfile[];
   userId: string; currency: string; convert: (n: number) => number;
-  onDelete: () => void; t: (k: string) => string;
+  onDelete: () => void; isDeleting?: boolean; t: (k: string) => string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const payer = memberProfiles.find(m => m.user_id === expense.paid_by);
@@ -514,9 +536,18 @@ function ExpenseCard({ expense, memberProfiles, userId, currency, convert, onDel
             })}
           </div>
           {isMyExpense && (
-            <button onClick={() => { if (!confirm(t("groups.expense.delete.confirm"))) return; onDelete(); }}
-              className="w-full mt-2 flex items-center justify-center gap-1.5 text-[11px] text-negative hover:text-negative/80 transition py-1">
-              <Trash2 className="size-3" /> {t("groups.expense.delete")}
+            <button
+              onClick={() => { if (!confirm(t("groups.expense.delete.confirm"))) return; onDelete(); }}
+              disabled={isDeleting}
+              className={cn("w-full mt-2 flex items-center justify-center gap-1.5 text-[11px] transition py-1",
+                isDeleting ? "text-muted-foreground" : "text-negative hover:text-negative/80"
+              )}
+            >
+              {isDeleting
+                ? <span className="size-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                : <Trash2 className="size-3" />
+              }
+              {isDeleting ? t("common.loading") : t("groups.expense.delete")}
             </button>
           )}
         </div>
@@ -575,7 +606,7 @@ function CreatePlanDialog({ open, onClose, userId, onCreated, t }: {
       toast.success(t("groups.created"));
       onCreated(id);
       onClose();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
   }
 
@@ -621,7 +652,7 @@ function InviteMemberDialog({ open, onClose, familyId, onSent, t }: {
     try {
       const r = await searchUserByUsername(username.replace(/^@/, ""));
       setFound(r); setSearched(true);
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
   }
 
@@ -632,7 +663,7 @@ function InviteMemberDialog({ open, onClose, familyId, onSent, t }: {
       await sendFamilyInvite(familyId, found.financial_username);
       toast.success(t("groups.invite.sent"));
       onSent(); onClose();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: unknown) { toast.error(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
   }
 
@@ -745,7 +776,7 @@ function AddExpenseDialog({ open, onClose, members, currency, currentUserId, t, 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
           <Button onClick={() => onSave(description, Number(amount), participants, category || undefined)}
-            disabled={!description || !amount || participants.length === 0}>
+            disabled={!description.trim() || Number(amount) <= 0 || isNaN(Number(amount)) || participants.length === 0}>
             {t("groups.expense.add.cta")}
           </Button>
         </DialogFooter>
