@@ -1,5 +1,5 @@
 import {
-  getUserFamilies,
+  getUserGoalGroups,
   loadFamilyData,
   createSharedGoal,
   updateSharedGoal,
@@ -15,13 +15,16 @@ import {
 
 export type { SharedGoal, UserFamily, UserSearchResult };
 export {
-  getUserFamilies,
+  getUserGoalGroups as getUserFamilies,
   loadFamilyData,
   createSharedGoal,
   updateSharedGoal,
   addGoalContribution,
-  createFamily,
   searchUserByUsername,
   sendFamilyInvite,
   leaveFamilyGroup,
 };
+
+export async function createGoalsGroup(name: string): Promise<string> {
+  return createFamily("", name, "goals");
+}

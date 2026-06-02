@@ -7,7 +7,6 @@ import {
   loadFamilyData,
   createSharedGoal,
   addGoalContribution,
-  createFamily,
   searchUserByUsername,
   sendFamilyInvite,
   leaveFamilyGroup,
@@ -15,6 +14,7 @@ import {
   type SharedGoal,
   type UserSearchResult,
 } from "./shared-goals.service";
+import { createFamily } from "@/features/family/family.service";
 
 export type { SharedGoal, UserFamily, UserSearchResult };
 
@@ -91,7 +91,7 @@ export function useCreateFamily() {
   const { t } = useT();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (name: string) => createFamily(user!.id, name),
+    mutationFn: (name: string) => createFamily(user!.id, name, "goals"),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["user-families"] });
       toast.success(t("goals.shared.group.created"));

@@ -602,7 +602,7 @@ function CreatePlanDialog({ open, onClose, userId, onCreated, t }: {
     if (!name.trim()) return;
     setBusy(true);
     try {
-      const id = await createFamily(userId, name.trim());
+      const id = await createFamily(userId, name.trim(), "expense");
       toast.success(t("groups.created"));
       onCreated(id);
       onClose();

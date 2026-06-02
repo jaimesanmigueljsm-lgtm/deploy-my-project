@@ -93,6 +93,7 @@ export interface UserFamily {
   member_role: string;
   member_count: number;
   owner_name: string;
+  family_type?: string; // 'expense' | 'goals'
 }
 
 export interface SharedExpense {
@@ -315,12 +316,19 @@ export async function leaveFamily(_userId: string): Promise<void> {
 
 // ─── Family creation ──────────────────────────────────────────────────────────
 
-export async function createFamily(_userId: string, name: string): Promise<string> {
+export async function createFamily(
+  _userId: string,
+  name: string,
+  type: "expense" | "goals" = "expense",
+): Promise<string> {
   // SECURITY DEFINER RPC: atomically inserts into families + family_members +
   // updates profiles.family_id in one transaction. The previous 3-call pattern
   // could leave an orphaned family row if step 2 or 3 failed.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("create_family", { p_name: name });
+  const { data, error } = await (supabase as any).rpc("create_family", {
+    p_name: name,
+    p_type: type,
+  });
   if (error) throw new Error(error.message);
   return data as string;
 }
@@ -454,6 +462,24 @@ export async function getUserFamilies(): Promise<UserFamily[]> {
   const { data, error } = await (supabase as any).rpc("get_user_families");
   if (error) throw new Error(error.message);
   return (data ?? []) as UserFamily[];
+}
+
+export async function getUserGoalGroups(): Promise<UserFamily[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_user_families");
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as UserFamily[]).filter(
+    (f) => f.family_type === "goals",
+  );
+}
+
+export async function getUserExpenseGroups(): Promise<UserFamily[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_user_families");
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as UserFamily[]).filter(
+    (f) => f.family_type === "expense" || !f.family_type,
+  );
 }
 
 export async function leaveFamilyGroup(familyId: string): Promise<void> {
