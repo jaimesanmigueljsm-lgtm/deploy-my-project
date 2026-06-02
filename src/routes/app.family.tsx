@@ -208,7 +208,7 @@ function GroupsPage() {
         </div>
 
         <CreatePlanDialog open={openCreate} onClose={() => setOpenCreate(false)} userId={userId}
-          onCreated={(newId) => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }} t={t} />
+          onCreated={(newId) => { switchGroup(newId); void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }} t={t} />
       </div>
     );
   }
