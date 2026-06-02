@@ -1,150 +1,39 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SectionError } from "@/components/section-error";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  Plus,
-  Users,
-  Crown,
-  Baby,
-  Heart,
-  Target,
-  Clock,
-  Search,
-  Send,
-  Pencil,
-  TrendingUp,
-  Calendar,
-  Trash2,
-  UserPlus,
-  UserMinus,
-  Sparkles,
-  Zap,
-  CircleDollarSign,
-  ChevronDown,
-  Receipt,
-  CheckCircle2,
-  ChevronRight,
-  Trophy,
-  ArrowRight,
-  Wallet,
-  Star,
-  PartyPopper,
-  Archive,
-  TrendingDown,
+  Plus, Users, Crown, Search, Trash2, UserPlus,
+  CircleDollarSign, Receipt, CheckCircle2, Trophy,
+  ArrowRight, ChevronDown, ChevronUp, Check, X,
+  Wallet, TrendingDown, PartyPopper, Settings2, LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SectionHeader, EmptyState } from "@/components/nest";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/nest";
 import { useT } from "@/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/features/profile/use-profile";
-import { money, shortMoney, getCurrencySymbol } from "@/lib/format";
+import { money, shortMoney } from "@/lib/format";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  loadFamilyData,
-  getMyInvitations,
-  getFamilySentInvitations,
-  searchUserByUsername,
-  sendFamilyInvite,
-  acceptFamilyInvite,
-  rejectFamilyInvite,
-  createFamily,
-  createSharedGoal,
-  updateSharedGoal,
-  addGoalContribution,
-  updateFamilyName,
-  removeFamilyMember,
-  leaveFamily,
-  notifyFamilyMembers,
-  getFamilyActivity,
-  logFamilyActivity,
-  updateMemberRelationship,
-  getUserFamilies,
-  fetchSharedExpenses,
-  addSharedExpense,
-  deleteSharedExpense,
-  calculateMemberBalances,
-  calculateSettlements,
-  type UserSearchResult,
-  type ReceivedInvitation,
-  type SentInvitation,
-  type SharedGoal,
-  type FamilyMemberProfile,
-  type FamilyActivity,
-  type UserFamily,
-  type SharedExpense,
-  type Settlement,
+  loadFamilyData, getMyInvitations, getFamilySentInvitations,
+  searchUserByUsername, sendFamilyInvite, acceptFamilyInvite,
+  rejectFamilyInvite, createFamily, updateFamilyName,
+  removeFamilyMember, leaveFamily, notifyFamilyMembers,
+  getUserFamilies, fetchSharedExpenses, addSharedExpense,
+  deleteSharedExpense, calculateMemberBalances, calculateSettlements,
+  type UserSearchResult, type ReceivedInvitation,
+  type FamilyMemberProfile, type UserFamily,
+  type SharedExpense, type Settlement,
 } from "@/features/family/family.service";
 import { useActiveFamily } from "@/hooks/use-active-family";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
-
-function monthlyNeeded(goal: SharedGoal): number | null {
-  if (!goal.deadline) return null;
-  const msLeft = new Date(goal.deadline).getTime() - Date.now();
-  if (msLeft <= 0) return null;
-  const monthsLeft = msLeft / (1000 * 60 * 60 * 24 * 30.44);
-  if (monthsLeft < 0.5) return null;
-  const remaining = Math.max(0, goal.target_amount - goal.current_amount);
-  if (remaining <= 0) return null;
-  return remaining / monthsLeft;
-}
-
-function relativeTime(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const min = Math.floor(diff / 60_000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `${h}h`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d`;
-  return new Date(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-function formatActivity(
-  item: FamilyActivity,
-  t: (k: string) => string,
-  currency: string,
-  convert: (n: number) => number = (n) => n,
-): string {
-  const meta = item.meta as Record<string, string | number>;
-  const name = item.actor_name ?? t("family.role.member");
-  switch (item.type) {
-    case "member_joined":
-      return t("family.activity.member_joined").replace("{name}", name);
-    case "member_removed":
-      return t("family.activity.member_removed").replace("{name}", name);
-    case "goal_created":
-      return t("family.activity.goal_created")
-        .replace("{name}", name)
-        .replace("{goal}", String(meta.goalName ?? ""));
-    case "goal_updated":
-      return t("family.activity.goal_updated")
-        .replace("{name}", name)
-        .replace("{goal}", String(meta.goalName ?? ""));
-    case "goal_contribution": {
-      const text = t("family.activity.goal_contribution")
-        .replace("{name}", name)
-        .replace("{amount}", money(convert(Number(meta.amount ?? 0)), currency))
-        .replace("{goal}", String(meta.goalName ?? ""));
-      return meta.note ? `${text} — "${meta.note}"` : text;
-    }
-    case "family_renamed":
-      return t("family.activity.family_renamed")
-        .replace("{name}", name)
-        .replace("{newName}", String(meta.newName ?? ""));
-    case "expense_added":
-      return `${name} added an expense: ${meta.description ?? ""} (${money(convert(Number(meta.amount ?? 0)), currency)})`;
-    default:
-      return name;
-  }
-}
 
 const FK = {
   data: (familyId: string) => ["family", "data", familyId] as const,
@@ -156,13 +45,13 @@ const FK = {
 };
 
 export const Route = createFileRoute("/app/family")({
-  component: FamilyPage,
+  component: GroupsPage,
   errorComponent: SectionError,
 });
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Page ──────────────────────────────────────────────────────────────────
 
-function FamilyPage() {
+function GroupsPage() {
   const { t } = useT();
   const { user } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
@@ -171,12 +60,11 @@ function FamilyPage() {
   const userId = user?.id ?? "";
   const currency = profile?.currency ?? "EUR";
   const convert = useCurrencyConvert();
-
-  // Multi-group switcher: localStorage first, falls back to profile.family_id
   const { activeFamilyId, switchGroup } = useActiveFamily(profile?.family_id ?? null);
   const familyId = activeFamilyId;
   const myDisplayName = profile?.full_name ?? profile?.first_name ?? t("family.role.member");
 
+  // ── Queries ──────────────────────────────────────────────────────────────
   const { data: receivedInvitations = [] } = useQuery({
     queryKey: FK.received(userId),
     queryFn: getMyInvitations,
@@ -190,21 +78,6 @@ function FamilyPage() {
     queryFn: () => loadFamilyData(familyId!, userId),
     enabled: !!familyId && !!userId,
     staleTime: 20_000,
-    placeholderData: keepPreviousData,
-  });
-
-  const { data: sentInvitations = [] } = useQuery({
-    queryKey: FK.sent(familyId ?? ""),
-    queryFn: () => getFamilySentInvitations(familyId!),
-    enabled: !!familyId,
-    staleTime: 20_000,
-  });
-
-  const { data: activityLog = [] } = useQuery({
-    queryKey: FK.activity(familyId ?? ""),
-    queryFn: () => getFamilyActivity(familyId!),
-    enabled: !!familyId,
-    staleTime: 15_000,
     placeholderData: keepPreviousData,
   });
 
@@ -223,179 +96,52 @@ function FamilyPage() {
     placeholderData: keepPreviousData,
   });
 
-  // ── Realtime: invitation channel (always active when logged in) ───────────
+  // ── Realtime ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!userId) return;
-    let subscribedOnce = false;
     const ch = supabase
       .channel(`nest-inv-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "family_invitations",
-          filter: `invited_user_id=eq.${userId}`,
-        },
-        () => void qc.invalidateQueries({ queryKey: FK.received(userId) }),
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          // On reconnect (not initial), refresh to catch any missed events
-          if (subscribedOnce) void qc.invalidateQueries({ queryKey: FK.received(userId) });
-          subscribedOnce = true;
-        }
-      });
-    return () => {
-      supabase.removeChannel(ch).then((status) => {
-        if (status !== "ok") console.warn("[Nest] inv channel cleanup:", status);
-      });
-    };
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "family_invitations", filter: `invited_user_id=eq.${userId}` },
+        () => void qc.invalidateQueries({ queryKey: FK.received(userId) }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, [userId, qc]);
 
-  // ── Realtime: family channel (active when in a family) ────────────────────
   useEffect(() => {
     if (!familyId) return;
-    let subscribedOnce = false;
     const ch = supabase
       .channel(`nest-fam-${familyId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "family_members",
-          filter: `family_id=eq.${familyId}`,
-        },
-        () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }),
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "shared_goals",
-          filter: `family_id=eq.${familyId}`,
-        },
-        () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }),
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "family_activity",
-          filter: `family_id=eq.${familyId}`,
-        },
-        () => void qc.invalidateQueries({ queryKey: FK.activity(familyId) }),
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "shared_expenses",
-          filter: `family_id=eq.${familyId}`,
-        },
-        () => void qc.invalidateQueries({ queryKey: FK.expenses(familyId) }),
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          // On reconnect (not initial), refresh all family data to catch missed events
-          if (subscribedOnce) {
-            void qc.invalidateQueries({ queryKey: FK.data(familyId) });
-            void qc.invalidateQueries({ queryKey: FK.activity(familyId) });
-          }
-          subscribedOnce = true;
-        }
-      });
-    return () => {
-      supabase.removeChannel(ch).then((status) => {
-        if (status !== "ok") console.warn("[Nest] fam channel cleanup:", status);
-      });
-    };
+      .on("postgres_changes", { event: "*", schema: "public", table: "family_members", filter: `family_id=eq.${familyId}` },
+        () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "shared_expenses", filter: `family_id=eq.${familyId}` },
+        () => void qc.invalidateQueries({ queryKey: FK.expenses(familyId) }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, [familyId, qc]);
 
-  // ── Auto-repair: if removed from family, clear own profile ───────────────
-  useEffect(() => {
-    if (!familyData || !userId || !familyId || familyData.isOwner) return;
-    const inMembers = familyData.members.some((m) => m.user_id === userId);
-    if (inMembers) return;
-    void leaveFamily(userId).then(
-      () => void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }),
-    );
-  }, [familyData, userId, familyId, qc]);
-
   // ── Mutations ─────────────────────────────────────────────────────────────
-
   const acceptMutation = useMutation({
     mutationFn: ({ id }: { id: string; invFamilyId: string }) => acceptFamilyInvite(id),
     onSuccess: async (_, { invFamilyId }) => {
-      toast.success(t("family.invite.accepted.toast"));
-      // Pre-seed family data cache so the transition feels instant
+      toast.success(t("groups.invite.accepted"));
       void qc.invalidateQueries({ queryKey: FK.data(invFamilyId) });
-      // Update profile (sets familyId, triggers component transition)
       await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
-      // Clear invitation inbox after profile is fresh
       void qc.invalidateQueries({ queryKey: FK.received(userId) });
-      try {
-        await notifyFamilyMembers(
-          invFamilyId,
-          "invite_accepted",
-          t("family.notif.joined.title"),
-          t("family.notif.joined.body").replace("{name}", myDisplayName),
-        );
-      } catch {
-        /* non-critical */
-      }
+      try { await notifyFamilyMembers(invFamilyId, "invite_accepted", t("family.notif.joined.title"), t("family.notif.joined.body").replace("{name}", myDisplayName)); } catch { /* non-critical */ }
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const rejectMutation = useMutation({
     mutationFn: rejectFamilyInvite,
-    onSuccess: () => {
-      toast.success(t("family.invite.rejected.toast"));
-      void qc.invalidateQueries({ queryKey: FK.received(userId) });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const removeMemberMutation = useMutation({
-    mutationFn: ({ memberId }: { memberId: string; memberUserId: string }) =>
-      removeFamilyMember(memberId),
-    onSuccess: (_, { memberUserId }) => {
-      toast.success(t("family.toast.member.removed"));
-      void qc.invalidateQueries({ queryKey: FK.data(familyId ?? "") });
-      void qc.invalidateQueries({ queryKey: queryKeys.profile(memberUserId) });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const updateRelationshipMutation = useMutation({
-    mutationFn: ({ memberId, relationship }: { memberId: string; relationship: string | null }) =>
-      updateMemberRelationship(memberId, relationship),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.data(familyId ?? "") }),
+    onSuccess: () => { toast.success(t("groups.invite.rejected")); void qc.invalidateQueries({ queryKey: FK.received(userId) }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const addExpenseMutation = useMutation({
-    mutationFn: ({
-      description,
-      amount,
-      participantIds,
-      category,
-    }: {
-      description: string;
-      amount: number;
-      participantIds: string[];
-      category?: string;
-    }) => addSharedExpense(familyId!, userId, description, amount, participantIds, category),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: FK.expenses(familyId ?? "") });
-      void logFamilyActivity(familyId!, "expense_added", myDisplayName, {}).catch(() => {});
-      void qc.invalidateQueries({ queryKey: FK.activity(familyId ?? "") });
-    },
+    mutationFn: ({ description, amount, participantIds, category }: { description: string; amount: number; participantIds: string[]; category?: string }) =>
+      addSharedExpense(familyId!, userId, description, amount, participantIds, category),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.expenses(familyId ?? "") }),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -405,2014 +151,702 @@ function FamilyPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const archiveGoalMutation = useMutation({
-    mutationFn: (goalId: string) => updateSharedGoal(goalId, { status: "archived" }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.data(familyId ?? "") }),
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   // ── Dialog state ──────────────────────────────────────────────────────────
   const [openCreate, setOpenCreate] = useState(false);
   const [openInvite, setOpenInvite] = useState(false);
-  const [openGoal, setOpenGoal] = useState(false);
-  const [openWhoAreWe, setOpenWhoAreWe] = useState(false);
-  const [openGoalPicker, setOpenGoalPicker] = useState(false);
-  const [viewingMember, setViewingMember] = useState<FamilyMemberProfile | null>(null);
-  const [editingGoal, setEditingGoal] = useState<SharedGoal | null>(null);
-  const [contributingGoal, setContributingGoal] = useState<SharedGoal | null>(null);
   const [openAddExpense, setOpenAddExpense] = useState(false);
-  const [showCompletedGoals, setShowCompletedGoals] = useState(false);
-  const [showGroupSwitcher, setShowGroupSwitcher] = useState(false);
+  const [openSettings, setOpenSettings] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
-  function quickContribute() {
-    if (goals.length === 0) return;
-    if (goals.length === 1) {
-      setContributingGoal(goals[0]);
-      return;
-    }
-    setOpenGoalPicker(true);
-  }
-
-  // ── Data destructuring — must be before any useMemo and before early return ─
+  // ── Data ──────────────────────────────────────────────────────────────────
   const isOwner = familyData?.isOwner ?? false;
-  const { family, members, memberProfiles, goals } = familyData ?? {
-    family: null,
-    members: [],
-    memberProfiles: [],
-    goals: [],
-  };
+  const { family, members, memberProfiles } = familyData ?? { family: null, members: [], memberProfiles: [], goals: [] };
 
-  // ── Stats (no hooks, safe here) ───────────────────────────────────────────
-  const activeGoals = goals.filter(
-    (g) => (g.status ?? "active") === "active" && g.current_amount < g.target_amount,
-  ).length;
-  const totalSaved = goals.reduce((s, g) => s + g.current_amount, 0);
+  const memberBalances = useMemo(() => calculateMemberBalances(memberProfiles, sharedExpenses), [memberProfiles, sharedExpenses]);
+  const settlements = useMemo(() => calculateSettlements(memberBalances), [memberBalances]);
 
-  // ── Goal lifecycle buckets ────────────────────────────────────────────────
-  const displayedGoals = goals.filter((g) => !g.status || g.status === "active");
-  const completedGoals = goals.filter((g) => g.status === "completed");
-  const archivedGoals = goals.filter((g) => g.status === "archived");
+  const totalSpend = useMemo(() => sharedExpenses.reduce((s, e) => s + e.amount, 0), [sharedExpenses]);
+  const myBalance = useMemo(() => memberBalances.find(b => b.user_id === userId)?.balance ?? 0, [memberBalances, userId]);
+  const settledCount = useMemo(() => settlements.filter(s => s.amount <= 0.01).length, [settlements]);
+  const isFullySettled = settlements.length > 0 && settlements.every(s => s.amount <= 0.01);
 
-  // ── useMemo hooks — ALL must be before any early return (Rules of Hooks) ──
-  const memberBalances = useMemo(
-    () => calculateMemberBalances(memberProfiles, sharedExpenses),
-    [memberProfiles, sharedExpenses],
-  );
+  if (profileLoading || (!!familyId && familyLoading && !familyData)) return <GroupsSkeleton />;
 
-  const settlements = useMemo(
-    () => calculateSettlements(memberBalances),
-    [memberBalances],
-  );
-
-  const { weeklyExpenseCount, monthlyExpenseTotal, totalGroupSpend } = useMemo(() => {
-    const now = Date.now();
-    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
-    return {
-      weeklyExpenseCount: sharedExpenses.filter((e) => new Date(e.created_at).getTime() >= weekAgo).length,
-      monthlyExpenseTotal: sharedExpenses
-        .filter((e) => new Date(e.created_at).getTime() >= monthStart)
-        .reduce((s, e) => s + e.amount, 0),
-      totalGroupSpend: sharedExpenses.reduce((s, e) => s + e.amount, 0),
-    };
-  }, [sharedExpenses]);
-
-  const mostActiveContributor = useMemo(() => {
-    if (sharedExpenses.length === 0) return null;
-    const totals: Record<string, number> = {};
-    for (const e of sharedExpenses) totals[e.paid_by] = (totals[e.paid_by] ?? 0) + e.amount;
-    const [topId] = Object.entries(totals).sort(([, a], [, b]) => b - a)[0] ?? [];
-    return topId ? (memberProfiles.find((m) => m.user_id === topId) ?? null) : null;
-  }, [sharedExpenses, memberProfiles]);
-
-  // ── Loading guard — after all hooks ───────────────────────────────────────
-  if (profileLoading || (!!familyId && familyLoading && !familyData)) return <FamilySkeleton />;
-
-  // ── No family ──────────────────────────────────────────────────────────────
+  // ── No group ──────────────────────────────────────────────────────────────
   if (!familyId || (!familyLoading && !family)) {
     return (
-      <div className="px-4 pt-5 space-y-5 animate-rise">
+      <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
         <header className="pt-2">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            {t("family.subtitle")}
-          </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("family.title")}</h1>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{t("groups.subtitle")}</p>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("groups.title")}</h1>
         </header>
 
         {receivedInvitations.length > 0 && (
-          <section>
-            <SectionHeader title={t("family.invite.received.title")} />
-            <div className="space-y-2">
-              {receivedInvitations.map((inv) => (
-                <InvitationCard
-                  key={inv.id}
-                  invitation={inv}
-                  onAccept={() => acceptMutation.mutate({ id: inv.id, invFamilyId: inv.family_id })}
-                  onReject={() => rejectMutation.mutate(inv.id)}
-                  busy={acceptMutation.isPending || rejectMutation.isPending}
-                  t={t}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        <div className="card-flat p-7 flex flex-col items-center text-center gap-4">
-          <div className="size-16 rounded-2xl bg-muted grid place-items-center">
-            <Users className="size-7 text-muted-foreground" />
-          </div>
-          <div className="space-y-1.5 max-w-[260px]">
-            <p className="text-base font-semibold">{t("family.empty.group.title")}</p>
-            <p className="text-[12px] text-muted-foreground leading-relaxed">{t("family.empty.group.desc")}</p>
-          </div>
-          <div className="flex flex-col gap-2 w-full max-w-[220px]">
-            <Button size="sm" onClick={() => setOpenCreate(true)} className="w-full">
-              <Plus className="size-3.5 mr-1.5" />
-              {t("family.create.button")}
-            </Button>
-          </div>
-        </div>
-
-        <CreateFamilyDialog
-          open={openCreate}
-          onClose={() => setOpenCreate(false)}
-          userId={userId}
-          onCreated={(newId) => {
-            void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
-            void qc.invalidateQueries({ queryKey: FK.groups(userId) });
-          }}
-          t={t}
-        />
-      </div>
-    );
-  }
-
-  if (!family) return <FamilySkeleton />;
-
-  // ── Has family ──────────────────────────────────────────────────────────────
-  return (
-    <div className="px-4 pt-5 space-y-5 animate-rise pb-6">
-      {/* Header */}
-      <header className="flex items-center justify-between pt-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            {t("family.subtitle")}
-          </p>
-          {/* Group switcher */}
-          <div className="relative">
-            <button
-              onClick={() => setShowGroupSwitcher((v) => !v)}
-              className="flex items-center gap-1.5 text-[22px] font-semibold mt-0.5 tracking-tight hover:opacity-80 transition"
-            >
-              <span className="truncate max-w-[180px]">{family.name}</span>
-              {userGroups.length > 1 && <ChevronDown className="size-4 text-muted-foreground shrink-0" />}
-              {isOwner && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setOpenWhoAreWe(true); }}
-                  className="size-6 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition ml-1"
-                  aria-label={t("common.edit")}
-                >
-                  <Pencil className="size-3.5" />
-                </button>
-              )}
-            </button>
-            {showGroupSwitcher && (
-              <div className="absolute top-full left-0 mt-1 z-50 bg-background border border-border rounded-xl shadow-lg py-1 min-w-[200px]">
-                {userGroups.map((g) => (
-                  <button
-                    key={g.family_id}
-                    onClick={() => { switchGroup(g.family_id); setShowGroupSwitcher(false); }}
-                    className={`w-full text-left px-3 py-2.5 text-sm flex items-center justify-between hover:bg-muted/40 transition ${g.family_id === familyId ? "font-semibold" : ""}`}
-                  >
-                    <span className="truncate">{g.family_name}</span>
-                    <span className="text-[11px] text-muted-foreground ml-2 shrink-0">{t("family.summary.members_count").replace("{n}", String(g.member_count))}</span>
-                  </button>
-                ))}
-                <div className="border-t border-border-subtle mt-1 pt-1">
-                  <button
-                    onClick={() => { setShowGroupSwitcher(false); setOpenCreate(true); }}
-                    className="w-full text-left px-3 py-2.5 text-sm text-positive flex items-center gap-1.5 hover:bg-muted/40 transition"
-                  >
-                    <Plus className="size-3.5" /> {t("family.new_group")}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {isOwner && (
-            <button
-              onClick={() => setOpenInvite(true)}
-              className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition active:scale-95"
-            >
-              <Plus className="size-4" />
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Group summary cards */}
-      <GroupSummaryCards
-        memberCount={members.length}
-        totalGroupSpend={totalGroupSpend}
-        totalSaved={totalSaved}
-        pendingSettlements={settlements.length}
-        mostActive={mostActiveContributor?.full_name ?? mostActiveContributor?.first_name ?? null}
-        currency={currency}
-        convert={convert}
-        t={t}
-      />
-
-      {/* Received invitations */}
-      {receivedInvitations.length > 0 && (
-        <section>
-          <SectionHeader title={t("family.invite.received.title")} />
           <div className="space-y-2">
-            {receivedInvitations.map((inv) => (
-              <InvitationCard
-                key={inv.id}
-                invitation={inv}
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("groups.invites.pending")}</p>
+            {receivedInvitations.map(inv => (
+              <PendingInviteCard key={inv.id} inv={inv}
                 onAccept={() => acceptMutation.mutate({ id: inv.id, invFamilyId: inv.family_id })}
                 onReject={() => rejectMutation.mutate(inv.id)}
                 busy={acceptMutation.isPending || rejectMutation.isPending}
-                t={t}
-              />
+                t={t} />
             ))}
           </div>
-        </section>
-      )}
+        )}
 
-      {/* Pending sent invitations (owner) */}
-      {isOwner && sentInvitations.length > 0 && (
-        <section>
-          <SectionHeader title={t("family.invite.pending.title")} />
-          <div className="card-flat divide-y divide-border-subtle">
-            {sentInvitations.map((inv) => (
-              <SentInvitationRow key={inv.id} inv={inv} />
-            ))}
+        <div className="card-flat p-8 flex flex-col items-center text-center gap-5">
+          <div className="size-20 rounded-3xl bg-gradient-to-br from-violet-100 to-violet-200 dark:from-violet-950 dark:to-violet-900 grid place-items-center">
+            <Receipt className="size-9 text-violet-600 dark:text-violet-400" />
           </div>
-        </section>
-      )}
-
-      {/* Members */}
-      <section>
-        <SectionHeader
-          title={t("family.section.members")}
-          action={
-            isOwner ? (
-              <button
-                onClick={() => setOpenWhoAreWe(true)}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                {t("common.manage")}
-              </button>
-            ) : undefined
-          }
-        />
-        <div className="card-flat divide-y divide-border-subtle">
-          {(memberProfiles.length > 0
-            ? memberProfiles
-            : members.map(
-                (m) =>
-                  ({
-                    member_id: m.id,
-                    user_id: m.user_id,
-                    role: m.role,
-                    relationship_type: m.relationship_type ?? null,
-                    joined_at: m.created_at ?? null,
-                    first_name: m.first_name ?? "",
-                    last_name_1: m.last_name_1 ?? "",
-                    financial_username: m.financial_username ?? "",
-                    full_name: m.full_name ?? null,
-                    avatar_url: m.avatar_url ?? null,
-                  }) as FamilyMemberProfile,
-              )
-          ).map((m) => {
-            const Icon = m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
-            const isMe = m.user_id === userId;
-            const displayName =
-              m.full_name ??
-              (m.first_name ? `${m.first_name} ${m.last_name_1}`.trim() : null) ??
-              t("family.role.member");
-            return (
-              <button
-                key={m.member_id}
-                onClick={() => setViewingMember(m)}
-                className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-muted/40 transition"
-              >
-                <div className="flex items-center gap-3">
-                  {m.avatar_url ? (
-                    <img
-                      src={m.avatar_url}
-                      alt={displayName}
-                      className="size-10 rounded-full object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
-                      <Icon className="size-4" />
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-sm font-semibold flex items-center gap-1.5">
-                      {displayName}
-                      {isMe && (
-                        <span className="text-[10px] text-muted-foreground font-normal">
-                          {t("family.you.label")}
-                        </span>
-                      )}
-                    </div>
-                    {m.financial_username && (
-                      <div className="text-xs text-muted-foreground font-mono">
-                        @{m.financial_username}
-                      </div>
-                    )}
-                    <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                      <span className="capitalize">{t(`family.role.${m.role}`) ?? m.role}</span>
-                      {m.relationship_type && (
-                        <>
-                          <span className="opacity-40">·</span>
-                          <span>
-                            {t(`family.member.relationship.${m.relationship_type}`) ??
-                              m.relationship_type}
-                          </span>
-                        </>
-                      )}
-                      {(() => {
-                        const b = memberBalances.find((x) => x.user_id === m.user_id);
-                        if (!b || Math.abs(b.balance) < 0.01) return null;
-                        const pos = b.balance > 0;
-                        return (
-                          <>
-                            <span className="opacity-40">·</span>
-                            <span className={`font-medium num ${pos ? "text-positive" : "text-negative"}`}>
-                              {pos ? "+" : "−"}{money(convert(Math.abs(b.balance)), currency)}
-                            </span>
-                          </>
-                        );
-                      })()}</div>
-                  </div>
-                </div>
-                <svg
-                  className="size-3.5 text-muted-foreground shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            );
-          })}
+          <div className="space-y-2 max-w-[260px]">
+            <p className="text-lg font-semibold">{t("groups.empty.title")}</p>
+            <p className="text-[13px] text-muted-foreground leading-relaxed">{t("groups.empty.desc")}</p>
+          </div>
+          <Button onClick={() => setOpenCreate(true)} className="w-full max-w-[220px]">
+            <Plus className="size-4 mr-2" /> {t("groups.create.cta")}
+          </Button>
         </div>
-      </section>
 
-      {/* Settlement suggestions */}
-      {sharedExpenses.length > 0 && (
-        <section>
-          <SectionHeader title={t("family.section.settlements")} />
-          {settlements.length === 0 ? (
-            <div className="card-flat px-4 py-3.5 flex items-center gap-3">
-              <div className="size-8 rounded-full bg-positive-soft grid place-items-center shrink-0">
-                <CheckCircle2 className="size-4 text-positive" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">{t("family.settlements.all_balanced")}</p>
-                <p className="text-[11px] text-muted-foreground">{t("family.settlements.all_balanced.desc")}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="card-flat divide-y divide-border-subtle">
-              {settlements.map((s, i) => {
-                const fromMember = memberProfiles.find((m) => m.user_id === s.from_user_id);
-                const toMember = memberProfiles.find((m) => m.user_id === s.to_user_id);
-                const fromName = fromMember?.full_name ?? fromMember?.first_name ?? t("family.role.member");
-                const toName = toMember?.full_name ?? toMember?.first_name ?? t("family.role.member");
-                const isMe = s.from_user_id === userId;
-                return (
-                  <div key={i} className="flex items-center justify-between px-4 py-3.5">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`size-8 rounded-full grid place-items-center shrink-0 ${isMe ? "bg-warn-soft" : "bg-muted"}`}>
-                        <Wallet className={`size-3.5 ${isMe ? "text-warn" : "text-muted-foreground"}`} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          <span className={isMe ? "text-warn font-semibold" : ""}>{isMe ? t("family.you.label") : fromName}</span>
-                          <span className="text-muted-foreground mx-1.5">→</span>
-                          <span>{toMember?.user_id === userId ? t("family.you.label") : toName}</span>
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">{t("family.settlements.suggestion")}</p>
-                      </div>
-                    </div>
-                    <span className={`text-sm font-semibold num shrink-0 ${isMe ? "text-warn" : "text-foreground"}`}>
-                      {money(convert(s.amount), currency)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Shared goals */}
-      <section>
-        <SectionHeader
-          title={t("family.section.goals")}
-          action={
-            <button
-              onClick={() => { setEditingGoal(null); setOpenGoal(true); }}
-              className="text-xs font-medium text-positive"
-            >
-              {t("family.add.goal")}
-            </button>
-          }
-        />
-        {goals.length === 0 ? (
-          <div className="card-flat p-6 flex flex-col items-center text-center gap-3">
-            <div className="size-14 rounded-2xl bg-positive-soft grid place-items-center">
-              <Target className="size-6 text-positive" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold">{t("family.empty.goals.title")}</p>
-              <p className="text-[12px] text-muted-foreground leading-relaxed">{t("family.empty.goals.desc")}</p>
-            </div>
-            <Button size="sm" onClick={() => { setEditingGoal(null); setOpenGoal(true); }} className="mt-1">
-              <Plus className="size-3.5 mr-1.5" /> {t("family.add.goal")}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {displayedGoals.map((g) => {
-              const pct = g.target_amount > 0 ? Math.min(100, (g.current_amount / g.target_amount) * 100) : 0;
-              const remaining = Math.max(0, g.target_amount - g.current_amount);
-              const monthly = monthlyNeeded(g);
-              return (
-                <div key={g.id} className="card-flat p-4">
-                  <div className="flex items-start justify-between mb-2 gap-2">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="size-9 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
-                        <Target className="size-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold truncate">{g.name}</div>
-                        <div className="text-[11px] text-muted-foreground num">
-                          {money(convert(g.current_amount), currency)}{" "}
-                          <span className="opacity-60">{t("common.of")}</span>{" "}
-                          {money(convert(g.target_amount), currency)}
-                        </div>
-                        {g.deadline && (
-                          <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                            <Calendar className="size-3" />
-                            {new Date(g.deadline).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-sm font-semibold num text-positive">{Math.round(pct)}%</span>
-                      <button
-                        onClick={() => setContributingGoal(g)}
-                        aria-label={t("family.goal.contribute")}
-                        className="size-10 grid place-items-center rounded-xl text-positive bg-positive-soft/40 hover:bg-positive-soft/70 transition active:scale-95"
-                      >
-                        <CircleDollarSign className="size-5" />
-                      </button>
-                      <button
-                        onClick={() => { setEditingGoal(g); setOpenGoal(true); }}
-                        aria-label={t("common.edit")}
-                        className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
-                      >
-                        <Pencil className="size-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-positive transition-all duration-700" style={{ width: `${pct}%` }} />
-                  </div>
-                  {(remaining > 0 || monthly !== null) && (
-                    <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
-                      {remaining > 0 && <span>{money(convert(remaining), currency)} {t("family.goal.remaining")}</span>}
-                      {monthly !== null && (
-                        <span className="text-positive font-medium">
-                          {t("family.goal.monthly").replace("{amount}", money(convert(Math.ceil(monthly)), currency))}
-                        </span>
-                      )}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Completed goals — collapsible */}
-            {completedGoals.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setShowCompletedGoals((v) => !v)}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition py-1 w-full"
-                >
-                  <CheckCircle2 className="size-3.5 text-positive" />
-                  {completedGoals.length} completed goal{completedGoals.length !== 1 ? "s" : ""}
-                  <ChevronRight className={`size-3 ml-auto transition-transform ${showCompletedGoals ? "rotate-90" : ""}`} />
-                </button>
-                {showCompletedGoals && (
-                  <div className="space-y-2 mt-1">
-                    {completedGoals.map((g) => (
-                      <div key={g.id} className="rounded-2xl border border-positive/20 bg-positive-soft/20 p-4 animate-rise">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <div className="size-10 rounded-xl bg-positive text-white grid place-items-center shrink-0">
-                              <Trophy className="size-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold truncate text-positive">{g.name}</div>
-                              <div className="text-[11px] text-positive/70 num font-medium">
-                                {t("family.goal.reached")} · {money(convert(g.current_amount), currency)}
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => archiveGoalMutation.mutate(g.id)}
-                            disabled={archiveGoalMutation.isPending}
-                            className="shrink-0 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition px-2 py-1 rounded-lg hover:bg-muted/40"
-                          >
-                            <Archive className="size-3" /> {t("family.goal.archive_btn")}
-                          </button>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-positive/30 overflow-hidden mt-3">
-                          <div className="h-full rounded-full bg-positive w-full" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Shared expenses */}
-      <section>
-        <SectionHeader
-          title={t("family.section.expenses")}
-          action={
-            <div className="flex items-center gap-3">
-              {sharedExpenses.length > 0 && monthlyExpenseTotal > 0 && (
-                <span className="text-[11px] text-muted-foreground num">
-                  {t("family.expenses.this_month").replace("{amount}", money(convert(monthlyExpenseTotal), currency))}
-                  {weeklyExpenseCount > 0 && ` · ${t("family.expenses.this_week").replace("{n}", String(weeklyExpenseCount))}`}
-                </span>
-              )}
-              <button onClick={() => setOpenAddExpense(true)} className="text-xs font-medium text-positive">
-                + Add
-              </button>
-            </div>
-          }
-        />
-        {sharedExpenses.length === 0 ? (
-          <div className="card-flat p-6 flex flex-col items-center text-center gap-3">
-            <div className="size-14 rounded-2xl bg-muted grid place-items-center">
-              <Receipt className="size-6 text-muted-foreground" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold">{t("family.empty.expenses.title")}</p>
-              <p className="text-[12px] text-muted-foreground leading-relaxed">{t("family.empty.expenses.desc")}</p>
-            </div>
-            <Button size="sm" variant="outline" onClick={() => setOpenAddExpense(true)} className="mt-1">
-              <Plus className="size-3.5 mr-1.5" /> + Add
-            </Button>
-          </div>
-        ) : (
-          <div className="card-flat divide-y divide-border-subtle">
-            {sharedExpenses.map((e) => {
-              const payer = memberProfiles.find((m) => m.user_id === e.paid_by);
-              const payerName = payer?.full_name ?? payer?.first_name ?? "Someone";
-              const n = e.shared_expense_participants?.length ?? 0;
-              const isMyExpense = e.paid_by === userId;
-              return (
-                <div key={e.id} className="flex items-center justify-between px-4 py-3.5 gap-3">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="size-9 rounded-xl bg-muted grid place-items-center shrink-0">
-                      <Receipt className="size-4 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{e.description}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {t("family.expenses.paid_by")} {isMyExpense ? t("family.you.label") : payerName}
-                        {n > 0 && <span className="ml-1">· {t("family.expenses.split")} {n}</span>}
-                        {e.category && <span className="ml-1">· {e.category}</span>}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-semibold num">{money(convert(e.amount), currency)}</span>
-                    {isMyExpense && (
-                      <button
-                        onClick={() => deleteExpenseMutation.mutate(e.id)}
-                        disabled={deleteExpenseMutation.isPending}
-                        className="size-7 grid place-items-center rounded-lg text-muted-foreground hover:text-negative transition"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Activity feed */}
-      <section>
-        <SectionHeader title={t("family.section.activity")} />
-        <ActivityFeed items={activityLog} currency={currency} t={t} />
-      </section>
-
-      {/* Dialogs */}
-      <MemberProfileSheet
-        member={viewingMember}
-        onClose={() => setViewingMember(null)}
-        isOwnProfile={viewingMember?.user_id === userId}
-        isOwner={isOwner}
-        onUpdateRelationship={(memberId, relationship) =>
-          updateRelationshipMutation.mutate({ memberId, relationship })
-        }
-        t={t}
-      />
-
-      <GoalPickerDialog
-        open={openGoalPicker}
-        onClose={() => setOpenGoalPicker(false)}
-        goals={goals}
-        onPick={(g) => {
-          setOpenGoalPicker(false);
-          setContributingGoal(g);
-        }}
-        t={t}
-      />
-
-      <WhoAreWeDialog
-        open={openWhoAreWe}
-        onClose={() => setOpenWhoAreWe(false)}
-        family={family}
-        members={memberProfiles}
-        isOwner={isOwner}
-        currentUserId={userId}
-        onRenamed={(newName) => {
-          void qc.invalidateQueries({ queryKey: FK.data(family.id) });
-          void logFamilyActivity(family.id, "family_renamed", myDisplayName, { newName }).catch(
-            () => {},
-          );
-          void qc.invalidateQueries({ queryKey: FK.activity(family.id) });
-        }}
-        onRemoveMember={(memberId, memberUserId) =>
-          removeMemberMutation.mutate({ memberId, memberUserId })
-        }
-        t={t}
-      />
-
-      {isOwner && (
-        <InviteDialog
-          open={openInvite}
-          onClose={() => setOpenInvite(false)}
-          familyId={family.id}
-          onSent={() => void qc.invalidateQueries({ queryKey: FK.sent(family.id) })}
-          t={t}
-        />
-      )}
-
-      <GoalDialog
-        open={openGoal}
-        onClose={() => {
-          setOpenGoal(false);
-          setEditingGoal(null);
-        }}
-        familyId={family.id}
-        editing={editingGoal}
-        myName={myDisplayName}
-        currency={currency}
-        onSaved={() => {
-          void qc.invalidateQueries({ queryKey: FK.data(family.id) });
-          void qc.invalidateQueries({ queryKey: FK.activity(family.id) });
-        }}
-        t={t}
-      />
-
-      {contributingGoal && (
-        <ContributionDialog
-          open={!!contributingGoal}
-          onClose={() => setContributingGoal(null)}
-          goal={contributingGoal}
-          familyId={family.id}
-          myName={myDisplayName}
-          currency={currency}
-          onSaved={() => {
-            setContributingGoal(null);
-            void qc.invalidateQueries({ queryKey: FK.data(family.id) });
-            void qc.invalidateQueries({ queryKey: FK.activity(family.id) });
-          }}
-          t={t}
-        />
-      )}
-
-      <CreateFamilyDialog
-        open={openCreate}
-        onClose={() => setOpenCreate(false)}
-        userId={userId}
-        onCreated={(newId) => {
-          void qc.invalidateQueries({ queryKey: FK.groups(userId) });
-          void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
-          switchGroup(newId);
-        }}
-        t={t}
-      />
-
-      <AddExpenseDialog
-        open={openAddExpense}
-        onClose={() => setOpenAddExpense(false)}
-        members={memberProfiles}
-        currency={currency}
-        currentUserId={userId}
-        t={t}
-        onSave={(description, amount, participantIds, category) => {
-          addExpenseMutation.mutate({ description, amount, participantIds, category });
-          setOpenAddExpense(false);
-        }}
-      />
-    </div>
-  );
-}
-
-// ─── FamilyStatsStrip ─────────────────────────────────────────────────────────
-
-function FamilyStatsStrip({
-  memberCount,
-  activeGoals,
-  totalSaved,
-  currency,
-  t,
-}: {
-  memberCount: number;
-  activeGoals: number;
-  totalSaved: number;
-  currency: string;
-  t: (k: string) => string;
-}) {
-  const convert = useCurrencyConvert();
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      <div className="card-flat p-3.5 space-y-0.5 text-center">
-        <p className="text-xl font-semibold num">{memberCount}</p>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-          {t("family.stats.members")}
-        </p>
-      </div>
-      <div className="card-flat p-3.5 space-y-0.5 text-center">
-        <p className="text-xl font-semibold num">{activeGoals}</p>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-          {t("family.stats.goals")}
-        </p>
-      </div>
-      <div className="card-flat p-3.5 space-y-0.5 text-center">
-        <p className="text-base font-semibold num text-positive">
-          {shortMoney(convert(totalSaved), currency)}
-        </p>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-          {t("family.stats.saved")}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── ActivityFeed ─────────────────────────────────────────────────────────────
-
-function ActivityFeed({
-  items,
-  currency,
-  t,
-}: {
-  items: FamilyActivity[];
-  currency: string;
-  t: (k: string) => string;
-}) {
-  const convert = useCurrencyConvert();
-  if (items.length === 0) {
-    return (
-      <div className="card-flat px-4 py-6 flex flex-col items-center gap-2 text-muted-foreground">
-        <Sparkles className="size-5 opacity-40" />
-        <p className="text-sm">{t("family.activity.empty")}</p>
+        <CreatePlanDialog open={openCreate} onClose={() => setOpenCreate(false)} userId={userId}
+          onCreated={(newId) => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }} t={t} />
       </div>
     );
   }
 
-  function getIcon(type: string) {
-    switch (type) {
-      case "member_joined":
-        return <UserPlus className="size-3.5" />;
-      case "member_removed":
-        return <UserMinus className="size-3.5" />;
-      case "goal_contribution":
-        return <TrendingUp className="size-3.5" />;
-      case "goal_created":
-        return <Target className="size-3.5" />;
-      case "goal_updated":
-        return <Pencil className="size-3.5" />;
-      case "family_renamed":
-        return <Pencil className="size-3.5" />;
-      default:
-        return <Zap className="size-3.5" />;
-    }
-  }
+  if (!family) return <GroupsSkeleton />;
 
-  function getIconColor(type: string): string {
-    if (type === "member_joined" || type === "goal_contribution")
-      return "bg-positive-soft text-positive";
-    if (type === "member_removed") return "bg-muted text-muted-foreground";
-    return "bg-accent/10 text-accent";
-  }
-
+  // ── Has group ─────────────────────────────────────────────────────────────
   return (
-    <div className="card-flat divide-y divide-border-subtle">
-      {items.map((item) => (
-        <div key={item.id} className="flex items-start gap-3 px-4 py-3">
-          <div
-            className={cn(
-              "size-7 rounded-full grid place-items-center shrink-0 mt-0.5",
-              getIconColor(item.type),
-            )}
-          >
-            {getIcon(item.type)}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm leading-snug">{formatActivity(item, t, currency, convert)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {relativeTime(item.created_at)}
-            </p>
-          </div>
+    <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
+
+      {/* Header */}
+      <header className="flex items-center justify-between pt-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{t("groups.subtitle")}</p>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight truncate max-w-[200px]">{family.name}</h1>
         </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function InvitationCard({
-  invitation,
-  onAccept,
-  onReject,
-  busy,
-  t,
-}: {
-  invitation: ReceivedInvitation;
-  onAccept: () => void;
-  onReject: () => void;
-  busy: boolean;
-  t: (k: string, p?: Record<string, string>) => string;
-}) {
-  return (
-    <div className="card-flat p-4">
-      <div className="flex items-start gap-3">
-        <div className="size-10 rounded-full bg-accent/10 text-accent grid place-items-center shrink-0 mt-0.5">
-          <Users className="size-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold truncate">{invitation.family_name}</div>
-          <div className="text-xs text-muted-foreground">
-            {t("family.invite.received.from", {
-              name: `${invitation.invited_by_first_name} ${invitation.invited_by_last_name_1}`,
-            })}
-          </div>
-          <div className="text-xs text-muted-foreground font-mono">
-            @{invitation.invited_by_username}
-          </div>
-        </div>
-      </div>
-      <div className="flex gap-2 mt-3">
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1 h-8 text-xs"
-          disabled={busy}
-          onClick={onReject}
-        >
-          {t("family.invite.reject")}
-        </Button>
-        <Button size="sm" className="flex-1 h-8 text-xs" disabled={busy} onClick={onAccept}>
-          {t("family.invite.accept")}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function SentInvitationRow({ inv }: { inv: SentInvitation }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <div>
-        <div className="text-sm font-medium">
-          {inv.invited_first_name} {inv.invited_last_name_1}
-        </div>
-        <div className="text-xs text-muted-foreground font-mono">@{inv.invited_username}</div>
-      </div>
-      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-        <Clock className="size-3" />
-        <span>{inv.role}</span>
-      </div>
-    </div>
-  );
-}
-
-// ─── MemberProfileSheet ───────────────────────────────────────────────────────
-
-const RELATIONSHIP_OPTIONS = [
-  "partner",
-  "spouse",
-  "child",
-  "parent",
-  "sibling",
-  "roommate",
-  "other",
-] as const;
-
-function MemberProfileSheet({
-  member,
-  onClose,
-  isOwnProfile,
-  isOwner,
-  onUpdateRelationship,
-  t,
-}: {
-  member: FamilyMemberProfile | null;
-  onClose: () => void;
-  isOwnProfile: boolean;
-  isOwner: boolean;
-  onUpdateRelationship: (memberId: string, relationship: string | null) => void;
-  t: (k: string) => string;
-}) {
-  const [relationship, setRelationship] = useState<string>("");
-
-  useEffect(() => {
-    if (member) setRelationship(member.relationship_type ?? "");
-  }, [member]);
-
-  if (!member) return null;
-
-  const displayName =
-    member.full_name ??
-    (member.first_name ? `${member.first_name} ${member.last_name_1}`.trim() : null) ??
-    t("family.role.member");
-  const RoleIcon = member.role === "owner" ? Crown : member.role === "child" ? Baby : Heart;
-
-  function handleRelationshipChange(val: string) {
-    setRelationship(val);
-    onUpdateRelationship(member!.member_id, val || null);
-  }
-
-  return (
-    <Dialog
-      open={!!member}
-      onOpenChange={(v) => {
-        if (!v) onClose();
-      }}
-    >
-      <DialogContent className="rounded-2xl max-w-xs">
-        <div className="flex flex-col items-center gap-3 pt-2">
-          {member.avatar_url ? (
-            <img
-              src={member.avatar_url}
-              alt={displayName}
-              className="size-24 rounded-full object-cover"
-            />
-          ) : (
-            <div className="size-24 rounded-full bg-muted grid place-items-center text-foreground">
-              <RoleIcon className="size-8" />
-            </div>
+        <div className="flex items-center gap-2">
+          {isOwner && (
+            <button onClick={() => setOpenInvite(true)}
+              className="size-9 rounded-full bg-muted grid place-items-center text-muted-foreground hover:text-foreground transition">
+              <UserPlus className="size-4" />
+            </button>
           )}
-          <div className="text-center">
-            <div className="text-base font-semibold">{displayName}</div>
-            {member.financial_username && (
-              <div className="text-sm text-muted-foreground font-mono mt-0.5">
-                @{member.financial_username}
+          <button onClick={() => setOpenAddExpense(true)}
+            className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition">
+            <Plus className="size-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Group selector chips */}
+      {userGroups.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {userGroups.map(g => (
+            <button key={g.family_id} onClick={() => switchGroup(g.family_id)}
+              className={cn("shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all",
+                g.family_id === familyId ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:text-foreground")}>
+              {g.family_name}
+            </button>
+          ))}
+          <button onClick={() => setOpenCreate(true)}
+            className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:text-foreground transition border border-dashed border-border flex items-center gap-1">
+            <Plus className="size-3" /> {t("groups.new")}
+          </button>
+        </div>
+      )}
+
+      {/* Pending invitations */}
+      {receivedInvitations.length > 0 && (
+        <div className="space-y-2">
+          {receivedInvitations.map(inv => (
+            <PendingInviteCard key={inv.id} inv={inv}
+              onAccept={() => acceptMutation.mutate({ id: inv.id, invFamilyId: inv.family_id })}
+              onReject={() => rejectMutation.mutate(inv.id)}
+              busy={acceptMutation.isPending || rejectMutation.isPending}
+              t={t} />
+          ))}
+        </div>
+      )}
+
+      {/* Hero card */}
+      <div className="card-soft p-5 gradient-hero relative overflow-hidden">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Users className="size-3.5 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">{memberProfiles.length} {t("groups.members")} · {sharedExpenses.length} {t("groups.expenses")}</p>
+            </div>
+            <div className="num-display text-[36px] font-semibold leading-tight">
+              {shortMoney(convert(totalSpend), currency)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{t("groups.total_spend")}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className={cn("px-3 py-1.5 rounded-xl text-xs font-semibold",
+              myBalance > 0 ? "bg-positive-soft text-positive" :
+              myBalance < 0 ? "bg-negative/10 text-negative" :
+              "bg-muted text-muted-foreground")}>
+              {myBalance > 0 ? `+${money(convert(myBalance), currency)}` :
+               myBalance < 0 ? money(convert(myBalance), currency) :
+               t("groups.settled")}
+            </div>
+            <p className="text-[10px] text-muted-foreground">{t("groups.your_balance")}</p>
+            <button onClick={() => setOpenSettings(true)}
+              className="size-7 rounded-full bg-foreground/10 grid place-items-center hover:bg-foreground/20 transition">
+              <Settings2 className="size-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Settlement progress bar */}
+        {settlements.length > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1.5">
+              <span>{t("groups.settlements")}</span>
+              <span>{settledCount}/{settlements.length} {t("groups.settled_label")}</span>
+            </div>
+            <div className="h-1.5 bg-foreground/5 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-positive transition-all duration-700"
+                style={{ width: `${settlements.length > 0 ? (settledCount / settlements.length) * 100 : 0}%` }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Members avatars strip */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {memberProfiles.map(m => {
+          const bal = memberBalances.find(b => b.user_id === m.user_id);
+          const isMe = m.user_id === userId;
+          return (
+            <div key={m.user_id} className="flex flex-col items-center gap-1 shrink-0">
+              <div className={cn("size-10 rounded-full grid place-items-center text-sm font-semibold",
+                isMe ? "bg-foreground text-background" : "bg-muted text-foreground")}>
+                {(m.first_name?.[0] ?? m.financial_username?.[0] ?? "?").toUpperCase()}
               </div>
-            )}
-            <div className="flex items-center justify-center gap-1.5 mt-2">
-              <span className="text-xs capitalize px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                {t(`family.role.${member.role}`) ?? member.role}
-              </span>
-              {member.relationship_type && (
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-accent/10 text-accent">
-                  {t(`family.member.relationship.${member.relationship_type}`) ??
-                    member.relationship_type}
-                </span>
+              <p className="text-[10px] text-muted-foreground truncate max-w-[48px]">
+                {isMe ? t("family.you.label") : (m.first_name ?? m.financial_username ?? "?")}
+              </p>
+              {bal && (
+                <p className={cn("text-[10px] font-semibold num",
+                  bal.balance > 0 ? "text-positive" : bal.balance < 0 ? "text-negative" : "text-muted-foreground")}>
+                  {bal.balance > 0 ? `+${shortMoney(convert(bal.balance), currency)}` :
+                   bal.balance < 0 ? shortMoney(convert(bal.balance), currency) : "✓"}
+                </p>
               )}
             </div>
-          </div>
-        </div>
+          );
+        })}
+      </div>
 
-        {member.joined_at && (
-          <p className="text-center text-[11px] text-muted-foreground -mt-1">
-            {t("family.member.joined")}{" "}
-            {new Date(member.joined_at).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "long",
+      {/* Settlements */}
+      {settlements.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("groups.who_owes")}</p>
+          <div className="space-y-2">
+            {settlements.map((s, i) => {
+              const from = memberProfiles.find(m => m.user_id === s.from_user_id);
+              const to = memberProfiles.find(m => m.user_id === s.to_user_id);
+              const fromName = s.from_user_id === userId ? t("family.you.label") : (from?.first_name ?? from?.financial_username ?? "?");
+              const toName = s.to_user_id === userId ? t("family.you.label") : (to?.first_name ?? to?.financial_username ?? "?");
+              return (
+                <div key={i} className={cn("flex items-center justify-between p-3 rounded-2xl",
+                  s.from_user_id === userId ? "bg-negative/8 border border-negative/20" :
+                  s.to_user_id === userId ? "bg-positive-soft border border-positive/20" :
+                  "bg-muted")}>
+                  <div className="flex items-center gap-2">
+                    <div className={cn("size-7 rounded-full grid place-items-center text-xs font-bold",
+                      s.from_user_id === userId ? "bg-negative/20 text-negative" : "bg-muted-foreground/20 text-foreground")}>
+                      {fromName[0]?.toUpperCase()}
+                    </div>
+                    <ArrowRight className="size-3.5 text-muted-foreground" />
+                    <div className={cn("size-7 rounded-full grid place-items-center text-xs font-bold",
+                      s.to_user_id === userId ? "bg-positive/20 text-positive" : "bg-muted-foreground/20 text-foreground")}>
+                      {toName[0]?.toUpperCase()}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{fromName} → {toName}</span>
+                  </div>
+                  <span className={cn("text-sm font-semibold num",
+                    s.from_user_id === userId ? "text-negative" : s.to_user_id === userId ? "text-positive" : "text-foreground")}>
+                    {money(convert(s.amount), currency)}
+                  </span>
+                </div>
+              );
             })}
-          </p>
-        )}
-
-        {(isOwnProfile || isOwner) && (
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
-              {t("family.member.relationship.label")}
-            </Label>
-            <select
-              value={relationship}
-              onChange={(e) => handleRelationshipChange(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">—</option>
-              {RELATIONSHIP_OPTIONS.map((r) => (
-                <option key={r} value={r}>
-                  {t(`family.member.relationship.${r}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <Button variant="outline" onClick={onClose} className="w-full">
-          {t("common.close")}
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── CreateFamilyDialog ───────────────────────────────────────────────────────
-
-function CreateFamilyDialog({
-  open,
-  onClose,
-  userId,
-  onCreated,
-  t,
-}: {
-  open: boolean;
-  onClose: () => void;
-  userId: string;
-  onCreated: (newFamilyId: string) => void;
-  t: (k: string) => string;
-}) {
-  const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  async function create() {
-    if (!name.trim()) return;
-    setSaving(true);
-    try {
-      const newId = await createFamily(userId, name.trim());
-      toast.success(t("family.toast.created"));
-      setName("");
-      onCreated(newId);
-      onClose();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("family.dialog.create.title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>{t("family.dialog.create.name.label")}</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("family.dialog.create.name.placeholder")}
-              autoFocus
-              onKeyDown={(e) => e.key === "Enter" && void create()}
-            />
-          </div>
-          <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              {t("common.cancel")}
-            </Button>
-            <Button
-              onClick={() => void create()}
-              disabled={saving || !name.trim()}
-              className="flex-1"
-            >
-              {saving ? t("family.dialog.create.creating") : t("family.dialog.create.cta")}
-            </Button>
           </div>
         </div>
+      )}
+
+      {/* Expenses list */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("groups.expenses_label")}</p>
+          <Button size="sm" variant="outline" onClick={() => setOpenAddExpense(true)}>
+            <Plus className="size-3.5 mr-1" /> {t("groups.add_expense")}
+          </Button>
+        </div>
+
+        {sharedExpenses.length === 0 ? (
+          <EmptyState icon={<Receipt className="size-5" />} title={t("groups.expenses.empty.title")} description={t("groups.expenses.empty.desc")}
+            action={<Button size="sm" onClick={() => setOpenAddExpense(true)}><Plus className="size-3.5 mr-1" />{t("groups.add_expense")}</Button>} />
+        ) : (
+          <div className="space-y-2">
+            {sharedExpenses.map(expense => (
+              <ExpenseCard key={expense.id} expense={expense} memberProfiles={memberProfiles}
+                userId={userId} currency={currency} convert={convert}
+                onDelete={() => deleteExpenseMutation.mutate(expense.id)} t={t} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Complete plan button */}
+      {isFullySettled && sharedExpenses.length > 0 && (
+        <div className="card-flat p-4 flex flex-col items-center gap-3 text-center border-positive/30 border">
+          <PartyPopper className="size-8 text-positive" />
+          <div>
+            <p className="font-semibold text-sm">{t("groups.all_settled")}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t("groups.all_settled.desc")}</p>
+          </div>
+          <Button size="sm" className="bg-positive hover:bg-positive/90 text-white w-full">
+            <CheckCircle2 className="size-3.5 mr-1" /> {t("groups.complete_plan")}
+          </Button>
+        </div>
+      )}
+
+      {/* Completed plans (collapsed) */}
+      {showCompleted && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("groups.completed_plans")}</p>
+        </div>
+      )}
+
+      {/* Dialogs */}
+      <CreatePlanDialog open={openCreate} onClose={() => setOpenCreate(false)} userId={userId}
+        onCreated={(newId) => { void qc.invalidateQueries({ queryKey: FK.groups(userId) }); void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); switchGroup(newId); }} t={t} />
+
+      {isOwner && <InviteMemberDialog open={openInvite} onClose={() => setOpenInvite(false)} familyId={family.id}
+        onSent={() => void qc.invalidateQueries({ queryKey: FK.sent(family.id) })} t={t} />}
+
+      <AddExpenseDialog open={openAddExpense} onClose={() => setOpenAddExpense(false)}
+        members={memberProfiles} currency={currency} currentUserId={userId} t={t}
+        onSave={(description, amount, participantIds, category) => {
+          addExpenseMutation.mutate({ description, amount, participantIds, category });
+          setOpenAddExpense(false);
+        }} />
+
+      <PlanSettingsDialog open={openSettings} onClose={() => setOpenSettings(false)}
+        family={family} isOwner={isOwner} memberProfiles={memberProfiles}
+        userId={userId} t={t}
+        onLeave={() => { void leaveFamily(userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }); }}
+        onRemoveMember={(memberId, memberUserId) => { void removeFamilyMember(memberId).then(() => { void qc.invalidateQueries({ queryKey: FK.data(family.id) }); void qc.invalidateQueries({ queryKey: queryKeys.profile(memberUserId) }); }); }}
+        onRename={(newName) => { void updateFamilyName(family.id, newName).then(() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })); }} />
+    </div>
+  );
+}
+
+// ─── ExpenseCard ───────────────────────────────────────────────────────────
+
+function ExpenseCard({ expense, memberProfiles, userId, currency, convert, onDelete, t }: {
+  expense: SharedExpense; memberProfiles: FamilyMemberProfile[];
+  userId: string; currency: string; convert: (n: number) => number;
+  onDelete: () => void; t: (k: string) => string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const payer = memberProfiles.find(m => m.user_id === expense.paid_by);
+  const payerName = expense.paid_by === userId ? t("family.you.label") : (payer?.first_name ?? payer?.financial_username ?? "?");
+  const isMyExpense = expense.paid_by === userId;
+  const participants = expense.shared_expense_participants ?? [];
+  const perPerson = participants.length > 0 ? expense.amount / participants.length : expense.amount;
+
+  return (
+    <div className="card-flat overflow-hidden">
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={cn("size-10 rounded-2xl grid place-items-center shrink-0",
+              isMyExpense ? "bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400" : "bg-muted text-muted-foreground")}>
+              <Receipt className="size-4.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold truncate">{expense.description}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {t("groups.paid_by")} {payerName}
+                {expense.category && <span className="ml-1.5 px-1.5 py-0.5 bg-muted rounded text-[10px]">{expense.category}</span>}
+              </p>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-sm font-semibold num">{money(convert(expense.amount), currency)}</p>
+            <p className="text-[10px] text-muted-foreground num">{money(convert(perPerson), currency)}/ea</p>
+          </div>
+        </div>
+
+        {/* Expand toggle */}
+        <button onClick={() => setExpanded(e => !e)}
+          className="w-full flex items-center justify-between mt-3 pt-2 border-t border-border-subtle text-[11px] text-muted-foreground hover:text-foreground transition">
+          <span>{participants.length} {t("groups.participants")} · {new Date(expense.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span>
+          {expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+        </button>
+      </div>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div className="px-4 pb-4 space-y-2 border-t border-border-subtle bg-muted/20">
+          <p className="text-[11px] font-medium text-muted-foreground pt-3">{t("groups.split_between")}</p>
+          <div className="space-y-1">
+            {participants.map(part => {
+              const p = memberProfiles.find(m => m.user_id === part.user_id);
+              const name = part.user_id === userId ? t("family.you.label") : (p?.first_name ?? p?.financial_username ?? "?");
+              return (
+                <div key={part.user_id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="size-6 rounded-full bg-muted grid place-items-center text-[10px] font-bold">
+                      {name[0]?.toUpperCase()}
+                    </div>
+                    <span className="text-xs">{name}</span>
+                  </div>
+                  <span className="text-xs font-medium num">{money(convert(perPerson), currency)}</span>
+                </div>
+              );
+            })}
+          </div>
+          {isMyExpense && (
+            <button onClick={() => { if (!confirm(t("groups.expense.delete.confirm"))) return; onDelete(); }}
+              className="w-full mt-2 flex items-center justify-center gap-1.5 text-[11px] text-negative hover:text-negative/80 transition py-1">
+              <Trash2 className="size-3" /> {t("groups.expense.delete")}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── PendingInviteCard ────────────────────────────────────────────────────
+
+function PendingInviteCard({ inv, onAccept, onReject, busy, t }: {
+  inv: ReceivedInvitation; onAccept: () => void; onReject: () => void; busy: boolean; t: (k: string) => string;
+}) {
+  return (
+    <div className="card-flat p-4 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="size-10 rounded-2xl bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 grid place-items-center shrink-0">
+          <UserPlus className="size-4.5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold truncate">{inv.family_name}</p>
+          <p className="text-[11px] text-muted-foreground">@{inv.invited_by_username} {t("groups.invite.from")}</p>
+        </div>
+      </div>
+      <div className="flex gap-2 shrink-0">
+        <button onClick={onReject} disabled={busy}
+          className="size-8 rounded-full bg-muted grid place-items-center text-muted-foreground hover:text-negative transition">
+          <X className="size-3.5" />
+        </button>
+        <button onClick={onAccept} disabled={busy}
+          className="size-8 rounded-full bg-positive grid place-items-center text-white hover:opacity-90 transition">
+          <Check className="size-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── CreatePlanDialog ─────────────────────────────────────────────────────
+
+function CreatePlanDialog({ open, onClose, userId, onCreated, t }: {
+  open: boolean; onClose: () => void; userId: string;
+  onCreated: (id: string) => void; t: (k: string) => string;
+}) {
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { if (!open) setName(""); }, [open]);
+
+  async function handleCreate() {
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      const id = await createFamily(userId, name.trim());
+      toast.success(t("groups.created"));
+      onCreated(id);
+      onClose();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle>{t("groups.create.title")}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("groups.create.name")}</Label>
+            <Input placeholder={t("groups.create.placeholder")} value={name}
+              onChange={e => setName(e.target.value)} autoFocus
+              onKeyDown={e => e.key === "Enter" && handleCreate()} />
+          </div>
+          <p className="text-xs text-muted-foreground">{t("groups.create.hint")}</p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={handleCreate} disabled={!name.trim() || busy}>
+            {busy ? t("common.loading") : t("groups.create.cta")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-// ─── InviteDialog ─────────────────────────────────────────────────────────────
+// ─── InviteMemberDialog ───────────────────────────────────────────────────
 
-function InviteDialog({
-  open,
-  onClose,
-  familyId,
-  onSent,
-  t,
-}: {
-  open: boolean;
-  onClose: () => void;
-  familyId: string;
-  onSent: () => void;
-  t: (k: string) => string;
+function InviteMemberDialog({ open, onClose, familyId, onSent, t }: {
+  open: boolean; onClose: () => void; familyId: string; onSent: () => void; t: (k: string) => string;
 }) {
-  const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<UserSearchResult | null | "not-found">(null);
+  const [username, setUsername] = useState("");
+  const [found, setFound] = useState<UserSearchResult | null>(null);
+  const [searched, setSearched] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  function reset() {
-    setQuery("");
-    setResult(null);
-    setSearching(false);
-    setSending(false);
+  useEffect(() => { if (!open) { setUsername(""); setFound(null); setSearched(false); } }, [open]);
+
+  async function handleSearch() {
+    if (!username.trim()) return;
+    setBusy(true);
+    try {
+      const r = await searchUserByUsername(username.replace(/^@/, ""));
+      setFound(r); setSearched(true);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
   }
 
-  async function doSearch() {
-    if (!query.trim()) return;
-    setSearching(true);
-    setResult(null);
+  async function handleInvite() {
+    if (!found) return;
+    setBusy(true);
     try {
-      const found = await searchUserByUsername(query.trim());
-      setResult(found ?? "not-found");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSearching(false);
-    }
-  }
-
-  async function doSend() {
-    if (!result || result === "not-found") return;
-    setSending(true);
-    try {
-      await sendFamilyInvite(familyId, result.financial_username);
-      toast.success(t("family.toast.invite.sent"));
-      onSent();
-      reset();
-      onClose();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSending(false);
-    }
+      await sendFamilyInvite(familyId, found.financial_username);
+      toast.success(t("groups.invite.sent"));
+      onSent(); onClose();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) {
-          reset();
-          onClose();
-        }
-      }}
-    >
-      <DialogContent className="rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("family.dialog.invite.title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>{t("family.invite.search.label")}</Label>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle>{t("groups.invite.title")}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("groups.invite.search")}</Label>
             <div className="flex gap-2">
-              <Input
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setResult(null);
-                }}
-                placeholder={t("family.invite.search.placeholder")}
-                autoFocus
-                onKeyDown={(e) => e.key === "Enter" && void doSearch()}
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={searching || !query.trim()}
-                onClick={() => void doSearch()}
-              >
-                <Search className="size-4" />
+              <Input placeholder="@username" value={username}
+                onChange={e => { setUsername(e.target.value); setFound(null); setSearched(false); }}
+                onKeyDown={e => e.key === "Enter" && handleSearch()} />
+              <Button variant="outline" size="icon" onClick={handleSearch} disabled={!username.trim() || busy} className="shrink-0">
+                {busy ? <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Search className="size-4" />}
               </Button>
             </div>
           </div>
-          {result === "not-found" && (
-            <p className="text-sm text-muted-foreground text-center py-2">
-              {t("family.invite.search.notfound")}
-            </p>
-          )}
-          {result && result !== "not-found" && (
-            <div className="card-flat p-4 flex items-center gap-3">
-              <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
-                <Heart className="size-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold">
-                  {result.first_name} {result.last_name_1}
-                </div>
-                <div className="text-xs text-muted-foreground font-mono">
-                  @{result.financial_username}
-                </div>
-              </div>
+          {searched && !found && <div className="flex items-center gap-2 p-3 rounded-xl bg-muted text-sm text-muted-foreground"><X className="size-4" />{t("groups.invite.not_found")}</div>}
+          {found && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-positive-soft">
+              <div><p className="text-sm font-medium">{found.first_name} {found.last_name_1}</p><p className="text-xs text-muted-foreground">@{found.financial_username}</p></div>
+              <Check className="size-4 text-positive" />
             </div>
           )}
-          <div className="flex gap-2 pt-1">
-            <Button
-              variant="outline"
-              onClick={() => {
-                reset();
-                onClose();
-              }}
-              className="flex-1"
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button
-              onClick={() => void doSend()}
-              disabled={!result || result === "not-found" || sending}
-              className="flex-1"
-            >
-              <Send className="size-3.5 mr-1.5" />
-              {t("family.invite.send.cta")}
-            </Button>
-          </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── GoalDialog ───────────────────────────────────────────────────────────────
-
-function GoalDialog({
-  open,
-  onClose,
-  familyId,
-  editing,
-  myName,
-  currency,
-  onSaved,
-  t,
-}: {
-  open: boolean;
-  onClose: () => void;
-  familyId: string;
-  editing: SharedGoal | null;
-  myName: string;
-  currency: string;
-  onSaved: () => void;
-  t: (k: string) => string;
-}) {
-  const [name, setName] = useState("");
-  const [target, setTarget] = useState("");
-  const [current, setCurrent] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      if (editing) {
-        setName(editing.name);
-        setTarget(String(editing.target_amount));
-        setCurrent(String(editing.current_amount));
-        setDeadline(editing.deadline?.slice(0, 10) ?? "");
-      } else {
-        setName("");
-        setTarget("");
-        setCurrent("");
-        setDeadline("");
-      }
-    }
-  }, [open, editing]);
-
-  async function save() {
-    if (!name.trim() || !target) return;
-    setSaving(true);
-    try {
-      if (editing) {
-        await updateSharedGoal(editing.id, {
-          name: name.trim(),
-          target_amount: Number(target),
-          deadline: deadline || null,
-        });
-        toast.success(t("family.toast.goal.updated"));
-        try {
-          await notifyFamilyMembers(
-            familyId,
-            "goal_updated",
-            t("family.notif.goal.updated.title"),
-            t("family.notif.goal.updated.body")
-              .replace("{name}", myName)
-              .replace("{goal}", name.trim()),
-          );
-          await logFamilyActivity(familyId, "goal_updated", myName, { goalName: name.trim() });
-        } catch {
-          /* non-critical */
-        }
-      } else {
-        await createSharedGoal(
-          familyId,
-          name.trim(),
-          Number(target),
-          Number(current || 0),
-          deadline || null,
-        );
-        toast.success(t("family.toast.goal.added"));
-        try {
-          await notifyFamilyMembers(
-            familyId,
-            "goal_updated",
-            t("family.notif.goal.created.title"),
-            t("family.notif.goal.created.body")
-              .replace("{name}", myName)
-              .replace("{goal}", name.trim()),
-          );
-          await logFamilyActivity(familyId, "goal_created", myName, { goalName: name.trim() });
-        } catch {
-          /* non-critical */
-        }
-      }
-      onSaved();
-      onClose();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) onClose();
-      }}
-    >
-      <DialogContent className="rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? t("family.dialog.goal.edit.title") : t("family.dialog.goal.title")}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>{t("family.dialog.goal.name.label")}</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("family.dialog.goal.name.placeholder")}
-              autoFocus
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>{t("family.dialog.goal.target")}</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="3000"
-              />
-            </div>
-            {!editing && (
-              <div className="space-y-1.5">
-                <Label>{t("family.dialog.goal.saved")}</Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  value={current}
-                  onChange={(e) => setCurrent(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-            )}
-            {editing && (
-              <div className="space-y-1.5">
-                <Label className="text-xs">{t("family.dialog.goal.deadline")}</Label>
-                <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-              </div>
-            )}
-          </div>
-          {!editing && (
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                {t("family.dialog.goal.deadline")}
-              </Label>
-              <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-            </div>
-          )}
-          <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              {t("common.cancel")}
-            </Button>
-            <Button
-              onClick={() => void save()}
-              disabled={saving || !name.trim() || !target}
-              className="flex-1"
-            >
-              {saving
-                ? t("common.loading")
-                : editing
-                  ? t("common.save")
-                  : t("family.dialog.goal.cta")}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── ContributionDialog ───────────────────────────────────────────────────────
-
-function ContributionDialog({
-  open,
-  onClose,
-  goal,
-  familyId,
-  myName,
-  currency,
-  onSaved,
-  t,
-}: {
-  open: boolean;
-  onClose: () => void;
-  goal: SharedGoal;
-  familyId: string;
-  myName: string;
-  currency: string;
-  onSaved: () => void;
-  t: (k: string) => string;
-}) {
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
-  const convert = useCurrencyConvert();
-
-  async function save() {
-    const n = Number(amount);
-    if (!n || n <= 0) return;
-    setSaving(true);
-    try {
-      await addGoalContribution(goal.id, goal.current_amount, n);
-      try {
-        const bodyTpl = t("family.notif.contribution.body")
-          .replace("{name}", myName)
-          .replace("{amount}", money(convert(n), currency))
-          .replace("{goal}", goal.name);
-        await notifyFamilyMembers(
-          familyId,
-          "contribution_added",
-          t("family.notif.contribution.title").replace("{goal}", goal.name),
-          note ? `${bodyTpl} — ${note}` : bodyTpl,
-        );
-        await logFamilyActivity(familyId, "goal_contribution", myName, {
-          goalName: goal.name,
-          amount: n,
-          ...(note.trim() ? { note: note.trim() } : {}),
-        });
-      } catch {
-        /* non-critical */
-      }
-      toast.success(t("family.toast.contribution.added"));
-      setAmount("");
-      setNote("");
-      onSaved();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const remaining = Math.max(0, goal.target_amount - goal.current_amount);
-  const monthly = monthlyNeeded(goal);
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) {
-          setAmount("");
-          setNote("");
-          onClose();
-        }
-      }}
-    >
-      <DialogContent className="rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("family.dialog.contribute.title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="card-sunken p-3 flex items-center gap-3">
-            <div className="size-8 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
-              <Target className="size-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate">{goal.name}</div>
-              <div className="text-xs text-muted-foreground num">
-                {money(convert(goal.current_amount), currency)} /{" "}
-                {money(convert(goal.target_amount), currency)}
-                {remaining > 0 && (
-                  <span className="ml-1 opacity-70">
-                    · {money(convert(remaining), currency)} {t("family.goal.remaining")}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="card-sunken p-5 flex items-baseline gap-2">
-            <span className="text-xl text-muted-foreground">{getCurrencySymbol(currency)}</span>
-            <Input
-              type="number"
-              inputMode="decimal"
-              autoFocus
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0"
-              className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
-            />
-          </div>
-          {monthly !== null && (
-            <p className="text-xs text-positive font-medium text-center -mt-1">
-              {t("family.dialog.contribute.monthly").replace(
-                "{amount}",
-                money(convert(Math.ceil(monthly)), currency),
-              )}
-            </p>
-          )}
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
-              {t("family.dialog.contribute.note")}
-            </Label>
-            <Input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={t("family.dialog.contribute.note.placeholder")}
-            />
-          </div>
-
-          <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              {t("common.cancel")}
-            </Button>
-            <Button
-              onClick={() => void save()}
-              disabled={saving || !amount || Number(amount) <= 0}
-              className="flex-1"
-            >
-              {saving ? t("common.loading") : t("family.dialog.contribute.cta")}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── GoalPickerDialog ─────────────────────────────────────────────────────────
-
-function GoalPickerDialog({
-  open,
-  onClose,
-  goals,
-  onPick,
-  t,
-}: {
-  open: boolean;
-  onClose: () => void;
-  goals: SharedGoal[];
-  onPick: (g: SharedGoal) => void;
-  t: (k: string) => string;
-}) {
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) onClose();
-      }}
-    >
-      <DialogContent className="rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("family.dialog.pick.title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2">
-          {goals.map((g) => (
-            <button
-              key={g.id}
-              onClick={() => onPick(g)}
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition text-left"
-            >
-              <div className="size-9 rounded-xl bg-positive-soft text-positive grid place-items-center shrink-0">
-                <Target className="size-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{g.name}</div>
-                <div className="text-xs text-muted-foreground num">
-                  {Math.round(g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0)}
-                  %
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── WhoAreWeDialog ───────────────────────────────────────────────────────────
-
-function WhoAreWeDialog({
-  open,
-  onClose,
-  family,
-  members,
-  isOwner,
-  currentUserId,
-  onRenamed,
-  onRemoveMember,
-  t,
-}: {
-  open: boolean;
-  onClose: () => void;
-  family: { id: string; name: string; owner_id: string };
-  members: FamilyMemberProfile[];
-  isOwner: boolean;
-  currentUserId: string;
-  onRenamed: (newName: string) => void;
-  onRemoveMember: (memberId: string, memberUserId: string) => void;
-  t: (k: string) => string;
-}) {
-  const [editName, setEditName] = useState(family.name);
-  const [saving, setSaving] = useState(false);
-  const [pendingRemove, setPendingRemove] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      setEditName(family.name);
-      setPendingRemove(null);
-    }
-  }, [open, family.name]);
-
-  async function rename() {
-    if (!editName.trim() || editName.trim() === family.name) return;
-    setSaving(true);
-    try {
-      await updateFamilyName(family.id, editName.trim());
-      toast.success(t("family.toast.renamed"));
-      onRenamed(editName.trim());
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) onClose();
-      }}
-    >
-      <DialogContent className="rounded-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("family.whoarewe.title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-5">
-          {/* Family name */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">
-              {t("family.whoarewe.name.label")}
-            </Label>
-            {isOwner ? (
-              <div className="flex gap-2">
-                <Input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && void rename()}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={saving || !editName.trim() || editName.trim() === family.name}
-                  onClick={() => void rename()}
-                >
-                  {saving ? "..." : t("family.whoarewe.name.save")}
-                </Button>
-              </div>
-            ) : (
-              <p className="text-sm font-semibold">{family.name}</p>
-            )}
-          </div>
-
-          {/* Members */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">
-              {t("family.whoarewe.members.title")}
-            </Label>
-            <div className="card-flat divide-y divide-border-subtle">
-              {members.map((m) => {
-                const RoleIcon = m.role === "owner" ? Crown : m.role === "child" ? Baby : Heart;
-                const displayName =
-                  m.full_name ??
-                  `${m.first_name} ${m.last_name_1}`.trim() ??
-                  t("family.role.member");
-                const canRemove = isOwner && m.role !== "owner" && m.user_id !== currentUserId;
-                return (
-                  <div key={m.member_id} className="flex items-center gap-3 px-4 py-3.5">
-                    {m.avatar_url ? (
-                      <img
-                        src={m.avatar_url}
-                        alt={displayName}
-                        className="size-10 rounded-full object-cover shrink-0"
-                      />
-                    ) : (
-                      <div className="size-10 rounded-full bg-muted grid place-items-center text-foreground shrink-0">
-                        <RoleIcon className="size-4" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold truncate">{displayName}</div>
-                      {m.financial_username && (
-                        <div className="text-xs text-muted-foreground font-mono">
-                          @{m.financial_username}
-                        </div>
-                      )}
-                      <div className="text-[11px] text-muted-foreground capitalize">
-                        {t(`family.role.${m.role}`) ?? m.role}
-                      </div>
-                    </div>
-                    {canRemove &&
-                      (pendingRemove === m.member_id ? (
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            onClick={() => {
-                              onRemoveMember(m.member_id, m.user_id);
-                              setPendingRemove(null);
-                            }}
-                            className="text-[11px] text-negative font-medium px-2 py-1 rounded-lg bg-negative/10 hover:bg-negative/20 transition"
-                          >
-                            {t("family.member.remove.cta")}
-                          </button>
-                          <button
-                            onClick={() => setPendingRemove(null)}
-                            className="text-[11px] text-muted-foreground px-2 py-1"
-                          >
-                            {t("common.cancel")}
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setPendingRemove(m.member_id)}
-                          className="size-8 grid place-items-center rounded-lg text-muted-foreground hover:text-negative hover:bg-negative/10 transition shrink-0"
-                          aria-label={t("family.member.remove")}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      ))}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <Button variant="outline" onClick={onClose} className="w-full">
-            {t("common.close")}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={handleInvite} disabled={!found || busy}>
+            <UserPlus className="size-3.5 mr-1" />{busy ? t("common.loading") : t("groups.invite.send")}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-// ─── GroupSummaryCards ────────────────────────────────────────────────────────
+// ─── AddExpenseDialog ─────────────────────────────────────────────────────
 
-function GroupSummaryCards({
-  memberCount,
-  totalGroupSpend,
-  totalSaved,
-  pendingSettlements,
-  mostActive,
-  currency,
-  convert,
-  t,
-}: {
-  memberCount: number;
-  totalGroupSpend: number;
-  totalSaved: number;
-  pendingSettlements: number;
-  mostActive: string | null;
-  currency: string;
-  convert: (n: number) => number;
-  t: (k: string, p?: Record<string, string>) => string;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-2.5">
-      <div className="card-flat p-4 space-y-1">
-        <div className="flex items-center gap-1.5">
-          <Receipt className="size-3.5 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("family.summary.shared_spend")}</span>
-        </div>
-        <p className="text-lg font-semibold num">{money(convert(totalGroupSpend), currency)}</p>
-        <p className="text-[10px] text-muted-foreground">{t("family.summary.total_expenses")}</p>
-      </div>
-
-      <div className="card-flat p-4 space-y-1">
-        <div className="flex items-center gap-1.5">
-          <Target className="size-3.5 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("family.summary.group_savings")}</span>
-        </div>
-        <p className="text-lg font-semibold num text-positive">{money(convert(totalSaved), currency)}</p>
-        <p className="text-[10px] text-muted-foreground">{t("family.summary.across_goals")}</p>
-      </div>
-
-      <div className={`card-flat p-4 space-y-1 ${pendingSettlements > 0 ? "border-warn/30 bg-warn-soft/10" : ""}`}>
-        <div className="flex items-center gap-1.5">
-          <Wallet className={`size-3.5 ${pendingSettlements > 0 ? "text-warn" : "text-muted-foreground"}`} />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("family.summary.balances")}</span>
-        </div>
-        <p className={`text-lg font-semibold ${pendingSettlements > 0 ? "text-warn" : "text-positive"}`}>
-          {pendingSettlements > 0
-            ? t("family.summary.pending").replace("{n}", String(pendingSettlements))
-            : t("family.summary.settled")}
-        </p>
-        <p className="text-[10px] text-muted-foreground">
-          {pendingSettlements > 0 ? t("family.summary.payments_to_make") : t("family.summary.all_even")}
-        </p>
-      </div>
-
-      <div className="card-flat p-4 space-y-1">
-        <div className="flex items-center gap-1.5">
-          <Star className="size-3.5 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("family.summary.most_active")}</span>
-        </div>
-        <p className="text-sm font-semibold truncate">
-          {mostActive ?? t("family.summary.members_count").replace("{n}", String(memberCount))}
-        </p>
-        <p className="text-[10px] text-muted-foreground">
-          {mostActive ? t("family.summary.top_contributor") : t("family.summary.members_count").replace("{n}", String(memberCount))}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── AddExpenseDialog ─────────────────────────────────────────────────────────
-
-function AddExpenseDialog({
-  open,
-  onClose,
-  members,
-  currency,
-  currentUserId,
-  t,
-  onSave,
-}: {
-  open: boolean;
-  onClose: () => void;
-  members: FamilyMemberProfile[];
-  currency: string;
-  currentUserId: string;
-  t: (k: string) => string;
+function AddExpenseDialog({ open, onClose, members, currency, currentUserId, t, onSave }: {
+  open: boolean; onClose: () => void; members: FamilyMemberProfile[];
+  currency: string; currentUserId: string; t: (k: string) => string;
   onSave: (description: string, amount: number, participantIds: string[], category?: string) => void;
 }) {
-  const currencySymbol = getCurrencySymbol(currency);
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(members.map((m) => m.user_id)));
+  const [participants, setParticipants] = useState<string[]>([]);
 
-  // Reset when opened
   useEffect(() => {
-    if (open) {
-      setDescription("");
-      setAmount("");
-      setCategory("");
-      setSelected(new Set(members.map((m) => m.user_id)));
-    }
+    if (open) { setParticipants(members.map(m => m.user_id)); }
+    else { setDescription(""); setAmount(""); setCategory(""); setParticipants([]); }
   }, [open, members]);
 
-  function toggle(uid: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(uid)) next.delete(uid);
-      else next.add(uid);
-      return next;
-    });
+  function toggleParticipant(uid: string) {
+    setParticipants(p => p.includes(uid) ? p.filter(x => x !== uid) : [...p, uid]);
   }
 
-  function save() {
-    const amt = Number(amount);
-    if (!description.trim() || amt <= 0) return;
-    onSave(description.trim(), amt, Array.from(selected), category.trim() || undefined);
-  }
-
-  const share = selected.size > 0 && Number(amount) > 0 ? Number(amount) / selected.size : 0;
+  const perPerson = participants.length > 0 && Number(amount) > 0 ? Number(amount) / participants.length : 0;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("family.dialog.expense.add.title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="card-sunken p-5 flex items-baseline gap-2">
-            <span className="text-xl text-muted-foreground">{currencySymbol}</span>
-            <Input
-              type="number"
-              inputMode="decimal"
-              autoFocus
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0"
-              className="border-0 shadow-none p-0 h-auto text-3xl font-semibold num focus-visible:ring-0 bg-transparent"
-            />
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{t("groups.expense.add.title")}</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>{t("groups.expense.description")}</Label>
+            <Input placeholder={t("groups.expense.description.placeholder")} value={description} onChange={e => setDescription(e.target.value)} autoFocus />
           </div>
-          <Input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t("family.dialog.expense.description.placeholder")}
-          />
-          <Input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder={t("family.dialog.expense.category.placeholder")}
-          />
-          <div className="space-y-1.5">
-            <p className="text-xs text-muted-foreground">{t("family.dialog.expense.split_among")}</p>
-            <div className="card-flat divide-y divide-border-subtle rounded-xl overflow-hidden">
-              {members.map((m) => {
-                const displayName = m.full_name ?? m.first_name ?? "Member";
-                const checked = selected.has(m.user_id);
+          <div>
+            <Label>{t("groups.expense.amount")} ({currency})</Label>
+            <Input type="number" inputMode="decimal" step="any" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} />
+          </div>
+          <div>
+            <Label>{t("groups.expense.category")} ({t("common.optional")})</Label>
+            <Input placeholder={t("groups.expense.category.placeholder")} value={category} onChange={e => setCategory(e.target.value)} />
+          </div>
+          <div>
+            <Label className="mb-2 block">{t("groups.expense.split_with")}</Label>
+            {perPerson > 0 && (
+              <p className="text-xs text-muted-foreground mb-2">{money(perPerson, currency)}/ea</p>
+            )}
+            <div className="space-y-2">
+              {members.map(m => {
+                const isMe = m.user_id === currentUserId;
+                const name = isMe ? t("family.you.label") : (m.first_name ?? m.financial_username ?? "?");
+                const checked = participants.includes(m.user_id);
                 return (
-                  <button
-                    key={m.user_id}
-                    type="button"
-                    onClick={() => toggle(m.user_id)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/40 transition"
-                  >
-                    <span className="text-sm">{displayName}{m.user_id === currentUserId ? ` ${t("family.you.label")}` : ""}</span>
-                    <div className={`size-4 rounded border-2 flex items-center justify-center transition ${checked ? "bg-foreground border-foreground" : "border-border"}`}>
-                      {checked && <svg className="size-2.5 text-background" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                  <button key={m.user_id} onClick={() => toggleParticipant(m.user_id)}
+                    className={cn("w-full flex items-center justify-between p-3 rounded-xl transition",
+                      checked ? "bg-foreground/8 border border-foreground/20" : "bg-muted border border-transparent")}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("size-7 rounded-full grid place-items-center text-xs font-bold",
+                        isMe ? "bg-foreground text-background" : "bg-muted-foreground/20 text-foreground")}>
+                        {name[0]?.toUpperCase()}
+                      </div>
+                      <span className="text-sm">{name}</span>
+                    </div>
+                    <div className={cn("size-5 rounded-full grid place-items-center border-2 transition",
+                      checked ? "bg-foreground border-foreground" : "border-muted-foreground/40")}>
+                      {checked && <Check className="size-3 text-background" />}
                     </div>
                   </button>
                 );
               })}
             </div>
-            {share > 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                {t("family.dialog.expense.each_pays")} {getCurrencySymbol(currency)}{share.toFixed(2)} ({selected.size} {t("family.dialog.expense.people")})
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} className="flex-1">{t("common.cancel")}</Button>
-            <Button onClick={save} disabled={!description.trim() || Number(amount) <= 0} className="flex-1">{t("family.dialog.expense.add_btn")}</Button>
           </div>
         </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={() => onSave(description, Number(amount), participants, category || undefined)}
+            disabled={!description || !amount || participants.length === 0}>
+            {t("groups.expense.add.cta")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// ─── PlanSettingsDialog ───────────────────────────────────────────────────
 
-function FamilySkeleton() {
+function PlanSettingsDialog({ open, onClose, family, isOwner, memberProfiles, userId, t, onLeave, onRemoveMember, onRename }: {
+  open: boolean; onClose: () => void;
+  family: { id: string; name: string; owner_id: string } | null;
+  isOwner: boolean; memberProfiles: FamilyMemberProfile[];
+  userId: string; t: (k: string) => string;
+  onLeave: () => void; onRemoveMember: (memberId: string, userId: string) => void;
+  onRename: (name: string) => void;
+}) {
+  const [newName, setNewName] = useState("");
+  const [editingName, setEditingName] = useState(false);
+
+  useEffect(() => { if (!open) { setEditingName(false); setNewName(""); } }, [open]);
+
+  if (!family) return null;
+
   return (
-    <div className="px-4 pt-6 space-y-4">
-      <div className="h-10 w-32 rounded-xl bg-muted animate-pulse" />
-      <div className="grid grid-cols-3 gap-2">
-        <div className="h-16 rounded-2xl bg-muted animate-pulse" />
-        <div className="h-16 rounded-2xl bg-muted animate-pulse" />
-        <div className="h-16 rounded-2xl bg-muted animate-pulse" />
-      </div>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{family.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {isOwner && (
+            <div className="space-y-2">
+              <Label>{t("groups.settings.rename")}</Label>
+              <div className="flex gap-2">
+                <Input placeholder={family.name} value={newName} onChange={e => setNewName(e.target.value)} />
+                <Button variant="outline" onClick={() => { if (newName.trim()) { onRename(newName.trim()); onClose(); } }}
+                  disabled={!newName.trim()}>{t("common.save")}</Button>
+              </div>
+            </div>
+          )}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t("groups.settings.members")}</p>
+            <div className="space-y-2">
+              {memberProfiles.map(m => {
+                const isMe = m.user_id === userId;
+                const isGroupOwner = m.user_id === family.owner_id;
+                return (
+                  <div key={m.user_id} className="flex items-center justify-between p-2 rounded-xl bg-muted">
+                    <div className="flex items-center gap-2">
+                      <div className="size-7 rounded-full bg-foreground/10 grid place-items-center text-xs font-bold">
+                        {(m.first_name?.[0] ?? "?").toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium">{isMe ? t("family.you.label") : (m.first_name ?? m.financial_username)}</p>
+                        <p className="text-[10px] text-muted-foreground">@{m.financial_username}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {isGroupOwner && <Crown className="size-3.5 text-warn" />}
+                      {isOwner && !isMe && !isGroupOwner && (
+                        <button onClick={() => { if (!confirm(t("groups.settings.remove.confirm"))) return; onRemoveMember(m.member_id ?? "", m.user_id); }}
+                          className="size-6 rounded grid place-items-center text-muted-foreground hover:text-negative transition">
+                          <X className="size-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="flex-col gap-2">
+          <Button variant="outline" onClick={onClose} className="w-full">{t("common.close")}</Button>
+          {!isOwner && (
+            <Button variant="ghost" className="w-full text-negative hover:text-negative hover:bg-negative/10"
+              onClick={() => { if (!confirm(t("groups.settings.leave.confirm").replace("{name}", family.name))) return; onLeave(); onClose(); }}>
+              <LogOut className="size-3.5 mr-1" />{t("groups.settings.leave")}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Skeleton ──────────────────────────────────────────────────────────────
+
+function GroupsSkeleton() {
+  return (
+    <div className="px-4 pt-6 space-y-4 pb-24">
+      <div className="h-10 w-48 rounded-xl bg-muted animate-pulse" />
+      <div className="h-8 w-full rounded-full bg-muted animate-pulse" />
       <div className="h-40 rounded-3xl bg-muted animate-pulse" />
-      <div className="h-32 rounded-3xl bg-muted animate-pulse" />
+      <div className="h-16 rounded-2xl bg-muted animate-pulse" />
+      <div className="space-y-2">
+        <div className="h-20 rounded-2xl bg-muted animate-pulse" />
+        <div className="h-20 rounded-2xl bg-muted animate-pulse" />
+        <div className="h-20 rounded-2xl bg-muted animate-pulse" />
+      </div>
     </div>
   );
 }
