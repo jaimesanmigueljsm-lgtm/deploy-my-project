@@ -50,6 +50,8 @@ import {
   useUpdateGoal,
   useDeleteGoal,
   useAddContribution,
+  useDeleteContribution,
+  useUpdateContribution,
   useSeedDemoGoals,
 } from "@/features/goals/use-goals";
 import { useT } from "@/i18n";
@@ -67,7 +69,7 @@ import {
   type UserFamily,
   type UserSearchResult,
 } from "@/features/goals/use-shared-goals";
-import { Users, Globe, UserPlus, Settings2, ChevronRight, Check, X, LogOut, Search } from "lucide-react";
+import { Users, Globe, UserPlus, Settings2, ChevronRight, Check, X, LogOut, Search, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/app/goals")({
   component: Goals,
@@ -274,7 +276,7 @@ function Goals() {
                 key={g.id}
                 goal={g}
                 currency={currency}
-                lastContrib={contribs.filter((c) => c.goal_id === g.id)[0]}
+                contribs={contribs.filter((c) => c.goal_id === g.id)}
                 onAddMoney={() => setContribOpen(g)}
                 onEdit={() => {
                   setEditing(g);
@@ -323,14 +325,14 @@ function Goals() {
 function GoalCard({
   goal,
   currency,
-  lastContrib,
+  contribs,
   onAddMoney,
   onEdit,
   onDelete,
 }: {
   goal: Goal;
   currency: string;
-  lastContrib?: GoalContribution;
+  contribs?: GoalContribution[];
   onAddMoney: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -340,6 +342,10 @@ function GoalCard({
   const iconMeta = goalIconsMap[goal.icon];
   const colorMeta = goalColorsMap[goal.color] ?? GOAL_COLORS.mint;
   const Icon = iconMeta?.icon ?? GOAL_ICONS.target.icon;
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const deleteContrib = useDeleteContribution();
+  const [editingContrib, setEditingContrib] = useState<GoalContribution | null>(null);
+  const goalContribs = contribs ?? [];
 
   const pct =
     Number(goal.target_amount) > 0
@@ -452,14 +458,67 @@ function GoalCard({
         )}
       </div>
 
-      {lastContrib && (
-        <p className="text-[10px] text-muted-foreground border-t border-border-subtle pt-2">
-          {t("goals.card.last_deposit")
-            .replace("{amount}", money(convert(lastContrib.amount), currency))
-            .replace("{date}", new Date(lastContrib.contributed_at).toLocaleDateString())}
-          {lastContrib.note && ` · ${lastContrib.note}`}
-        </p>
+      {/* Contribution history toggle */}
+      {goalContribs.length > 0 && (
+        <button
+          onClick={() => setHistoryOpen(h => !h)}
+          className="w-full flex items-center justify-between text-[11px] text-muted-foreground hover:text-foreground transition pt-1 border-t border-border-subtle"
+        >
+          <span>
+            {goalContribs.length} {t("goals.contrib.history.count")}
+            {" · "}{t("goals.contrib.history.last")}: {money(convert(goalContribs[0].amount), currency)}
+          </span>
+          {historyOpen
+            ? <ChevronUp className="size-3.5" />
+            : <ChevronDown className="size-3.5" />
+          }
+        </button>
       )}
+
+      {/* Expanded history */}
+      {historyOpen && goalContribs.length > 0 && (
+        <div className="space-y-2 pt-1">
+          {goalContribs.map((c) => (
+            <div key={c.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-muted/50">
+              <div className="min-w-0">
+                <p className="text-[12px] font-medium num">
+                  +{money(convert(c.amount), currency)}
+                </p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {new Date(c.contributed_at).toLocaleDateString(undefined, {
+                    day: "numeric", month: "short", year: "numeric"
+                  })}
+                  {c.note && ` · ${c.note}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => setEditingContrib(c)}
+                  className="size-6 rounded-lg bg-muted grid place-items-center text-muted-foreground hover:text-foreground transition"
+                >
+                  <Pencil className="size-3" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (!confirm(t("goals.contrib.history.confirm_delete"))) return;
+                    deleteContrib.mutate(c.id);
+                  }}
+                  className="size-6 rounded-lg bg-muted grid place-items-center text-muted-foreground hover:text-negative transition"
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <EditContributionDialog
+        contrib={editingContrib}
+        currency={currency}
+        onClose={() => setEditingContrib(null)}
+        t={t}
+      />
 
       <div className="flex gap-2 pt-1">
         <Button size="sm" variant="default" className="flex-1" onClick={onAddMoney}>
@@ -777,6 +836,79 @@ function ContributionDialog({
           </Button>
           <Button onClick={save} disabled={addContribution.isPending}>
             {addContribution.isPending ? t("common.loading") : t("goals.contrib.cta")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Edit Contribution Dialog ─────────────────────────────────────────────────
+
+function EditContributionDialog({
+  contrib,
+  currency,
+  onClose,
+  t,
+}: {
+  contrib: GoalContribution | null;
+  currency: string;
+  onClose: () => void;
+  t: (k: string) => string;
+}) {
+  const updateContrib = useUpdateContribution();
+  const convert = useCurrencyConvert();
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+
+  useEffect(() => {
+    if (contrib) {
+      setAmount(String(contrib.amount));
+      setNote(contrib.note ?? "");
+    }
+  }, [contrib]);
+
+  function save() {
+    if (!contrib) return;
+    const n = Number(amount);
+    if (!n || n <= 0) return toast.error(t("goals.contrib.error"));
+    updateContrib.mutate(
+      { contributionId: contrib.id, newAmount: n, newNote: note || null },
+      { onSuccess: () => onClose() },
+    );
+  }
+
+  return (
+    <Dialog open={!!contrib} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("goals.contrib.history.edit_title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("goals.contrib.amount")} ({currency})</Label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="any"
+              autoFocus
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>{t("goals.contrib.note")}</Label>
+            <Input
+              placeholder={t("goals.contrib.note.placeholder")}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={save} disabled={updateContrib.isPending}>
+            {updateContrib.isPending ? t("common.loading") : t("common.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

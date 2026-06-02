@@ -93,6 +93,36 @@ export async function addContribution(
   if (error) throw new Error(error.message);
 }
 
+// ─── Delete contribution ──────────────────────────────────────────────────────
+
+export async function deleteContribution(
+  contributionId: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("delete_goal_contribution" as any, {
+    p_contribution_id: contributionId,
+    p_user_id: userId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+// ─── Update contribution ──────────────────────────────────────────────────────
+
+export async function updateContribution(
+  contributionId: string,
+  userId: string,
+  newAmount: number,
+  newNote: string | null,
+): Promise<void> {
+  const { error } = await supabase.rpc("update_goal_contribution" as any, {
+    p_contribution_id: contributionId,
+    p_user_id: userId,
+    p_new_amount: newAmount,
+    p_new_note: newNote,
+  });
+  if (error) throw new Error(error.message);
+}
+
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
 export async function seedDemoGoals(userId: string): Promise<void> {

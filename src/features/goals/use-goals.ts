@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useT } from "@/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { monthRange } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
@@ -9,10 +10,12 @@ import {
   addContribution,
   addGoal,
   deleteGoal,
+  deleteContribution,
   fetchGoalContributions,
   fetchGoals,
   seedDemoGoals,
   updateGoal,
+  updateContribution,
   type AddContributionPayload,
   type AddGoalPayload,
   type UpdateGoalPayload,
@@ -157,5 +160,46 @@ export function useSeedDemoGoals() {
       toast.success("Example goals added");
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to seed goals"),
+  });
+}
+
+// ─── Delete contribution ──────────────────────────────────────────────────────
+
+export function useDeleteContribution() {
+  const { user } = useAuth();
+  const { t } = useT();
+  const invalidate = useInvalidateGoals();
+  return useMutation({
+    mutationFn: (contributionId: string) =>
+      deleteContribution(contributionId, user!.id),
+    onSuccess: () => {
+      invalidate();
+      toast.success(t("goals.contrib.deleted"));
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// ─── Update contribution ──────────────────────────────────────────────────────
+
+export function useUpdateContribution() {
+  const { user } = useAuth();
+  const { t } = useT();
+  const invalidate = useInvalidateGoals();
+  return useMutation({
+    mutationFn: ({
+      contributionId,
+      newAmount,
+      newNote,
+    }: {
+      contributionId: string;
+      newAmount: number;
+      newNote: string | null;
+    }) => updateContribution(contributionId, user!.id, newAmount, newNote),
+    onSuccess: () => {
+      invalidate();
+      toast.success(t("goals.contrib.updated"));
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 }
