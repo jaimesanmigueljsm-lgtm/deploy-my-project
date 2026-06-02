@@ -25,7 +25,7 @@ import {
   searchUserByUsername, sendFamilyInvite, acceptFamilyInvite,
   rejectFamilyInvite, createFamily, updateFamilyName, deleteFamily,
   removeFamilyMember, leaveFamily, notifyFamilyMembers,
-  getUserFamilies, fetchSharedExpenses, addSharedExpense,
+  getUserExpenseGroups, fetchSharedExpenses, addSharedExpense,
   deleteSharedExpense, calculateMemberBalances, calculateSettlements,
   type UserSearchResult, type ReceivedInvitation,
   type FamilyMemberProfile, type UserFamily,
@@ -83,7 +83,7 @@ function GroupsPage() {
 
   const { data: userGroups = [] } = useQuery({
     queryKey: FK.groups(userId),
-    queryFn: getUserFamilies,
+    queryFn: getUserExpenseGroups,
     enabled: !!userId,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
