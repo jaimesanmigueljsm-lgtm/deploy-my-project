@@ -54,8 +54,20 @@ import {
 } from "@/features/goals/use-goals";
 import { useT } from "@/i18n";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
-import { useUserFamilies, useFamilyGoals, useCreateSharedGoal, useAddSharedContribution, type SharedGoal, type UserFamily } from "@/features/goals/use-shared-goals";
-import { Users, Globe } from "lucide-react";
+import {
+  useUserFamilies,
+  useFamilyGoals,
+  useCreateSharedGoal,
+  useAddSharedContribution,
+  useCreateFamily,
+  useSearchUser,
+  useSendInvite,
+  useLeaveGroup,
+  type SharedGoal,
+  type UserFamily,
+  type UserSearchResult,
+} from "@/features/goals/use-shared-goals";
+import { Users, Globe, UserPlus, Settings2, ChevronRight, Check, X, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/app/goals")({
   component: Goals,
@@ -86,6 +98,7 @@ function Goals() {
   const [contribOpen, setContribOpen] = useState<Goal | null>(null);
   const [activeTab, setActiveTab] = useState<"personal" | "shared">("personal");
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [sharedAddOpen, setSharedAddOpen] = useState(false);
 
   const goals = goalsQ.data ?? [];
   const contribs = contribsQ.data ?? [];
@@ -120,8 +133,12 @@ function Goals() {
         </div>
         <button
           onClick={() => {
-            setEditing(null);
-            setOpen(true);
+            if (activeTab === "shared") {
+              setSharedAddOpen(true);
+            } else {
+              setEditing(null);
+              setOpen(true);
+            }
           }}
           className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition"
         >
@@ -293,6 +310,8 @@ function Goals() {
           isLoading={sharedGoalsQ.isLoading || familiesQ.isLoading}
           familyId={effectiveGroupId}
           t={t}
+          externalAddOpen={sharedAddOpen}
+          onExternalAddOpenChange={setSharedAddOpen}
         />
       )}
     </div>
@@ -775,6 +794,8 @@ function SharedGoalsSection({
   isLoading,
   familyId,
   t,
+  externalAddOpen,
+  onExternalAddOpenChange,
 }: {
   families: UserFamily[];
   activeGroupId: string | null;
@@ -783,73 +804,147 @@ function SharedGoalsSection({
   isLoading: boolean;
   familyId: string | null;
   t: (k: string) => string;
+  externalAddOpen: boolean;
+  onExternalAddOpenChange: (o: boolean) => void;
 }) {
-  const [addOpen, setAddOpen] = useState(false);
+  const [addGoalOpen, setAddGoalOpen] = useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [contribGoal, setContribGoal] = useState<SharedGoal | null>(null);
+
   const createGoal = useCreateSharedGoal(familyId);
   const addContrib = useAddSharedContribution(familyId);
-  const [contribGoal, setContribGoal] = useState<SharedGoal | null>(null);
   const profileQ = useProfile();
   const currency = profileQ.data?.currency ?? "EUR";
   const convert = useCurrencyConvert();
 
+  const activeFamily = families.find((f) => f.family_id === activeGroupId) ?? families[0];
+
+  // Sync external add open (from header + button)
+  useEffect(() => {
+    if (externalAddOpen) {
+      if (families.length === 0) {
+        setCreateGroupOpen(true);
+      } else {
+        setAddGoalOpen(true);
+      }
+      onExternalAddOpenChange(false);
+    }
+  }, [externalAddOpen, families.length, onExternalAddOpenChange]);
+
+  // Stats for active group
+  const groupStats = useMemo(() => {
+    const total = goals.reduce((s, g) => s + g.target_amount, 0);
+    const saved = goals.reduce((s, g) => s + g.current_amount, 0);
+    return { total, saved, progress: total > 0 ? (saved / total) * 100 : 0 };
+  }, [goals]);
+
   if (families.length === 0) {
     return (
-      <EmptyState
-        icon={<Users className="size-5" />}
-        title={t("goals.shared.empty.title")}
-        description={t("goals.shared.empty.desc")}
-      />
+      <>
+        <EmptyState
+          icon={<Users className="size-5" />}
+          title={t("goals.shared.empty.title")}
+          description={t("goals.shared.empty.desc")}
+          action={
+            <Button size="sm" onClick={() => setCreateGroupOpen(true)}>
+              <Plus className="size-3.5 mr-1" /> {t("goals.shared.group.create")}
+            </Button>
+          }
+        />
+        <CreateGroupDialog
+          open={createGroupOpen}
+          onOpenChange={setCreateGroupOpen}
+          t={t}
+        />
+      </>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Group selector — only show if user has more than 1 group */}
-      {families.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {families.map((f) => (
-            <button
-              key={f.family_id}
-              onClick={() => onGroupChange(f.family_id)}
-              className={cn(
-                "shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all",
-                activeGroupId === f.family_id
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {f.family_name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Active group name */}
-      {families.length > 0 && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Globe className="size-4 text-muted-foreground" />
-            <span className="text-sm font-medium">
-              {families.find((f) => f.family_id === activeGroupId)?.family_name ?? families[0]?.family_name}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              · {families.find((f) => f.family_id === activeGroupId)?.member_count ?? 0} {t("goals.shared.members")}
-            </span>
-          </div>
+      {/* Group selector chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {families.map((f) => (
           <button
-            onClick={() => setAddOpen(true)}
-            className="size-8 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition"
+            key={f.family_id}
+            onClick={() => onGroupChange(f.family_id)}
+            className={cn(
+              "shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all",
+              (activeGroupId ?? families[0]?.family_id) === f.family_id
+                ? "bg-foreground text-background"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            )}
           >
-            <Plus className="size-3.5" />
+            {f.family_name}
           </button>
+        ))}
+        <button
+          onClick={() => setCreateGroupOpen(true)}
+          className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:text-foreground transition-all border border-dashed border-border flex items-center gap-1"
+        >
+          <Plus className="size-3" /> {t("goals.shared.group.new")}
+        </button>
+      </div>
+
+      {/* Group hero card */}
+      {activeFamily && (
+        <div className="card-soft p-5 gradient-hero relative overflow-hidden">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Globe className="size-3.5 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  {activeFamily.family_name} · {activeFamily.member_count} {t("goals.shared.members")}
+                </p>
+              </div>
+              <div className="num-display text-[32px] font-semibold leading-tight">
+                {shortMoney(convert(groupStats.saved), currency)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("common.of")} {shortMoney(convert(groupStats.total), currency)} · {goals.length} {t("goals.shared.goals_count")}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <ProgressRing
+                value={groupStats.progress}
+                size={64}
+                stroke={5}
+                label={`${Math.round(groupStats.progress)}%`}
+                sublabel={t("goals.kpi.overall")}
+              />
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="size-7 rounded-full bg-foreground/10 text-foreground grid place-items-center hover:bg-foreground/20 transition"
+              >
+                <Settings2 className="size-3.5" />
+              </button>
+            </div>
+          </div>
+          {/* Mini progress bar */}
+          <div className="mt-4 h-1.5 bg-foreground/5 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full bg-violet-500 transition-all duration-700"
+              style={{ width: `${Math.min(100, groupStats.progress)}%` }}
+            />
+          </div>
         </div>
       )}
 
-      {/* Goals */}
+      {/* Goals section header */}
+      <div className="flex items-center justify-between">
+        <SectionHeader title={t("goals.shared.goals_label")} />
+        <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
+          <UserPlus className="size-3.5 mr-1" /> {t("goals.shared.invite")}
+        </Button>
+      </div>
+
+      {/* Goals list */}
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="h-32 rounded-2xl bg-muted animate-pulse" />
+            <div key={i} className="h-36 rounded-2xl bg-muted animate-pulse" />
           ))}
         </div>
       ) : goals.length === 0 ? (
@@ -858,7 +953,7 @@ function SharedGoalsSection({
           title={t("goals.shared.goals.empty.title")}
           description={t("goals.shared.goals.empty.desc")}
           action={
-            <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Button size="sm" onClick={() => setAddGoalOpen(true)}>
               <Plus className="size-3.5 mr-1" /> {t("goals.shared.add")}
             </Button>
           }
@@ -875,22 +970,29 @@ function SharedGoalsSection({
               t={t}
             />
           ))}
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full"
+            onClick={() => setAddGoalOpen(true)}
+          >
+            <Plus className="size-3.5 mr-1" /> {t("goals.shared.add")}
+          </Button>
         </div>
       )}
 
-      {/* Add shared goal dialog */}
+      {/* Dialogs */}
       <AddSharedGoalDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
+        open={addGoalOpen}
+        onOpenChange={setAddGoalOpen}
         onCreate={({ name, targetAmount, deadline }) =>
-          createGoal.mutate({ name, targetAmount, deadline }, { onSuccess: () => setAddOpen(false) })
+          createGoal.mutate({ name, targetAmount, deadline }, { onSuccess: () => setAddGoalOpen(false) })
         }
         isPending={createGoal.isPending}
         currency={currency}
         t={t}
       />
 
-      {/* Contribute dialog */}
       <SharedContribDialog
         goal={contribGoal}
         currency={currency}
@@ -904,6 +1006,26 @@ function SharedGoalsSection({
           )
         }
         isPending={addContrib.isPending}
+        t={t}
+      />
+
+      <CreateGroupDialog
+        open={createGroupOpen}
+        onOpenChange={setCreateGroupOpen}
+        t={t}
+      />
+
+      <InviteUserDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        familyId={familyId}
+        t={t}
+      />
+
+      <GroupSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        family={activeFamily ?? null}
         t={t}
       />
     </div>
@@ -923,49 +1045,120 @@ function SharedGoalCard({
   onContribute: () => void;
   t: (k: string) => string;
 }) {
-  const pct =
-    goal.target_amount > 0
-      ? Math.min(100, (goal.current_amount / goal.target_amount) * 100)
-      : 0;
+  const pct = goal.target_amount > 0
+    ? Math.min(100, (goal.current_amount / goal.target_amount) * 100)
+    : 0;
+
+  const remaining = goal.target_amount - goal.current_amount;
+  const isComplete = pct >= 100;
+
+  // Mini bar chart data — simulate 5 segments of progress
+  const segments = [20, 40, 60, 80, 100];
 
   return (
-    <div className="card-flat p-4 space-y-3 hover:shadow-soft transition-shadow">
+    <div className="card-flat p-4 space-y-4 hover:shadow-soft transition-shadow">
+      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="size-11 rounded-2xl bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 grid place-items-center shrink-0">
-            <Users className="size-5" />
+          <div className={cn(
+            "size-11 rounded-2xl grid place-items-center shrink-0",
+            isComplete
+              ? "bg-positive-soft text-positive"
+              : "bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400"
+          )}>
+            {isComplete ? <Trophy className="size-5" /> : <Users className="size-5" />}
           </div>
           <div className="min-w-0">
-            <h3 className="font-semibold text-sm truncate">{goal.name}</h3>
-            <p className="text-[11px] text-muted-foreground num truncate">
-              {money(convert(goal.current_amount), currency)} {t("common.of")}{" "}
-              {money(convert(goal.target_amount), currency)}
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm truncate">{goal.name}</h3>
+              {isComplete && (
+                <span className="text-[9px] uppercase tracking-wider font-bold text-positive bg-positive-soft px-1.5 py-0.5 rounded">
+                  {t("goals.card.complete")}
+                </span>
+              )}
+              {goal.status === "archived" && (
+                <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  {t("goals.shared.archived")}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground num">
+              {money(convert(goal.current_amount), currency)} {t("common.of")} {money(convert(goal.target_amount), currency)}
             </p>
           </div>
         </div>
         <div className="text-right shrink-0">
-          <div className="text-base font-semibold num">{Math.round(pct)}%</div>
-          {pct >= 100 && <Trophy className="size-3.5 text-warn ml-auto mt-0.5" />}
+          <div className="text-lg font-semibold num">{Math.round(pct)}%</div>
         </div>
       </div>
 
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-700 bg-violet-500"
-          style={{ width: `${pct}%` }}
-        />
+      {/* Progress bar with milestones */}
+      <div className="relative">
+        <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-700",
+              isComplete ? "bg-positive" : "bg-violet-500"
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {[25, 50, 75].map((m) => (
+          <div
+            key={m}
+            className="absolute top-0 size-2.5 -translate-x-1/2 flex items-center justify-center"
+            style={{ left: `${m}%` }}
+          >
+            <div className={cn(
+              "size-1 rounded-full",
+              pct >= m ? "bg-background/60" : "bg-border"
+            )} />
+          </div>
+        ))}
       </div>
 
-      {goal.deadline && (
-        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-          <Calendar className="size-3" />
-          {new Date(goal.deadline).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
-        </p>
-      )}
+      {/* Mini bar chart — visual representation of goal segments */}
+      <div className="flex items-end gap-1 h-8">
+        {segments.map((s, i) => {
+          const filled = pct >= s;
+          const partial = pct > (s - 20) && pct < s;
+          const partialPct = partial ? ((pct - (s - 20)) / 20) * 100 : 0;
+          return (
+            <div key={i} className="flex-1 rounded-sm bg-muted overflow-hidden" style={{ height: `${60 + i * 10}%` }}>
+              <div
+                className={cn(
+                  "w-full rounded-sm transition-all duration-500",
+                  filled
+                    ? isComplete ? "bg-positive" : "bg-violet-400 dark:bg-violet-500"
+                    : "bg-transparent"
+                )}
+                style={{
+                  height: filled ? "100%" : partial ? `${partialPct}%` : "0%",
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
 
-      <Button size="sm" variant="default" className="w-full" onClick={onContribute}>
-        <Plus className="size-3.5 mr-1" /> {t("goals.contrib.cta")}
-      </Button>
+      {/* Footer row */}
+      <div className="flex items-center justify-between text-[11px]">
+        {goal.deadline ? (
+          <span className="text-muted-foreground flex items-center gap-1">
+            <Calendar className="size-3" />
+            {new Date(goal.deadline).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">
+            {!isComplete && `${money(convert(remaining), currency)} ${t("goals.shared.remaining")}`}
+          </span>
+        )}
+        {!isComplete && (
+          <Button size="sm" variant="default" onClick={onContribute} className="h-7 text-xs px-3">
+            <Plus className="size-3 mr-1" /> {t("goals.contrib.cta")}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -1089,6 +1282,204 @@ function SharedContribDialog({
             disabled={!amount || Number(amount) <= 0 || isPending}
           >
             {isPending ? t("common.loading") : t("goals.contrib.cta")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Create Group Dialog ──────────────────────────────────────────────────────
+
+function CreateGroupDialog({
+  open,
+  onOpenChange,
+  t,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  t: (k: string) => string;
+}) {
+  const createGroup = useCreateFamily();
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (!open) setName("");
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("goals.shared.group.create")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("goals.shared.group.name")}</Label>
+            <Input
+              placeholder={t("goals.shared.group.name.placeholder")}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">{t("goals.shared.group.create.hint")}</p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+          <Button
+            onClick={() => createGroup.mutate(name, { onSuccess: () => onOpenChange(false) })}
+            disabled={!name.trim() || createGroup.isPending}
+          >
+            {createGroup.isPending ? t("common.loading") : t("goals.shared.group.create")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Invite User Dialog ───────────────────────────────────────────────────────
+
+function InviteUserDialog({
+  open,
+  onOpenChange,
+  familyId,
+  t,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  familyId: string | null;
+  t: (k: string) => string;
+}) {
+  const searchUser = useSearchUser();
+  const sendInvite = useSendInvite(familyId);
+  const [username, setUsername] = useState("");
+  const [foundUser, setFoundUser] = useState<UserSearchResult | null>(null);
+  const [searched, setSearched] = useState(false);
+
+  useEffect(() => {
+    if (!open) { setUsername(""); setFoundUser(null); setSearched(false); }
+  }, [open]);
+
+  async function handleSearch() {
+    if (!username.trim()) return;
+    setSearched(true);
+    const result = await searchUser.mutateAsync(username.replace(/^@/, ""));
+    setFoundUser(result);
+  }
+
+  function handleInvite() {
+    if (!foundUser) return;
+    sendInvite.mutate(foundUser.financial_username, { onSuccess: () => onOpenChange(false) });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("goals.shared.invite.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("goals.shared.invite.username")}</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="@username"
+                value={username}
+                onChange={(e) => { setUsername(e.target.value); setFoundUser(null); setSearched(false); }}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+              <Button
+                variant="outline"
+                onClick={handleSearch}
+                disabled={!username.trim() || searchUser.isPending}
+              >
+                {searchUser.isPending ? t("common.loading") : t("common.search")}
+              </Button>
+            </div>
+          </div>
+
+          {searched && !foundUser && !searchUser.isPending && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-muted text-sm text-muted-foreground">
+              <X className="size-4 shrink-0" />
+              {t("goals.shared.invite.not_found")}
+            </div>
+          )}
+
+          {foundUser && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-positive-soft">
+              <div>
+                <p className="text-sm font-medium">{foundUser.first_name} {foundUser.last_name_1}</p>
+                <p className="text-xs text-muted-foreground">@{foundUser.financial_username}</p>
+              </div>
+              <Check className="size-4 text-positive" />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+          <Button
+            onClick={handleInvite}
+            disabled={!foundUser || sendInvite.isPending}
+          >
+            <UserPlus className="size-3.5 mr-1" />
+            {sendInvite.isPending ? t("common.loading") : t("goals.shared.invite.send")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Group Settings Dialog ────────────────────────────────────────────────────
+
+function GroupSettingsDialog({
+  open,
+  onOpenChange,
+  family,
+  t,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  family: UserFamily | null;
+  t: (k: string) => string;
+}) {
+  const leaveGroup = useLeaveGroup();
+
+  if (!family) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{family.family_name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-muted">
+            <div className="flex items-center gap-2">
+              <Users className="size-4 text-muted-foreground" />
+              <span className="text-sm">{family.member_count} {t("goals.shared.members")}</span>
+            </div>
+            <span className="text-xs text-muted-foreground capitalize">{family.member_role}</span>
+          </div>
+          <div className="text-xs text-muted-foreground px-1">{t("goals.shared.group.owned_by")} {family.owner_name}</div>
+        </div>
+        <DialogFooter className="flex-col gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full">
+            {t("common.close")}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full text-negative hover:text-negative hover:bg-negative/10"
+            onClick={() => {
+              if (!confirm(t("goals.shared.group.leave.confirm").replace("{name}", family.family_name))) return;
+              leaveGroup.mutate(family.family_id, { onSuccess: () => onOpenChange(false) });
+            }}
+            disabled={leaveGroup.isPending}
+          >
+            <LogOut className="size-3.5 mr-1" />
+            {leaveGroup.isPending ? t("common.loading") : t("goals.shared.group.leave")}
           </Button>
         </DialogFooter>
       </DialogContent>

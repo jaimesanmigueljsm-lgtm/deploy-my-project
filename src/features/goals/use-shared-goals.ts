@@ -7,11 +7,16 @@ import {
   loadFamilyData,
   createSharedGoal,
   addGoalContribution,
+  createFamily,
+  searchUserByUsername,
+  sendFamilyInvite,
+  leaveFamilyGroup,
   type UserFamily,
   type SharedGoal,
+  type UserSearchResult,
 } from "./shared-goals.service";
 
-export type { SharedGoal, UserFamily };
+export type { SharedGoal, UserFamily, UserSearchResult };
 
 const keys = {
   families: (uid: string) => ["user-families", uid] as const,
@@ -76,6 +81,53 @@ export function useAddSharedContribution(familyId: string | null) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.familyData(familyId ?? "") });
       toast.success(t("goals.contrib.success"));
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useCreateFamily() {
+  const { user } = useAuth();
+  const { t } = useT();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => createFamily(user!.id, name),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user-families"] });
+      toast.success(t("goals.shared.group.created"));
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useSearchUser() {
+  return useMutation({
+    mutationFn: (username: string) => searchUserByUsername(username),
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useSendInvite(familyId: string | null) {
+  const { t } = useT();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (username: string) => sendFamilyInvite(familyId!, username),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["family-data", familyId ?? ""] });
+      toast.success(t("goals.shared.invite.sent"));
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useLeaveGroup() {
+  const { t } = useT();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (familyId: string) => leaveFamilyGroup(familyId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user-families"] });
+      toast.success(t("goals.shared.group.left"));
     },
     onError: (err: Error) => toast.error(err.message),
   });
