@@ -116,7 +116,13 @@ export function useSendInvite(familyId: string | null) {
       qc.invalidateQueries({ queryKey: ["family-data", familyId ?? ""] });
       toast.success(t("goals.shared.invite.sent"));
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => {
+      if (err.message.toLowerCase().includes("owner")) {
+        toast.error(t("goals.shared.invite.owner_only"));
+      } else {
+        toast.error(err.message);
+      }
+    },
   });
 }
 

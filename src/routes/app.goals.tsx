@@ -67,7 +67,7 @@ import {
   type UserFamily,
   type UserSearchResult,
 } from "@/features/goals/use-shared-goals";
-import { Users, Globe, UserPlus, Settings2, ChevronRight, Check, X, LogOut } from "lucide-react";
+import { Users, Globe, UserPlus, Settings2, ChevronRight, Check, X, LogOut, Search } from "lucide-react";
 
 export const Route = createFileRoute("/app/goals")({
   component: Goals,
@@ -1392,10 +1392,15 @@ function InviteUserDialog({
               />
               <Button
                 variant="outline"
+                size="icon"
                 onClick={handleSearch}
                 disabled={!username.trim() || searchUser.isPending}
+                className="shrink-0"
               >
-                {searchUser.isPending ? t("common.loading") : t("common.search")}
+                {searchUser.isPending
+                  ? <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  : <Search className="size-4" />
+                }
               </Button>
             </div>
           </div>
