@@ -32,8 +32,16 @@ export const Route = createFileRoute("/app")({
     const prof = await queryClient.fetchQuery({
       queryKey: queryKeys.profile(uid),
       queryFn: async () => {
-        const { data: p } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
-        return p ?? null;
+        const { data: p, error } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
+        if (error) {
+          console.error("[app.tsx] Profile fetch error:", error);
+          throw error;
+        }
+        if (!p) {
+          console.error("[app.tsx] Profile not found for user:", uid);
+          return null;
+        }
+        return p;
       },
       staleTime: 5 * 60_000,
     });
