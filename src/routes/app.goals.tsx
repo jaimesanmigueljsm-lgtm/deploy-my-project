@@ -336,7 +336,7 @@ function PremiumSharedEmptyState({
     { emoji: "✈️", label: "Viaje Argentina" },
     { emoji: "🏠", label: "Entrada casa" },
     { emoji: "💍", label: "Boda" },
-    { emoji: "🐶", label: "Nuevo compañero" },
+    { emoji: "🐶", label: "Peluquería Firulais" },
   ];
 
   return (
