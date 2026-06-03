@@ -29,8 +29,9 @@ export function useUserFamilies() {
     queryKey: keys.families(user?.id ?? ""),
     queryFn: () => getUserFamilies(),
     enabled: !!user,
-    staleTime: 30_000,
+    staleTime: 20_000,
     placeholderData: keepPreviousData,
+    refetchOnMount: true,
   });
 }
 

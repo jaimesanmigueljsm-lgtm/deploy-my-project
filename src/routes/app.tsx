@@ -1,5 +1,6 @@
 import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Wallet, Target, BarChart3, Users, User } from "lucide-react";
 import { useT } from "@/i18n";
@@ -82,6 +83,16 @@ const tabs: TabDef[] = [
 function AppShell() {
   const loc = useLocation();
   const { t } = useT();
+  const queryClient = useQueryClient();
+
+  // Invalidate all queries when window gains focus (for multi-device sync)
+  useEffect(() => {
+    function onFocus() {
+      queryClient.invalidateQueries();
+    }
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [queryClient]);
 
   // Sync dark mode across browser tabs when the user changes the theme in another tab
   useEffect(() => {

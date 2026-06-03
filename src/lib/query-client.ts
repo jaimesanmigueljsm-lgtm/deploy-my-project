@@ -12,8 +12,9 @@ export function createQueryClient(): QueryClient {
         // Two retries with exponential backoff handle transient Supabase cold-starts.
         retry: 2,
         retryDelay: (attempt) => Math.min(1_000 * 2 ** attempt, 30_000),
-        // Prevent jarring refetches while a user is reading their financial data.
-        refetchOnWindowFocus: false,
+        // Refetch on window focus to sync data across devices, but only if stale (>60s).
+        // This ensures multi-device consistency without excessive requests.
+        refetchOnWindowFocus: true,
         // Reconnect refetch is fine — the user was offline and is back.
         refetchOnReconnect: true,
       },

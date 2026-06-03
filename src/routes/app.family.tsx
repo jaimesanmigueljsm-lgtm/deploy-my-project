@@ -85,8 +85,9 @@ function GroupsPage() {
     queryKey: FK.groups(userId),
     queryFn: getUserExpenseGroups,
     enabled: !!userId,
-    staleTime: 30_000,
+    staleTime: 20_000,
     placeholderData: keepPreviousData,
+    refetchOnMount: true,
   });
 
   const { data: sharedExpenses = [] } = useQuery({
