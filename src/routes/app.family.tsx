@@ -245,13 +245,22 @@ function GroupsPage() {
       {/* Group selector chips */}
       {userGroups.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {userGroups.map(g => (
-            <button key={g.family_id} onClick={() => switchGroup(g.family_id)}
-              className={cn("shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all",
-                g.family_id === familyId ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:text-foreground")}>
-              {g.family_name}
-            </button>
-          ))}
+          {userGroups.map((g, i) => {
+            const chipColors = [
+              "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+              "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
+              "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+              "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+              "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+            ];
+            return (
+              <button key={g.family_id} onClick={() => switchGroup(g.family_id)}
+                className={cn("shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all",
+                  g.family_id === familyId ? "bg-foreground text-background" : chipColors[i % chipColors.length])}>
+                {g.family_name}
+              </button>
+            );
+          })}
           <button onClick={() => setOpenCreate(true)}
             className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:text-foreground transition border border-dashed border-border flex items-center gap-1">
             <Plus className="size-3" /> {t("groups.new")}
@@ -273,30 +282,30 @@ function GroupsPage() {
       )}
 
       {/* Hero card */}
-      <div className="card-soft p-5 gradient-hero relative overflow-hidden">
+      <div className="p-5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Users className="size-3.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">{memberProfiles.length} {t("groups.members")} · {sharedExpenses.length} {t("groups.expenses")}</p>
+              <Users className="size-3.5 text-white/70" />
+              <p className="text-xs text-white/70">{memberProfiles.length} {t("groups.members")} · {sharedExpenses.length} {t("groups.expenses")}</p>
             </div>
             <div className="num-display text-[36px] font-semibold leading-tight">
               {shortMoney(convert(totalSpend), currency)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{t("groups.total_spend")}</p>
+            <p className="text-xs text-white/70 mt-1">{t("groups.total_spend")}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className={cn("px-3 py-1.5 rounded-xl text-xs font-semibold",
-              myBalance > 0 ? "bg-positive-soft text-positive" :
-              myBalance < 0 ? "bg-negative/10 text-negative" :
-              "bg-muted text-muted-foreground")}>
+              myBalance > 0 ? "bg-white/20 text-white" :
+              myBalance < 0 ? "bg-white/10 text-white/80" :
+              "bg-white/10 text-white/70")}>
               {myBalance > 0 ? `+${money(convert(myBalance), currency)}` :
                myBalance < 0 ? money(convert(myBalance), currency) :
                t("groups.settled")}
             </div>
-            <p className="text-[10px] text-muted-foreground">{t("groups.your_balance")}</p>
+            <p className="text-[10px] text-white/70">{t("groups.your_balance")}</p>
             <button onClick={() => setOpenSettings(true)}
-              className="size-7 rounded-full bg-foreground/10 grid place-items-center hover:bg-foreground/20 transition">
+              className="size-7 rounded-full bg-white/20 grid place-items-center hover:bg-white/30 transition">
               <Settings2 className="size-3.5" />
             </button>
           </div>
@@ -305,12 +314,12 @@ function GroupsPage() {
         {/* Settlement progress bar */}
         {settlements.length > 0 && (
           <div className="mt-4">
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1.5">
+            <div className="flex items-center justify-between text-[11px] text-white/70 mb-1.5">
               <span>{t("groups.settlements")}</span>
               <span>{settledCount}/{settlements.length} {t("groups.settled_label")}</span>
             </div>
-            <div className="h-1.5 bg-foreground/5 rounded-full overflow-hidden">
-              <div className="h-full rounded-full bg-positive transition-all duration-700"
+            <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-white transition-all duration-700"
                 style={{ width: `${settlements.length > 0 ? (settledCount / settlements.length) * 100 : 0}%` }} />
             </div>
           </div>
@@ -341,6 +350,17 @@ function GroupsPage() {
             </div>
           );
         })}
+        {isOwner && memberProfiles.length <= 2 && (
+          <button
+            onClick={() => setOpenInvite(true)}
+            className="flex flex-col items-center gap-1 shrink-0"
+          >
+            <div className="size-10 rounded-full border-2 border-dashed border-muted-foreground/30 grid place-items-center text-muted-foreground hover:border-violet-400 hover:text-violet-500 transition">
+              <UserPlus className="size-4" />
+            </div>
+            <p className="text-[10px] text-muted-foreground">{t("groups.invite.cta")}</p>
+          </button>
+        )}
       </div>
 
       {/* Settlements */}
@@ -391,8 +411,30 @@ function GroupsPage() {
         </div>
 
         {sharedExpenses.length === 0 ? (
-          <EmptyState icon={<Receipt className="size-5" />} title={t("groups.expenses.empty.title")} description={t("groups.expenses.empty.desc")}
-            action={<Button size="sm" onClick={() => setOpenAddExpense(true)}><Plus className="size-3.5 mr-1" />{t("groups.add_expense")}</Button>} />
+          <div className="card-flat p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              {[
+                { icon: Receipt, label: t("groups.how.step1") },
+                { icon: Users, label: t("groups.how.step2") },
+                { icon: CheckCircle2, label: t("groups.how.step3") },
+              ].map((step, i, arr) => (
+                <>
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 text-center">
+                    <div className="size-10 rounded-2xl bg-violet-50 dark:bg-violet-950/50 grid place-items-center">
+                      <step.icon className="size-4 text-violet-500" />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-tight">{step.label}</p>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <ArrowRight className="size-3 text-muted-foreground shrink-0 mb-4" />
+                  )}
+                </>
+              ))}
+            </div>
+            <Button className="w-full" onClick={() => setOpenAddExpense(true)}>
+              <Plus className="size-4 mr-2" /> {t("groups.add_expense")}
+            </Button>
+          </div>
         ) : (
           <div className="space-y-2">
             {sharedExpenses.map(expense => (
