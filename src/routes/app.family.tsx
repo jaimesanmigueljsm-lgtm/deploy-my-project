@@ -184,7 +184,7 @@ function GroupsPage() {
       <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
         <header className="pt-2">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider bg-positive-soft text-positive px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium tracking-wider text-muted-foreground px-2.5 py-1 rounded-full">
               <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
                 <circle cx="4" cy="4" r="4" />
               </svg>
@@ -236,7 +236,7 @@ function GroupsPage() {
       <header className="flex items-center justify-between pt-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider bg-positive-soft text-positive px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium tracking-wider text-muted-foreground px-2.5 py-1 rounded-full">
               <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
                 <circle cx="4" cy="4" r="4" />
               </svg>
