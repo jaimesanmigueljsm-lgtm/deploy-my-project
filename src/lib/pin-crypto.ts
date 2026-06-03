@@ -42,6 +42,7 @@ async function pbkdf2HashV2(pin: string, salt?: Uint8Array): Promise<string> {
     ["deriveBits"],
   );
   const bits = await crypto.subtle.deriveBits(
+    // @ts-ignore - TypeScript incorrectly infers ArrayBufferLike instead of ArrayBuffer for crypto.getRandomValues
     { name: "PBKDF2", hash: "SHA-256", salt: saltBytes, iterations: ITERATIONS },
     keyMaterial,
     256,

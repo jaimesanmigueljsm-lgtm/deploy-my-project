@@ -23,6 +23,7 @@ import {
   Pie,
   Cell,
   Sector,
+  type PieSectorDataItem,
 } from "recharts";
 import { SectionHeader, InsightCard, TrendBadge, SkeletonBlock } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
@@ -315,16 +316,16 @@ function SpendingPieChart({
               outerRadius={52}
               paddingAngle={2}
               stroke="none"
-              activeIndex={activeIndex ?? undefined}
-              activeShape={(props: Record<string, unknown>) => (
+              {...({ activeIndex: activeIndex ?? undefined } as any)}
+              activeShape={(props: PieSectorDataItem) => (
                 <Sector
-                  cx={props.cx as number}
-                  cy={props.cy as number}
-                  innerRadius={(props.innerRadius as number) - 2}
-                  outerRadius={(props.outerRadius as number) + 7}
-                  startAngle={props.startAngle as number}
-                  endAngle={props.endAngle as number}
-                  fill={props.fill as string}
+                  cx={props.cx}
+                  cy={props.cy}
+                  innerRadius={props.innerRadius - 2}
+                  outerRadius={props.outerRadius + 7}
+                  startAngle={props.startAngle}
+                  endAngle={props.endAngle}
+                  fill={props.fill}
                   opacity={1}
                 />
               )}
