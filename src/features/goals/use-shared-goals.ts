@@ -93,13 +93,13 @@ export function useAddSharedContribution(familyId: string | null) {
 
 export function useCreateFamily() {
   const { user } = useAuth();
-  const { t } = useT();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (name: string) => createFamily(user!.id, name, "goals"),
-    onSuccess: () => {
+    onSuccess: (familyId) => {
       qc.invalidateQueries({ queryKey: ["user-families"] });
-      toast.success(t("goals.shared.group.created"));
+      // Toast will be shown when the goal is created, not here
+      return familyId;
     },
     onError: (err: Error) => toast.error(err.message),
   });

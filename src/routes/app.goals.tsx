@@ -1228,11 +1228,12 @@ function SharedGoalsSection({
 }) {
   const [addGoalOpen, setAddGoalOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteGoalFamilyId, setInviteGoalFamilyId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [contribGoal, setContribGoal] = useState<SharedGoal | null>(null);
 
   const createGoal = useCreateSharedGoal(familyId);
+  const createFamily = useCreateFamily();
   const addContrib = useAddSharedContribution(familyId);
   const profileQ = useProfile();
   const currency = profileQ.data?.currency ?? "EUR";
@@ -1240,17 +1241,41 @@ function SharedGoalsSection({
 
   const activeFamily = families.find((f) => f.family_id === activeGroupId) ?? families[0];
 
+  // Handle creating first goal with auto group creation
+  async function handleCreateFirstGoal(goalData: { name: string; targetAmount: number; deadline: string | null }) {
+    try {
+      // 1. Create invisible group with goal name
+      const newFamilyId = await new Promise<string>((resolve, reject) => {
+        createFamily.mutate(goalData.name, {
+          onSuccess: resolve,
+          onError: reject,
+        });
+      });
+
+      // 2. Switch to new group
+      onGroupChange(newFamilyId);
+
+      // 3. Create goal in that group
+      await new Promise<void>((resolve, reject) => {
+        createGoal.mutate(goalData, {
+          onSuccess: () => resolve(),
+          onError: reject,
+        });
+      });
+
+      setAddGoalOpen(false);
+    } catch (err) {
+      // Errors already handled by hooks
+    }
+  }
+
   // Sync external add open (from header + button)
   useEffect(() => {
     if (externalAddOpen) {
-      if (families.length === 0) {
-        setCreateGroupOpen(true);
-      } else {
-        setAddGoalOpen(true);
-      }
+      setAddGoalOpen(true);
       onExternalAddOpenChange(false);
     }
-  }, [externalAddOpen, families.length, onExternalAddOpenChange]);
+  }, [externalAddOpen, onExternalAddOpenChange]);
 
   // Stats for active group
   const groupStats = useMemo(() => {
@@ -1263,13 +1288,15 @@ function SharedGoalsSection({
     return (
       <>
         <PremiumSharedEmptyState
-          onCreateGoal={() => setCreateGroupOpen(true)}
+          onCreateGoal={() => setAddGoalOpen(true)}
           t={t}
         />
-        <CreateGroupDialog
-          open={createGroupOpen}
-          onOpenChange={setCreateGroupOpen}
-          onSuccess={(newFamilyId) => onGroupChange(newFamilyId)}
+        <AddSharedGoalDialog
+          open={addGoalOpen}
+          onOpenChange={setAddGoalOpen}
+          onCreate={handleCreateFirstGoal}
+          isPending={createGoal.isPending || createFamily.isPending}
+          currency={currency}
           t={t}
         />
       </>
@@ -1278,81 +1305,6 @@ function SharedGoalsSection({
 
   return (
     <div className="space-y-4">
-      {/* Group selector chips */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {families.map((f) => (
-          <button
-            key={f.family_id}
-            onClick={() => onGroupChange(f.family_id)}
-            className={cn(
-              "shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all",
-              (activeGroupId ?? families[0]?.family_id) === f.family_id
-                ? "bg-foreground text-background"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {f.family_name}
-          </button>
-        ))}
-        <button
-          onClick={() => setCreateGroupOpen(true)}
-          className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:text-foreground transition-all border border-dashed border-border flex items-center gap-1"
-        >
-          <Plus className="size-3" /> {t("goals.shared.group.new")}
-        </button>
-      </div>
-
-      {/* Group hero card */}
-      {activeFamily && (
-        <div className="card-soft p-5 gradient-hero-orange relative overflow-hidden">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Globe className="size-3.5 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">
-                  {activeFamily.family_name} · {activeFamily.member_count} {t("goals.shared.members")}
-                </p>
-              </div>
-              <div className="num-display text-[32px] font-semibold leading-tight">
-                {shortMoney(convert(groupStats.saved), currency)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("common.of")} {shortMoney(convert(groupStats.total), currency)} · {goals.length} {t("goals.shared.goals_count")}
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <ProgressRing
-                value={groupStats.progress}
-                size={64}
-                stroke={5}
-                label={`${Math.round(groupStats.progress)}%`}
-                sublabel={t("goals.kpi.overall")}
-              />
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="size-7 rounded-full bg-foreground/10 text-foreground grid place-items-center hover:bg-foreground/20 transition"
-              >
-                <Settings2 className="size-3.5" />
-              </button>
-            </div>
-          </div>
-          {/* Mini progress bar */}
-          <div className="mt-4 h-1.5 bg-foreground/5 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full bg-violet-500 transition-all duration-700"
-              style={{ width: `${Math.min(100, groupStats.progress)}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Goals section header */}
-      <div className="flex items-center justify-between">
-        <SectionHeader title={t("goals.shared.goals_label")} />
-        <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
-          <UserPlus className="size-3.5 mr-1" /> {t("goals.shared.invite")}
-        </Button>
-      </div>
 
       {/* Goals list */}
       {isLoading ? (
@@ -1375,6 +1327,7 @@ function SharedGoalsSection({
               currency={currency}
               convert={convert}
               onContribute={() => setContribGoal(g)}
+              onInvite={() => setInviteGoalFamilyId(familyId)}
               t={t}
             />
           ))}
@@ -1425,9 +1378,9 @@ function SharedGoalsSection({
       />
 
       <InviteUserDialog
-        open={inviteOpen}
-        onOpenChange={setInviteOpen}
-        familyId={familyId}
+        open={!!inviteGoalFamilyId}
+        onOpenChange={(open) => !open && setInviteGoalFamilyId(null)}
+        familyId={inviteGoalFamilyId}
         t={t}
       />
 
@@ -1446,12 +1399,14 @@ function SharedGoalCard({
   currency,
   convert,
   onContribute,
+  onInvite,
   t,
 }: {
   goal: SharedGoal;
   currency: string;
   convert: (n: number) => number;
   onContribute: () => void;
+  onInvite: () => void;
   t: (k: string) => string;
 }) {
   const pct = goal.target_amount > 0
@@ -1552,16 +1507,25 @@ function SharedGoalCard({
 
       {/* Footer row */}
       <div className="flex items-center justify-between text-[11px]">
-        {goal.deadline ? (
-          <span className="text-muted-foreground flex items-center gap-1">
-            <Calendar className="size-3" />
-            {new Date(goal.deadline).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">
-            {!isComplete && `${money(convert(remaining), currency)} ${t("goals.shared.remaining")}`}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {goal.deadline ? (
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Calendar className="size-3" />
+              {new Date(goal.deadline).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">
+              {!isComplete && `${money(convert(remaining), currency)} ${t("goals.shared.remaining")}`}
+            </span>
+          )}
+          <button
+            onClick={onInvite}
+            className="size-8 rounded-full border border-dashed border-border grid place-items-center hover:bg-muted transition"
+            title={t("goals.shared.invite")}
+          >
+            <UserPlus className="size-3.5 text-muted-foreground" />
+          </button>
+        </div>
         {!isComplete && (
           <Button size="sm" variant="default" onClick={onContribute} className="h-7 text-xs px-3">
             <Plus className="size-3 mr-1" /> {t("goals.contrib.cta")}
