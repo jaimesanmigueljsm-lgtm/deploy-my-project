@@ -125,11 +125,14 @@ function Goals() {
   if (isLoading) return <GoalsSkeleton />;
 
   return (
-    <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
+    <div className="px-4 pt-5 space-y-4 animate-rise pb-24">
       <header className="flex items-center justify-between pt-2">
         <div>
-          <h1 className="text-[24px] font-semibold tracking-tight">
-            {activeTab === "personal" ? t("goals.personal.title") : t("goals.shared.title")}
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+            {t("goals.section.title")}
+          </p>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">
+            {activeTab === "personal" ? t("goals.title") : t("goals.shared.section")}
           </h1>
         </div>
         <button
@@ -154,7 +157,7 @@ function Goals() {
           className={cn(
             "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm font-medium transition-all duration-200",
             activeTab === "personal"
-              ? "bg-background text-foreground shadow-sm"
+              ? "bg-positive text-white shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
@@ -166,14 +169,14 @@ function Goals() {
           className={cn(
             "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm font-medium transition-all duration-200",
             activeTab === "shared"
-              ? "bg-background text-foreground shadow-sm"
+              ? "bg-positive text-white shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
           <Users className="size-3.5" />
           {t("goals.tab.shared")}
           {sharedGoals.length > 0 && (
-            <span className="size-4 rounded-full bg-foreground text-background text-[10px] font-bold grid place-items-center">
+            <span className="size-4 rounded-full bg-white text-positive text-[10px] font-bold grid place-items-center">
               {sharedGoals.length}
             </span>
           )}
@@ -359,14 +362,14 @@ function PremiumGoalCard({
   const remaining = Number(goal.target_amount) - Number(goal.current_amount);
 
   return (
-    <div className="card-soft p-5 space-y-3 rounded-2xl hover:shadow-md transition-shadow">
+    <div className="card-flat p-4 space-y-2.5 rounded-2xl hover:shadow-soft transition-shadow">
       {/* Top Section: Icon, Name, Amount | Progress Ring */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
           {/* Icon */}
           <div
             className={cn(
-              "size-12 rounded-xl grid place-items-center shrink-0",
+              "size-11 rounded-xl grid place-items-center shrink-0",
               colorMeta.bg,
               colorMeta.text,
             )}
@@ -376,20 +379,20 @@ function PremiumGoalCard({
 
           {/* Name + Amount */}
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-base truncate mb-0.5">{goal.name}</h3>
-            <p className="text-[11px] text-muted-foreground">Objetivo total</p>
-            <div className="num-display text-[32px] font-bold leading-none mt-1">
+            <h3 className="font-semibold text-sm truncate">{goal.name}</h3>
+            <p className="text-[10px] text-muted-foreground">Objetivo total</p>
+            <div className="num-display text-[28px] font-bold leading-none mt-0.5">
               {shortMoney(convert(Number(goal.target_amount)), currency)}
             </div>
           </div>
         </div>
 
-        {/* Circular Progress Ring - Más pequeño */}
+        {/* Circular Progress Ring */}
         <div className="shrink-0">
           <ProgressRing
             value={pct}
-            size={72}
-            stroke={6}
+            size={64}
+            stroke={5}
             label={`${Math.round(pct)}%`}
             sublabel="TOTAL"
           />
@@ -398,7 +401,7 @@ function PremiumGoalCard({
 
       {/* Progress Bar */}
       <div className="relative">
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{ width: `${pct}%`, background: colorMeta.ring }}
@@ -406,12 +409,12 @@ function PremiumGoalCard({
         </div>
       </div>
 
-      {/* Secondary Info - Más compacto */}
-      <div className="space-y-1.5 text-sm">
+      {/* Secondary Info */}
+      <div className="space-y-1 text-xs">
         {/* Pace / Deadline */}
         {deadlineStatus ? (
-          <div className="flex items-center gap-2">
-            <Calendar className="size-4 text-muted-foreground" />
+          <div className="flex items-center gap-1.5">
+            <Calendar className="size-3.5 text-muted-foreground" />
             <span
               className={cn(
                 "font-medium",
@@ -424,8 +427,8 @@ function PremiumGoalCard({
             </span>
           </div>
         ) : projected ? (
-          <div className="flex items-center gap-2">
-            <Calendar className="size-4 text-muted-foreground" />
+          <div className="flex items-center gap-1.5">
+            <Calendar className="size-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">
               A este ritmo:{" "}
               <span className="font-medium text-foreground">
@@ -439,7 +442,7 @@ function PremiumGoalCard({
         {nextMs !== null && (
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Siguiente: {nextMs}%</span>
-            <span className="font-semibold num">
+            <span className="font-medium num">
               (faltan {shortMoney(convert((Number(goal.target_amount) * nextMs) / 100 - Number(goal.current_amount)), currency)})
             </span>
           </div>
@@ -499,20 +502,20 @@ function PremiumGoalCard({
         </div>
       )}
 
-      {/* Action Buttons - Más compactos */}
+      {/* Action Buttons */}
       <div className="flex items-center gap-2">
         <Button
           onClick={onAddMoney}
           className="flex-1 rounded-xl font-medium"
-          size="default"
+          size="sm"
         >
-          <Plus className="size-4 mr-1.5" />
+          <Plus className="size-3.5 mr-1.5" />
           Añadir aportación
         </Button>
         <Button
           onClick={onEdit}
           variant="outline"
-          size="default"
+          size="sm"
           className="rounded-xl"
         >
           Editar
@@ -520,10 +523,10 @@ function PremiumGoalCard({
         <Button
           onClick={onDelete}
           variant="ghost"
-          size="icon"
-          className="text-negative hover:text-negative hover:bg-negative/10 rounded-xl"
+          size="sm"
+          className="text-negative hover:text-negative hover:bg-negative/10 rounded-xl px-2"
         >
-          <Trash2 className="size-4" />
+          <Trash2 className="size-3.5" />
         </Button>
       </div>
 
