@@ -282,7 +282,7 @@ function GroupsPage() {
       )}
 
       {/* Hero card */}
-      <div className="p-5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white">
+      <div className="p-5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
