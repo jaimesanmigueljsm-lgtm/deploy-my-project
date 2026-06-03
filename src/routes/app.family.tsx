@@ -129,6 +129,9 @@ function GroupsPage() {
       void qc.invalidateQueries({ queryKey: FK.data(invFamilyId) });
       await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
       void qc.invalidateQueries({ queryKey: FK.received(userId) });
+      void qc.invalidateQueries({ queryKey: FK.groups(userId) });
+      void qc.invalidateQueries({ queryKey: ["user-families", userId] });
+      switchGroup(invFamilyId);
       try { await notifyFamilyMembers(invFamilyId, "invite_accepted", t("family.notif.joined.title"), t("family.notif.joined.body").replace("{name}", myDisplayName)); } catch { /* non-critical */ }
     },
     onError: (e: Error) => toast.error(e.message),
