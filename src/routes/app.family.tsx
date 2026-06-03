@@ -60,7 +60,7 @@ function GroupsPage() {
   const userId = user?.id ?? "";
   const currency = profile?.currency ?? "EUR";
   const convert = useCurrencyConvert();
-  const { activeFamilyId, switchGroup } = useActiveFamily(profile?.family_id ?? null);
+  const { activeFamilyId, switchGroup, clearOverride } = useActiveFamily(profile?.family_id ?? null);
   const familyId = activeFamilyId;
   const myDisplayName = profile?.full_name ?? profile?.first_name ?? t("family.role.member");
 
@@ -505,10 +505,34 @@ function GroupsPage() {
       <PlanSettingsDialog open={openSettings} onClose={() => setOpenSettings(false)}
         family={family} isOwner={isOwner} memberProfiles={memberProfiles}
         userId={userId} t={t}
-        onLeave={() => { void leaveFamily(userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e))); }}
+        onLeave={() => {
+          void leaveFamily(userId).then(() => {
+            // Find another group to switch to, or clear override if this was the last one
+            const remainingGroups = userGroups.filter(g => g.family_id !== family.id);
+            if (remainingGroups.length > 0) {
+              switchGroup(remainingGroups[0].family_id);
+            } else {
+              clearOverride();
+            }
+            void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+            void qc.invalidateQueries({ queryKey: FK.groups(userId) });
+          }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e)));
+        }}
         onRemoveMember={(memberId, memberUserId) => { void removeFamilyMember(memberId).then(() => { void qc.invalidateQueries({ queryKey: FK.data(family.id) }); void qc.invalidateQueries({ queryKey: queryKeys.profile(memberUserId) }); }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e))); }}
         onRename={(newName) => { void updateFamilyName(family.id, newName).then(() => void qc.invalidateQueries({ queryKey: FK.data(family.id) })).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e))); }}
-        onDelete={() => { void deleteFamily(family.id, userId).then(() => { void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e))); }} />
+        onDelete={() => {
+          void deleteFamily(family.id, userId).then(() => {
+            // Find another group to switch to, or clear override if this was the last one
+            const remainingGroups = userGroups.filter(g => g.family_id !== family.id);
+            if (remainingGroups.length > 0) {
+              switchGroup(remainingGroups[0].family_id);
+            } else {
+              clearOverride();
+            }
+            void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+            void qc.invalidateQueries({ queryKey: FK.groups(userId) });
+          }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e)));
+        }} />
     </div>
   );
 }
