@@ -1473,7 +1473,7 @@ function SharedGoalCard({
             "size-11 rounded-2xl grid place-items-center shrink-0",
             isComplete
               ? "bg-positive-soft text-positive"
-              : "bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400"
+              : "bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400"
           )}>
             {isComplete ? <Trophy className="size-5" /> : <Users className="size-5" />}
           </div>
@@ -1507,7 +1507,7 @@ function SharedGoalCard({
           <div
             className={cn(
               "h-full rounded-full transition-all duration-700",
-              isComplete ? "bg-positive" : "bg-violet-500"
+              isComplete ? "bg-positive" : "bg-orange-500"
             )}
             style={{ width: `${pct}%` }}
           />
@@ -1538,7 +1538,7 @@ function SharedGoalCard({
                 className={cn(
                   "w-full rounded-sm transition-all duration-500",
                   filled
-                    ? isComplete ? "bg-positive" : "bg-violet-400 dark:bg-violet-500"
+                    ? isComplete ? "bg-positive" : "bg-orange-400 dark:bg-orange-500"
                     : "bg-transparent"
                 )}
                 style={{
