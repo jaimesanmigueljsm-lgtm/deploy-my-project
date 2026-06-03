@@ -258,10 +258,10 @@ function PremiumEmptyState({
   t: (k: string) => string;
 }) {
   const suggestions = [
-    { emoji: "✈️", label: "Japón 2026" },
+    { emoji: "✈️", label: "Japón" },
     { emoji: "🚗", label: "Coche nuevo" },
     { emoji: "🏠", label: "Entrada casa" },
-    { emoji: "💍", label: "Boda" },
+    { emoji: "🏍️", label: "Moto" },
   ];
 
   return (
