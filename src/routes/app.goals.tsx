@@ -362,7 +362,7 @@ function PremiumGoalCard({
   const remaining = Number(goal.target_amount) - Number(goal.current_amount);
 
   return (
-    <div className="card-flat p-4 space-y-2.5 rounded-2xl hover:shadow-soft transition-shadow">
+    <div className="card-soft p-4 gradient-hero-green space-y-2.5 rounded-2xl hover:shadow-soft transition-shadow relative overflow-hidden">
       {/* Top Section: Icon, Name, Amount | Progress Ring */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
