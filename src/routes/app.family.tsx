@@ -282,30 +282,30 @@ function GroupsPage() {
       )}
 
       {/* Hero card */}
-      <div className="p-5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white">
+      <div className="card-soft p-5 gradient-hero relative overflow-hidden">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Users className="size-3.5 text-white/70" />
-              <p className="text-xs text-white/70">{memberProfiles.length} {t("groups.members")} · {sharedExpenses.length} {t("groups.expenses")}</p>
+              <Users className="size-3.5 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">{memberProfiles.length} {t("groups.members")} · {sharedExpenses.length} {t("groups.expenses")}</p>
             </div>
             <div className="num-display text-[36px] font-semibold leading-tight">
               {shortMoney(convert(totalSpend), currency)}
             </div>
-            <p className="text-xs text-white/70 mt-1">{t("groups.total_spend")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("groups.total_spend")}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className={cn("px-3 py-1.5 rounded-xl text-xs font-semibold",
-              myBalance > 0 ? "bg-white/20 text-white" :
-              myBalance < 0 ? "bg-white/10 text-white/80" :
-              "bg-white/10 text-white/70")}>
+              myBalance > 0 ? "bg-positive-soft text-positive" :
+              myBalance < 0 ? "bg-negative/10 text-negative" :
+              "bg-muted text-muted-foreground")}>
               {myBalance > 0 ? `+${money(convert(myBalance), currency)}` :
                myBalance < 0 ? money(convert(myBalance), currency) :
                t("groups.settled")}
             </div>
-            <p className="text-[10px] text-white/70">{t("groups.your_balance")}</p>
+            <p className="text-[10px] text-muted-foreground">{t("groups.your_balance")}</p>
             <button onClick={() => setOpenSettings(true)}
-              className="size-7 rounded-full bg-white/20 grid place-items-center hover:bg-white/30 transition">
+              className="size-7 rounded-full bg-foreground/10 grid place-items-center hover:bg-foreground/20 transition">
               <Settings2 className="size-3.5" />
             </button>
           </div>
@@ -314,12 +314,12 @@ function GroupsPage() {
         {/* Settlement progress bar */}
         {settlements.length > 0 && (
           <div className="mt-4">
-            <div className="flex items-center justify-between text-[11px] text-white/70 mb-1.5">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1.5">
               <span>{t("groups.settlements")}</span>
               <span>{settledCount}/{settlements.length} {t("groups.settled_label")}</span>
             </div>
-            <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full rounded-full bg-white transition-all duration-700"
+            <div className="h-1.5 bg-foreground/5 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-positive transition-all duration-700"
                 style={{ width: `${settlements.length > 0 ? (settledCount / settlements.length) * 100 : 0}%` }} />
             </div>
           </div>
