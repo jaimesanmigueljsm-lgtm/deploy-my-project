@@ -359,39 +359,37 @@ function PremiumGoalCard({
   const remaining = Number(goal.target_amount) - Number(goal.current_amount);
 
   return (
-    <div className="card-soft p-6 space-y-4 rounded-3xl hover:shadow-md transition-shadow">
+    <div className="card-soft p-5 space-y-3 rounded-2xl hover:shadow-md transition-shadow">
       {/* Top Section: Icon, Name, Amount | Progress Ring */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0 space-y-3">
-          {/* Icon + Name */}
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "size-14 rounded-2xl grid place-items-center shrink-0",
-                colorMeta.bg,
-                colorMeta.text,
-              )}
-            >
-              <Icon className="size-7" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-bold text-lg truncate">{goal.name}</h3>
-              <p className="text-xs text-muted-foreground">Objetivo total</p>
-            </div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Icon */}
+          <div
+            className={cn(
+              "size-12 rounded-xl grid place-items-center shrink-0",
+              colorMeta.bg,
+              colorMeta.text,
+            )}
+          >
+            <Icon className="size-5" />
           </div>
 
-          {/* Big Amount */}
-          <div className="num-display text-[44px] font-bold leading-none">
-            {shortMoney(convert(Number(goal.target_amount)), currency)}
+          {/* Name + Amount */}
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-base truncate mb-0.5">{goal.name}</h3>
+            <p className="text-[11px] text-muted-foreground">Objetivo total</p>
+            <div className="num-display text-[32px] font-bold leading-none mt-1">
+              {shortMoney(convert(Number(goal.target_amount)), currency)}
+            </div>
           </div>
         </div>
 
-        {/* Circular Progress Ring */}
+        {/* Circular Progress Ring - Más pequeño */}
         <div className="shrink-0">
           <ProgressRing
             value={pct}
-            size={88}
-            stroke={8}
+            size={72}
+            stroke={6}
             label={`${Math.round(pct)}%`}
             sublabel="TOTAL"
           />
@@ -400,7 +398,7 @@ function PremiumGoalCard({
 
       {/* Progress Bar */}
       <div className="relative">
-        <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{ width: `${pct}%`, background: colorMeta.ring }}
@@ -408,8 +406,8 @@ function PremiumGoalCard({
         </div>
       </div>
 
-      {/* Secondary Info */}
-      <div className="space-y-2 text-sm">
+      {/* Secondary Info - Más compacto */}
+      <div className="space-y-1.5 text-sm">
         {/* Pace / Deadline */}
         {deadlineStatus ? (
           <div className="flex items-center gap-2">
@@ -452,20 +450,20 @@ function PremiumGoalCard({
       {goalContribs.length > 0 && (
         <button
           onClick={() => setHistoryOpen(h => !h)}
-          className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-foreground transition pt-2 border-t border-border-subtle"
+          className="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition pt-1 border-t border-border-subtle"
         >
           <span>
             {goalContribs.length} aportaciones · Última: {money(convert(goalContribs[0].amount), currency)}
           </span>
-          {historyOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          {historyOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
         </button>
       )}
 
       {/* Expanded History */}
       {historyOpen && goalContribs.length > 0 && (
-        <div className="space-y-2 pt-1">
+        <div className="space-y-1.5">
           {goalContribs.map((c) => (
-            <div key={c.id} className="flex items-center justify-between gap-2 p-3 rounded-xl bg-muted/50">
+            <div key={c.id} className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/50">
               <div className="min-w-0">
                 <p className="text-sm font-semibold num">
                   +{money(convert(c.amount), currency)}
@@ -501,12 +499,12 @@ function PremiumGoalCard({
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-2 pt-2">
+      {/* Action Buttons - Más compactos */}
+      <div className="flex items-center gap-2">
         <Button
           onClick={onAddMoney}
-          className="flex-1 rounded-xl font-semibold"
-          size="lg"
+          className="flex-1 rounded-xl font-medium"
+          size="default"
         >
           <Plus className="size-4 mr-1.5" />
           Añadir aportación
@@ -514,7 +512,7 @@ function PremiumGoalCard({
         <Button
           onClick={onEdit}
           variant="outline"
-          size="lg"
+          size="default"
           className="rounded-xl"
         >
           Editar
@@ -522,7 +520,7 @@ function PremiumGoalCard({
         <Button
           onClick={onDelete}
           variant="ghost"
-          size="lg"
+          size="icon"
           className="text-negative hover:text-negative hover:bg-negative/10 rounded-xl"
         >
           <Trash2 className="size-4" />
