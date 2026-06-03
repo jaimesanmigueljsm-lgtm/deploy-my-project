@@ -125,13 +125,12 @@ function Goals() {
   if (isLoading) return <GoalsSkeleton />;
 
   return (
-    <div className="px-4 pt-5 space-y-4 animate-rise">
+    <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
       <header className="flex items-center justify-between pt-2">
         <div>
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            {t("goals.section.title")}
-          </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("goals.title")}</h1>
+          <h1 className="text-[24px] font-semibold tracking-tight">
+            {activeTab === "personal" ? t("goals.personal.title") : t("goals.shared.title")}
+          </h1>
         </div>
         <button
           onClick={() => {
@@ -142,7 +141,7 @@ function Goals() {
               setOpen(true);
             }
           }}
-          className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition"
+          className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition active:scale-95"
         >
           <Plus className="size-4" />
         </button>
@@ -183,123 +182,47 @@ function Goals() {
 
       {activeTab === "personal" && (
         <>
-          {/* HERO */}
-      <div className="card-soft p-5 gradient-hero relative overflow-hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs text-muted-foreground">{t("goals.stat.saved")}</p>
-            <div className="num-display text-[36px] font-semibold mt-0.5 leading-tight">
-              {shortMoney(convert(stats.saved), currency)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t("common.of")} {shortMoney(convert(stats.total), currency)} — {goals.length}{" "}
-              {t("goals.title").toLowerCase()}
-            </p>
-          </div>
-          <ProgressRing
-            value={stats.progress}
-            size={72}
-            stroke={6}
-            label={`${Math.round(stats.progress)}%`}
-            sublabel={t("goals.kpi.overall")}
-          />
-        </div>
-        <div className="mt-4 h-1.5 bg-foreground/5 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full bg-positive transition-all duration-700"
-            style={{ width: `${Math.min(100, stats.progress)}%` }}
-          />
-        </div>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard
-          label={t("goals.stat.monthly")}
-          value={shortMoney(convert(stats.monthly), currency)}
-          suffix={
-            income > 0
-              ? t("goals.kpi.pct_income").replace(
-                  "{pct}",
-                  String(Math.round((stats.monthly / income) * 100)),
-                )
-              : t("goals.kpi.set_plan")
-          }
-          tone="mint"
-          icon={<Calendar className="size-3.5" />}
-        />
-        <StatCard
-          label={t("goals.stat.total")}
-          value={shortMoney(convert(Math.max(0, stats.total - stats.saved)), currency)}
-          suffix={
-            stats.monthly > 0
-              ? t("goals.kpi.months_left").replace(
-                  "{n}",
-                  String(Math.ceil((stats.total - stats.saved) / stats.monthly)),
-                )
-              : t("goals.kpi.no_plan")
-          }
-          tone="sky"
-          icon={<TrendingUp className="size-3.5" />}
-        />
-      </div>
-
-      {/* Goals list */}
-      <section>
-        <SectionHeader title={t("goals.title")} />
-        {goals.length === 0 ? (
-          <EmptyState
-            icon={<Target className="size-5" />}
-            title={t("goals.empty.title")}
-            description={t("goals.empty.desc")}
-            action={
-              <div className="flex gap-2 flex-wrap justify-center">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setEditing(null);
+          {/* Premium Goals List */}
+          {goals.length === 0 ? (
+            <PremiumEmptyState
+              onCreateGoal={() => {
+                setEditing(null);
+                setOpen(true);
+              }}
+              onSeedGoals={() => seedGoals.mutate()}
+              t={t}
+            />
+          ) : (
+            <div className="space-y-4">
+              {goals.map((g) => (
+                <PremiumGoalCard
+                  key={g.id}
+                  goal={g}
+                  currency={currency}
+                  contribs={contribs.filter((c) => c.goal_id === g.id)}
+                  onAddMoney={() => setContribOpen(g)}
+                  onEdit={() => {
+                    setEditing(g);
                     setOpen(true);
                   }}
-                >
-                  <Plus className="size-3.5 mr-1" /> {t("goals.add")}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => seedGoals.mutate()}>
-                  <Sparkles className="size-3.5 mr-1" /> {t("goals.demo")}
-                </Button>
-              </div>
-            }
+                  onDelete={() => {
+                    if (!confirm(t("goals.confirm.delete").replace("{name}", g.name))) return;
+                    deleteGoal.mutate(g.id);
+                  }}
+                  t={t}
+                />
+              ))}
+            </div>
+          )}
+
+          <GoalDialog open={open} onOpenChange={setOpen} editing={editing} currency={currency} t={t} />
+
+          <ContributionDialog
+            goal={contribOpen}
+            currency={currency}
+            onClose={() => setContribOpen(null)}
+            t={t}
           />
-        ) : (
-          <div className="space-y-3">
-            {goals.map((g) => (
-              <GoalCard
-                key={g.id}
-                goal={g}
-                currency={currency}
-                contribs={contribs.filter((c) => c.goal_id === g.id)}
-                onAddMoney={() => setContribOpen(g)}
-                onEdit={() => {
-                  setEditing(g);
-                  setOpen(true);
-                }}
-                onDelete={() => {
-                  if (!confirm(t("goals.confirm.delete").replace("{name}", g.name))) return;
-                  deleteGoal.mutate(g.id);
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <GoalDialog open={open} onOpenChange={setOpen} editing={editing} currency={currency} t={t} />
-
-      <ContributionDialog
-        goal={contribOpen}
-        currency={currency}
-        onClose={() => setContribOpen(null)}
-        t={t}
-      />
         </>
       )}
 
@@ -320,7 +243,304 @@ function Goals() {
   );
 }
 
-// ─── Goal card ────────────────────────────────────────────────────────────────
+// ─── Premium Empty State ──────────────────────────────────────────────────────
+
+function PremiumEmptyState({
+  onCreateGoal,
+  onSeedGoals,
+  t,
+}: {
+  onCreateGoal: () => void;
+  onSeedGoals: () => void;
+  t: (k: string) => string;
+}) {
+  const suggestions = [
+    { emoji: "✈️", label: "Japón 2026" },
+    { emoji: "🚗", label: "Coche nuevo" },
+    { emoji: "🏠", label: "Entrada casa" },
+    { emoji: "💍", label: "Boda" },
+  ];
+
+  return (
+    <div className="pt-12 pb-8 px-4 text-center space-y-6">
+      {/* Gradient background decoration */}
+      <div className="absolute inset-0 -z-10 overflow-hidden opacity-30">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-br from-emerald-200 to-teal-200 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-br from-cyan-200 to-blue-200 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-full blur-3xl" />
+      </div>
+
+      {/* Aspirational copy */}
+      <div className="space-y-3 relative">
+        <h2 className="text-[28px] font-bold leading-tight tracking-tight">
+          No necesitas más dinero.<br />Solo un plan.
+        </h2>
+        <p className="text-muted-foreground text-base max-w-sm mx-auto">
+          Crea una meta y empieza a construirla paso a paso.
+        </p>
+      </div>
+
+      {/* Primary CTA */}
+      <Button
+        size="lg"
+        onClick={onCreateGoal}
+        className="px-8 py-6 text-base font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all"
+      >
+        <Plus className="size-5 mr-2" />
+        Crear primera meta
+      </Button>
+
+      {/* Suggestion chips */}
+      <div className="space-y-3 pt-4">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+          Ideas para empezar
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              onClick={onCreateGoal}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 hover:bg-muted text-sm font-medium transition-colors"
+            >
+              <span className="text-base">{s.emoji}</span>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Demo option (subtle) */}
+      <button
+        onClick={onSeedGoals}
+        className="text-xs text-muted-foreground hover:text-foreground transition inline-flex items-center gap-1"
+      >
+        <Sparkles className="size-3" />
+        {t("goals.demo")}
+      </button>
+    </div>
+  );
+}
+
+// ─── Premium Goal Card ────────────────────────────────────────────────────────
+
+function PremiumGoalCard({
+  goal,
+  currency,
+  contribs,
+  onAddMoney,
+  onEdit,
+  onDelete,
+  t,
+}: {
+  goal: Goal;
+  currency: string;
+  contribs?: GoalContribution[];
+  onAddMoney: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  t: (k: string) => string;
+}) {
+  const convert = useCurrencyConvert();
+  const iconMeta = goalIconsMap[goal.icon];
+  const colorMeta = goalColorsMap[goal.color] ?? GOAL_COLORS.mint;
+  const Icon = iconMeta?.icon ?? GOAL_ICONS.target.icon;
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const deleteContrib = useDeleteContribution();
+  const [editingContrib, setEditingContrib] = useState<GoalContribution | null>(null);
+  const goalContribs = contribs ?? [];
+
+  const pct =
+    Number(goal.target_amount) > 0
+      ? Math.min(100, (Number(goal.current_amount) / Number(goal.target_amount)) * 100)
+      : 0;
+
+  const deadlineStatus = getDeadlineStatus(goal, currency, convert);
+  const projected = getProjectedCompletion(goal);
+  const nextMs = getNextMilestone(pct);
+  const remaining = Number(goal.target_amount) - Number(goal.current_amount);
+
+  return (
+    <div className="card-soft p-6 space-y-4 rounded-3xl hover:shadow-md transition-shadow">
+      {/* Top Section: Icon, Name, Amount | Progress Ring */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0 space-y-3">
+          {/* Icon + Name */}
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "size-14 rounded-2xl grid place-items-center shrink-0",
+                colorMeta.bg,
+                colorMeta.text,
+              )}
+            >
+              <Icon className="size-7" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-lg truncate">{goal.name}</h3>
+              <p className="text-xs text-muted-foreground">Objetivo total</p>
+            </div>
+          </div>
+
+          {/* Big Amount */}
+          <div className="num-display text-[44px] font-bold leading-none">
+            {shortMoney(convert(Number(goal.target_amount)), currency)}
+          </div>
+        </div>
+
+        {/* Circular Progress Ring */}
+        <div className="shrink-0">
+          <ProgressRing
+            value={pct}
+            size={88}
+            stroke={8}
+            label={`${Math.round(pct)}%`}
+            sublabel="TOTAL"
+          />
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="relative">
+        <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${pct}%`, background: colorMeta.ring }}
+          />
+        </div>
+      </div>
+
+      {/* Secondary Info */}
+      <div className="space-y-2 text-sm">
+        {/* Pace / Deadline */}
+        {deadlineStatus ? (
+          <div className="flex items-center gap-2">
+            <Calendar className="size-4 text-muted-foreground" />
+            <span
+              className={cn(
+                "font-medium",
+                deadlineStatus.tone === "good" && "text-positive",
+                deadlineStatus.tone === "warn" && "text-warn",
+                deadlineStatus.tone === "bad" && "text-negative",
+              )}
+            >
+              {deadlineStatus.label}
+            </span>
+          </div>
+        ) : projected ? (
+          <div className="flex items-center gap-2">
+            <Calendar className="size-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              A este ritmo:{" "}
+              <span className="font-medium text-foreground">
+                {projected.toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+              </span>
+            </span>
+          </div>
+        ) : null}
+
+        {/* Next Milestone */}
+        {nextMs !== null && (
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Siguiente: {nextMs}%</span>
+            <span className="font-semibold num">
+              (faltan {shortMoney(convert((Number(goal.target_amount) * nextMs) / 100 - Number(goal.current_amount)), currency)})
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Contribution History Toggle */}
+      {goalContribs.length > 0 && (
+        <button
+          onClick={() => setHistoryOpen(h => !h)}
+          className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-foreground transition pt-2 border-t border-border-subtle"
+        >
+          <span>
+            {goalContribs.length} aportaciones · Última: {money(convert(goalContribs[0].amount), currency)}
+          </span>
+          {historyOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+        </button>
+      )}
+
+      {/* Expanded History */}
+      {historyOpen && goalContribs.length > 0 && (
+        <div className="space-y-2 pt-1">
+          {goalContribs.map((c) => (
+            <div key={c.id} className="flex items-center justify-between gap-2 p-3 rounded-xl bg-muted/50">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold num">
+                  +{money(convert(c.amount), currency)}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {new Date(c.contributed_at).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                  {c.note && ` · ${c.note}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => setEditingContrib(c)}
+                  className="size-7 rounded-lg bg-muted grid place-items-center text-muted-foreground hover:text-foreground transition"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (!confirm(t("goals.contrib.history.confirm_delete"))) return;
+                    deleteContrib.mutate(c.id);
+                  }}
+                  className="size-7 rounded-lg bg-muted grid place-items-center text-muted-foreground hover:text-negative transition"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2 pt-2">
+        <Button
+          onClick={onAddMoney}
+          className="flex-1 rounded-xl font-semibold"
+          size="lg"
+        >
+          <Plus className="size-4 mr-1.5" />
+          Añadir aportación
+        </Button>
+        <Button
+          onClick={onEdit}
+          variant="outline"
+          size="lg"
+          className="rounded-xl"
+        >
+          Editar
+        </Button>
+        <Button
+          onClick={onDelete}
+          variant="ghost"
+          size="lg"
+          className="text-negative hover:text-negative hover:bg-negative/10 rounded-xl"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+
+      {/* Edit Contribution Dialog */}
+      <EditContributionDialog
+        contrib={editingContrib}
+        currency={currency}
+        onClose={() => setEditingContrib(null)}
+        t={t}
+      />
+    </div>
+  );
+}
+
+// ─── Original Goal card (keep for reference/shared goals) ────────────────────
 
 function GoalCard({
   goal,

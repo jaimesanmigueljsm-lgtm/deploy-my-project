@@ -337,6 +337,8 @@ const en: Dict = {
 
   // ── Goals ─────────────────────────────────────────────────────────────────
   "goals.title": "Goals",
+  "goals.personal.title": "Your personal goals",
+  "goals.shared.title": "Your shared goals",
   "goals.section.title": "Your goals",
   "goals.empty.title": "No goals yet",
   "goals.empty.desc": "Set a financial goal and start saving towards it.",
@@ -1270,6 +1272,8 @@ const es: Dict = {
 
   // ── Goals ─────────────────────────────────────────────────────────────────
   "goals.title": "Metas",
+  "goals.personal.title": "Tus metas personales",
+  "goals.shared.title": "Tus metas compartidas",
   "goals.section.title": "Tus metas",
   "goals.empty.title": "Aún sin metas",
   "goals.empty.desc": "Define un objetivo financiero y empieza a ahorrar hacia él.",
@@ -2162,6 +2166,8 @@ const fr: Dict = {
   "analytics.empty.title": "Pas encore de données",
   "analytics.empty.desc": "Ajoutez des dépenses pour débloquer tendances et analyses.",
   "goals.title": "Objectifs",
+  "goals.personal.title": "Vos objectifs personnels",
+  "goals.shared.title": "Vos objectifs partagés",
   "goals.section.title": "Vos objectifs",
   "goals.empty.title": "Pas encore d'objectifs",
   "goals.empty.desc": "Définissez un objectif financier et commencez à épargner.",
@@ -2836,6 +2842,8 @@ const de: Dict = {
   "analytics.empty.title": "Noch keine Daten",
   "analytics.empty.desc": "Füge Ausgaben hinzu, um Trends und Analysen zu sehen.",
   "goals.title": "Ziele",
+  "goals.personal.title": "Deine persönlichen Ziele",
+  "goals.shared.title": "Deine geteilten Ziele",
   "goals.section.title": "Deine Ziele",
   "goals.empty.title": "Noch keine Ziele",
   "goals.empty.desc": "Setze ein Finanzziel und fange an zu sparen.",
@@ -3511,6 +3519,8 @@ const pt: Dict = {
   "analytics.empty.title": "Sem dados ainda",
   "analytics.empty.desc": "Adiciona despesas para ver tendências e análises.",
   "goals.title": "Metas",
+  "goals.personal.title": "As tuas metas pessoais",
+  "goals.shared.title": "As tuas metas partilhadas",
   "goals.section.title": "As tuas metas",
   "goals.empty.title": "Sem metas ainda",
   "goals.empty.desc": "Define um objetivo financeiro e começa a poupar.",
@@ -4188,6 +4198,8 @@ const it: Dict = {
   "analytics.empty.title": "Ancora nessun dato",
   "analytics.empty.desc": "Aggiungi spese per vedere tendenze e analisi.",
   "goals.title": "Obiettivi",
+  "goals.personal.title": "I tuoi obiettivi personali",
+  "goals.shared.title": "I tuoi obiettivi condivisi",
   "goals.section.title": "I tuoi obiettivi",
   "goals.empty.title": "Ancora nessun obiettivo",
   "goals.empty.desc": "Definisci un obiettivo finanziario e inizia a risparmiare.",
