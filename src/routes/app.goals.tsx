@@ -323,6 +323,72 @@ function PremiumEmptyState({
   );
 }
 
+// ─── Premium Shared Empty State ───────────────────────────────────────────────
+
+function PremiumSharedEmptyState({
+  onCreateGoal,
+  t,
+}: {
+  onCreateGoal: () => void;
+  t: (k: string) => string;
+}) {
+  const suggestions = [
+    { emoji: "✈️", label: "Viaje Argentina" },
+    { emoji: "🏠", label: "Entrada casa" },
+    { emoji: "💍", label: "Boda" },
+    { emoji: "🐶", label: "Nuevo compañero" },
+  ];
+
+  return (
+    <div className="pt-12 pb-8 px-4 text-center space-y-6">
+      {/* Warm gradient background decoration */}
+      <div className="absolute inset-0 -z-10 overflow-hidden opacity-30">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-br from-orange-200 to-rose-200 dark:from-orange-900/20 dark:to-rose-900/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-br from-amber-200 to-yellow-200 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-full blur-3xl" />
+      </div>
+
+      {/* Aspirational copy */}
+      <div className="space-y-3 relative">
+        <h2 className="text-[28px] font-bold leading-tight tracking-tight">
+          Los grandes planes<br />se construyen juntos.
+        </h2>
+        <p className="text-muted-foreground text-base max-w-sm mx-auto">
+          Invita a alguien y empezad a ahorrar para vuestro próximo objetivo.
+        </p>
+      </div>
+
+      {/* Primary CTA */}
+      <Button
+        size="lg"
+        onClick={onCreateGoal}
+        className="px-8 py-6 text-base font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all"
+      >
+        <Plus className="size-5 mr-2" />
+        Crear meta compartida
+      </Button>
+
+      {/* Suggestion chips */}
+      <div className="space-y-3 pt-4">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+          Ideas para empezar
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              onClick={onCreateGoal}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 hover:bg-muted text-sm font-medium transition-colors"
+            >
+              <span className="text-base">{s.emoji}</span>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Premium Goal Card ────────────────────────────────────────────────────────
 
 function PremiumGoalCard({
@@ -1196,15 +1262,9 @@ function SharedGoalsSection({
   if (families.length === 0) {
     return (
       <>
-        <EmptyState
-          icon={<Users className="size-5" />}
-          title={t("goals.shared.empty.title")}
-          description={t("goals.shared.empty.desc")}
-          action={
-            <Button size="sm" onClick={() => setCreateGroupOpen(true)}>
-              <Plus className="size-3.5 mr-1" /> {t("goals.shared.group.create")}
-            </Button>
-          }
+        <PremiumSharedEmptyState
+          onCreateGoal={() => setCreateGroupOpen(true)}
+          t={t}
         />
         <CreateGroupDialog
           open={createGroupOpen}
@@ -1302,15 +1362,9 @@ function SharedGoalsSection({
           ))}
         </div>
       ) : goals.length === 0 ? (
-        <EmptyState
-          icon={<Target className="size-5" />}
-          title={t("goals.shared.goals.empty.title")}
-          description={t("goals.shared.goals.empty.desc")}
-          action={
-            <Button size="sm" onClick={() => setAddGoalOpen(true)}>
-              <Plus className="size-3.5 mr-1" /> {t("goals.shared.add")}
-            </Button>
-          }
+        <PremiumSharedEmptyState
+          onCreateGoal={() => setAddGoalOpen(true)}
+          t={t}
         />
       ) : (
         <div className="space-y-3">
