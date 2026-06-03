@@ -1304,7 +1304,7 @@ function SharedGoalsSection({
 
       {/* Group hero card */}
       {activeFamily && (
-        <div className="card-soft p-5 gradient-hero relative overflow-hidden">
+        <div className="card-soft p-5 gradient-hero-orange relative overflow-hidden">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
