@@ -254,9 +254,9 @@ function PremiumEmptyState({
 }) {
   const suggestions = [
     { emoji: "✈️", label: t("goals.suggestion.japan") },
-    { emoji: "🚗", label: t("goals.suggestion.new_car") },
-    { emoji: "🏠", label: t("goals.suggestion.house_deposit") },
-    { emoji: "🏍️", label: t("goals.suggestion.motorcycle") },
+    { emoji: "🚗", label: t("goals.suggestion.car") },
+    { emoji: "🏠", label: t("goals.suggestion.house") },
+    { emoji: "🏍️", label: t("goals.suggestion.bike") },
   ];
 
   return (
