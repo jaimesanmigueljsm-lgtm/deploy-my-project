@@ -363,6 +363,20 @@
       var(--surface);
   }
 
+  /* Hero gradient with purple — for groups/expense page */
+  .gradient-hero-purple {
+    background:
+      radial-gradient(120% 80% at 0% 0%, oklch(0.92 0.10 290 / 0.65), transparent 60%),
+      radial-gradient(120% 80% at 100% 0%, oklch(0.90 0.08 270 / 0.5), transparent 60%),
+      var(--surface);
+  }
+  .dark .gradient-hero-purple {
+    background:
+      radial-gradient(120% 80% at 0% 0%, oklch(0.45 0.12 290 / 0.35), transparent 60%),
+      radial-gradient(120% 80% at 100% 0%, oklch(0.40 0.10 270 / 0.3), transparent 60%),
+      var(--surface);
+  }
+
   .gradient-net {
     background:
       radial-gradient(140% 80% at 100% 0%, oklch(0.62 0.14 158 / 0.18), transparent 55%),

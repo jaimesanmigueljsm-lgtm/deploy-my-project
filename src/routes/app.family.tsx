@@ -183,15 +183,7 @@ function GroupsPage() {
     return (
       <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
         <header className="pt-2">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium tracking-wider text-muted-foreground px-2.5 py-1 rounded-full">
-              <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
-                <circle cx="4" cy="4" r="4" />
-              </svg>
-              NOOLY SPLIT
-            </span>
-          </div>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("groups.title")}</h1>
+          <h1 className="text-[28px] font-bold tracking-tight">NOOLY GRUPOS</h1>
         </header>
 
         {receivedInvitations.length > 0 && (
@@ -227,15 +219,8 @@ function GroupsPage() {
       {/* Header */}
       <header className="flex items-center justify-between pt-2">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium tracking-wider text-muted-foreground px-2.5 py-1 rounded-full">
-              <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
-                <circle cx="4" cy="4" r="4" />
-              </svg>
-              NOOLY SPLIT
-            </span>
-          </div>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight truncate max-w-[200px]">{family.name}</h1>
+          <h1 className="text-[28px] font-bold tracking-tight">NOOLY GRUPOS</h1>
+          <p className="text-sm text-muted-foreground mt-1">{family.name}</p>
         </div>
         <div className="flex items-center gap-2">
           {isOwner && (
@@ -291,7 +276,7 @@ function GroupsPage() {
       )}
 
       {/* Hero card */}
-      <div className="card-soft p-5 gradient-hero-green relative overflow-hidden">
+      <div className="card-soft p-5 gradient-hero-purple relative overflow-hidden">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">

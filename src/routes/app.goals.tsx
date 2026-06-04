@@ -128,12 +128,7 @@ function Goals() {
     <div className="px-4 pt-5 space-y-4 animate-rise pb-24">
       <header className="flex items-center justify-between pt-2">
         <div>
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            {t("goals.section.title")}
-          </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">
-            {activeTab === "personal" ? t("goals.title") : t("goals.shared.section")}
-          </h1>
+          <h1 className="text-[28px] font-bold tracking-tight">NOOLY METAS</h1>
         </div>
         <button
           onClick={() => {
