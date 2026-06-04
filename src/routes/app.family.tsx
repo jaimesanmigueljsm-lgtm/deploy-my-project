@@ -207,18 +207,10 @@ function GroupsPage() {
           </div>
         )}
 
-        <div className="card-flat p-8 flex flex-col items-center text-center gap-5">
-          <div className="size-20 rounded-3xl bg-gradient-to-br from-violet-100 to-violet-200 dark:from-violet-950 dark:to-violet-900 grid place-items-center">
-            <Receipt className="size-9 text-violet-600 dark:text-violet-400" />
-          </div>
-          <div className="space-y-2 max-w-[260px]">
-            <p className="text-lg font-semibold">{t("groups.empty.title")}</p>
-            <p className="text-[13px] text-muted-foreground leading-relaxed">{t("groups.empty.desc")}</p>
-          </div>
-          <Button onClick={() => setOpenCreate(true)} className="w-full max-w-[220px]">
-            <Plus className="size-4 mr-2" /> {t("groups.create.cta")}
-          </Button>
-        </div>
+        <PremiumGroupsEmptyState
+          onCreateGroup={() => setOpenCreate(true)}
+          t={t}
+        />
 
         <CreatePlanDialog open={openCreate} onClose={() => setOpenCreate(false)} userId={userId}
           onCreated={(newId) => { switchGroup(newId); void qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }); void qc.invalidateQueries({ queryKey: FK.groups(userId) }); }} t={t} />
@@ -550,6 +542,71 @@ function GroupsPage() {
             void qc.invalidateQueries({ queryKey: FK.groups(userId) });
           }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : String(e)));
         }} />
+    </div>
+  );
+}
+
+// ─── Premium Groups Empty State ────────────────────────────────────────────────
+
+function PremiumGroupsEmptyState({
+  onCreateGroup,
+  t,
+}: {
+  onCreateGroup: () => void;
+  t: (k: string) => string;
+}) {
+  const suggestions = [
+    { emoji: "🍻", label: "Cena viernes" },
+    { emoji: "🎉", label: "Festival" },
+    { emoji: "🏕️", label: "Roadtrip verano" },
+  ];
+
+  return (
+    <div className="pt-12 pb-8 px-4 text-center space-y-6">
+      {/* Purple gradient background decoration */}
+      <div className="absolute inset-0 -z-10 overflow-hidden opacity-30">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-200 to-violet-200 dark:from-purple-900/20 dark:to-violet-900/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-br from-indigo-200 to-purple-200 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full blur-3xl" />
+      </div>
+
+      {/* Aspirational copy */}
+      <div className="space-y-3 relative">
+        <h2 className="text-[28px] font-bold leading-tight tracking-tight">
+          Los mejores planes<br />no deberían acabar en líos.
+        </h2>
+        <p className="text-muted-foreground text-base max-w-sm mx-auto">
+          Crea un grupo, comparte gastos y deja que NOOLY haga las cuentas.
+        </p>
+      </div>
+
+      {/* Primary CTA */}
+      <Button
+        size="lg"
+        onClick={onCreateGroup}
+        className="px-8 py-6 text-base font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all"
+      >
+        <Plus className="size-5 mr-2" />
+        Crear grupo
+      </Button>
+
+      {/* Suggestion chips */}
+      <div className="space-y-3 pt-4">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+          Ideas para empezar
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              onClick={onCreateGroup}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 hover:bg-muted text-sm font-medium transition-colors"
+            >
+              <span className="text-base">{s.emoji}</span>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
