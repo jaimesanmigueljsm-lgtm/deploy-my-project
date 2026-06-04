@@ -320,6 +320,15 @@ function Onboarding() {
       // beforeLoad reads queryKeys.profile(uid) with staleTime:5min — setting it
       // here guarantees the guard sees onboarded:true immediately, no refetch race.
       queryClient.setQueryData(queryKeys.profile(user.id), updatedProfile);
+
+      // CRITICAL: Persist onboarding completion to localStorage as backup guard
+      // This prevents onboarding loop if profile query ever becomes stale/invalid
+      try {
+        localStorage.setItem('nooly.onboarded', 'true');
+      } catch {
+        // localStorage unavailable - non-critical, DB is source of truth
+      }
+
       navigate({ to: "/app" });
     } catch (e) {
       finishingRef.current = false;

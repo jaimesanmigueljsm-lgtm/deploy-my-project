@@ -45,7 +45,21 @@ export const Route = createFileRoute("/app")({
       },
       staleTime: 5 * 60_000,
     });
-    if (!prof?.onboarded) throw redirect({ to: "/onboarding" });
+
+    // CRITICAL: Double-check onboarding state with localStorage backup
+    // This prevents onboarding redirect loop caused by stale/invalid profile cache
+    let onboardingComplete = false;
+    try {
+      onboardingComplete = localStorage.getItem('nooly.onboarded') === 'true';
+    } catch {
+      // localStorage unavailable - rely on DB only
+    }
+
+    // Only redirect to onboarding if BOTH checks fail
+    // This prevents false redirects from cache invalidation/race conditions
+    if (!onboardingComplete && !prof?.onboarded) {
+      throw redirect({ to: "/onboarding" });
+    }
     // Apply theme synchronously before the shell renders to avoid flash.
     // localStorage is the authoritative source after the first visit — it's updated
     // synchronously on every toggle, so it's always ahead of the 5-min-cached DB value.
@@ -93,10 +107,18 @@ function AppShell() {
   const { t } = useT();
   const queryClient = useQueryClient();
 
-  // Invalidate all queries when window gains focus (for multi-device sync)
+  // Invalidate queries when window gains focus (for multi-device sync)
+  // CRITICAL: Never invalidate profile query to prevent onboarding loop bug
   useEffect(() => {
     function onFocus() {
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          // Exclude profile query to prevent onboarding redirect loop
+          // Profile is managed separately and shouldn't be invalidated on focus
+          const key = query.queryKey[0];
+          return key !== 'profile';
+        }
+      });
     }
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
