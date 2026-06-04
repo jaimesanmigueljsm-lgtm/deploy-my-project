@@ -126,15 +126,31 @@ function GroupsPage() {
     mutationFn: ({ id }: { id: string; invFamilyId: string }) => acceptFamilyInvite(id),
     onSuccess: async (_, { invFamilyId }) => {
       toast.success(t("groups.invite.accepted"));
-      void qc.invalidateQueries({ queryKey: FK.data(invFamilyId) });
-      await qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
-      void qc.invalidateQueries({ queryKey: FK.received(userId) });
-      void qc.invalidateQueries({ queryKey: FK.groups(userId) });
-      void qc.invalidateQueries({ queryKey: ["user-families", userId] });
+      // Wait for all cache invalidations to complete before switching group
+      // This prevents race conditions where new group queries fetch before old ones invalidate
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: FK.data(invFamilyId) }),
+        qc.invalidateQueries({ queryKey: queryKeys.profile(userId) }),
+        qc.invalidateQueries({ queryKey: FK.received(userId) }),
+        qc.invalidateQueries({ queryKey: FK.groups(userId) }),
+        qc.invalidateQueries({ queryKey: ["user-families", userId] }),
+      ]);
       switchGroup(invFamilyId);
       try { await notifyFamilyMembers(invFamilyId, "invite_accepted", t("family.notif.joined.title"), t("family.notif.joined.body").replace("{name}", myDisplayName)); } catch { /* non-critical */ }
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      const msg = e.message.toLowerCase();
+      if (msg.includes("expired")) {
+        toast.error(t("groups.invite.error.expired"));
+      } else if (msg.includes("already accepted")) {
+        toast.error(t("groups.invite.error.already_accepted"));
+      } else if (msg.includes("not found")) {
+        toast.error(t("groups.invite.error.not_found"));
+      } else {
+        toast.error(e.message);
+      }
+      void qc.invalidateQueries({ queryKey: FK.received(userId) });
+    },
   });
 
   const rejectMutation = useMutation({
