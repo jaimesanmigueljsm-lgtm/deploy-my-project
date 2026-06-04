@@ -102,14 +102,14 @@ function Finances() {
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3">
         <StatCard
-          label="Invested"
+          label={t("finance.invested")}
           value={shortMoney(convert(stats.invested), currency)}
-          suffix="cost basis"
+          suffix={t("finance.cost_basis")}
           tone="neutral"
           icon={<Coins className="size-3.5" />}
         />
         <StatCard
-          label="Today"
+          label={t("finance.today")}
           value={`${stats.plPct >= 0 ? "+" : ""}${stats.plPct.toFixed(2)}%`}
           suffix={`${money(convert(stats.pl), currency)}`}
           tone={stats.pl >= 0 ? "mint" : "warn"}
@@ -134,25 +134,25 @@ function Finances() {
       {/* Holdings */}
       <section>
         <SectionHeader
-          title="Holdings"
+          title={t("finance.holdings")}
           action={
             <span className="text-[11px] text-muted-foreground">
-              {investments.length} positions
+              {investments.length} {t("finance.positions")}
             </span>
           }
         />
         {investments.length === 0 ? (
           <EmptyState
             icon={<TrendingUp className="size-5" />}
-            title="Start tracking your portfolio"
-            description="Add stocks, ETFs, crypto or savings to see net worth and performance in one place."
+            title={t("finance.empty.title")}
+            description={t("finance.empty.desc")}
             action={
               <div className="flex flex-col sm:flex-row gap-2 items-center">
                 <Button size="sm" onClick={() => setOpen(true)}>
-                  <Plus className="size-3.5 mr-1" /> Add holding
+                  <Plus className="size-3.5 mr-1" /> {t("finance.add_holding")}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => seedDemo.mutate()}>
-                  <Sparkles className="size-3.5 mr-1" /> Try demo data
+                  <Sparkles className="size-3.5 mr-1" /> {t("finance.demo_data")}
                 </Button>
               </div>
             }
@@ -312,7 +312,7 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5 col-span-1">
-              <Label>Ticker</Label>
+              <Label>{t("finance.ticker")}</Label>
               <Input
                 value={ticker}
                 onChange={(e) => setTicker(e.target.value.toUpperCase())}
@@ -320,7 +320,7 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
               />
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Name</Label>
+              <Label>{t("finance.name")}</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -330,7 +330,7 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label>Quantity</Label>
+              <Label>{t("finance.quantity")}</Label>
               <Input
                 type="number"
                 inputMode="decimal"
@@ -350,7 +350,7 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Price now</Label>
+              <Label>{t("finance.price_now")}</Label>
               <Input
                 type="number"
                 inputMode="decimal"

@@ -490,14 +490,14 @@ function Settings() {
         <div className="card-flat divide-y divide-border-subtle">
           <Row
             icon={<Shield className="size-4" />}
-            label="Security Center"
-            value="Devices · Activity"
+            label={t("settings.security_center")}
+            value={t("settings.security_center.value")}
             onClick={() => setOpenSecurityCenter(true)}
           />
           <Row
             icon={<KeyRound className="size-4" />}
             label={t("settings.security.label")}
-            value="Email & password"
+            value={t("settings.security.value")}
             onClick={() => setOpenSecurity(true)}
           />
           <Row
