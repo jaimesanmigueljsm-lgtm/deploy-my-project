@@ -104,8 +104,21 @@ export interface SharedExpense {
   amount: number;
   category: string | null;
   notes: string | null;
+  spent_at: string; // Fecha real del gasto
   created_at: string;
   shared_expense_participants: Array<{ user_id: string }>;
+}
+
+export interface FamilySettlement {
+  id: string;
+  family_id: string;
+  from_user_id: string; // Quien paga
+  to_user_id: string;   // Quien recibe
+  amount: number;
+  description: string | null;
+  settled_at: string;   // Fecha real del pago
+  created_by: string;   // Quien lo registró
+  created_at: string;
 }
 
 export interface MemberBalance {
@@ -511,6 +524,7 @@ export async function addSharedExpense(
   description: string,
   amount: number,
   participantIds: string[],
+  spentAt: string, // Nueva fecha del gasto
   category?: string | null,
   notes?: string | null,
 ): Promise<void> {
@@ -522,6 +536,7 @@ export async function addSharedExpense(
       paid_by: paidBy,
       description: description.trim(),
       amount,
+      spent_at: spentAt,
       category: category?.trim() || null,
       notes: notes?.trim() || null,
     })
@@ -544,6 +559,50 @@ export async function deleteSharedExpense(expenseId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+// ─── Settlements (Ingresos/Pagos) ────────────────────────────────────────────
+
+export async function fetchFamilySettlements(familyId: string): Promise<FamilySettlement[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("family_settlements")
+    .select("*")
+    .eq("family_id", familyId)
+    .order("settled_at", { ascending: false })
+    .limit(50);
+  if (error) return []; // graceful if table doesn't exist yet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((data ?? []) as any[]).map((s) => ({ ...s, amount: Number(s.amount) })) as FamilySettlement[];
+}
+
+export async function addFamilySettlement(
+  familyId: string,
+  fromUserId: string,
+  toUserId: string,
+  amount: number,
+  settledAt: string,
+  description?: string | null,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from("family_settlements")
+    .insert({
+      family_id: familyId,
+      from_user_id: fromUserId,
+      to_user_id: toUserId,
+      amount,
+      settled_at: settledAt,
+      description: description?.trim() || null,
+      created_by: (await supabase.auth.getUser()).data.user?.id,
+    });
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteFamilySettlement(settlementId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from("family_settlements").delete().eq("id", settlementId);
+  if (error) throw new Error(error.message);
+}
+
 export interface Settlement {
   from_user_id: string;
   to_user_id: string;
@@ -555,10 +614,12 @@ export interface Settlement {
 export function calculateMemberBalances(
   members: FamilyMemberProfile[],
   expenses: SharedExpense[],
+  settlements: FamilySettlement[] = [],
 ): MemberBalance[] {
   const balances: Record<string, number> = {};
   for (const m of members) balances[m.user_id] = 0;
 
+  // 1. Calcular balances de gastos compartidos
   for (const e of expenses) {
     const participants = e.shared_expense_participants ?? [];
     const n = participants.length;
@@ -569,6 +630,14 @@ export function calculateMemberBalances(
     for (const p of participants) {
       if (balances[p.user_id] !== undefined) balances[p.user_id] -= share;
     }
+  }
+
+  // 2. Aplicar settlements (pagos de deudas)
+  for (const s of settlements) {
+    // Quien paga (from) sube su balance (reduce su deuda)
+    if (balances[s.from_user_id] !== undefined) balances[s.from_user_id] += s.amount;
+    // Quien recibe (to) baja su balance (reduce lo que le deben)
+    if (balances[s.to_user_id] !== undefined) balances[s.to_user_id] -= s.amount;
   }
 
   return members.map((m) => ({ user_id: m.user_id, balance: balances[m.user_id] ?? 0 }));

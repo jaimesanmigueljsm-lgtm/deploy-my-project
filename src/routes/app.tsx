@@ -46,18 +46,19 @@ export const Route = createFileRoute("/app")({
       staleTime: 5 * 60_000,
     });
 
-    // CRITICAL: Double-check onboarding state with localStorage backup
-    // This prevents onboarding redirect loop caused by stale/invalid profile cache
-    let onboardingComplete = false;
+    // CRITICAL: Check onboarding completion from DB first, localStorage as backup
+    // If EITHER check passes, user is onboarded (prevents loop from cache races)
+    const dbOnboarded = prof?.onboarded === true;
+    let localStorageOnboarded = false;
     try {
-      onboardingComplete = localStorage.getItem('nooly.onboarded') === 'true';
+      localStorageOnboarded = localStorage.getItem('nooly.onboarded') === 'true';
     } catch {
-      // localStorage unavailable - rely on DB only
+      // localStorage unavailable in some environments - non-critical
     }
 
-    // Only redirect to onboarding if BOTH checks fail
-    // This prevents false redirects from cache invalidation/race conditions
-    if (!onboardingComplete && !prof?.onboarded) {
+    // Redirect to onboarding ONLY if both DB and localStorage say not onboarded
+    // This prevents race conditions where cache is stale but localStorage is current
+    if (!dbOnboarded && !localStorageOnboarded) {
       throw redirect({ to: "/onboarding" });
     }
     // Apply theme synchronously before the shell renders to avoid flash.

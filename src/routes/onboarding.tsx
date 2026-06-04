@@ -205,8 +205,8 @@ function Onboarding() {
         .eq("id", user.id)
         .maybeSingle();
       if (existing?.onboarded) {
-        await queryClient.invalidateQueries({ queryKey: queryKeys.profile(user.id) });
-        queryClient.removeQueries({ queryKey: queryKeys.profile(user.id) });
+        // User already onboarded (e.g., double-submit or back-button race)
+        // Just navigate without touching cache - app.tsx will handle it
         navigate({ to: "/app" });
         return;
       }

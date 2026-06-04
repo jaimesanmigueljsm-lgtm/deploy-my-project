@@ -26,10 +26,11 @@ import {
   rejectFamilyInvite, createFamily, updateFamilyName, deleteFamily,
   removeFamilyMember, leaveFamily, notifyFamilyMembers,
   getUserExpenseGroups, fetchSharedExpenses, addSharedExpense,
-  deleteSharedExpense, calculateMemberBalances, calculateSettlements,
+  deleteSharedExpense, fetchFamilySettlements, addFamilySettlement,
+  deleteFamilySettlement, calculateMemberBalances, calculateSettlements,
   type UserSearchResult, type ReceivedInvitation,
   type FamilyMemberProfile, type UserFamily,
-  type SharedExpense, type Settlement,
+  type SharedExpense, type FamilySettlement, type Settlement,
 } from "@/features/family/family.service";
 import { useActiveFamily } from "@/hooks/use-active-family";
 import { queryKeys } from "@/lib/query-keys";
@@ -41,6 +42,7 @@ const FK = {
   sent: (familyId: string) => ["family", "sent", familyId] as const,
   activity: (familyId: string) => ["family", "activity", familyId] as const,
   expenses: (familyId: string) => ["family", "expenses", familyId] as const,
+  settlements: (familyId: string) => ["family", "settlements", familyId] as const,
   groups: (userId: string) => ["family", "groups", userId] as const,
 };
 
@@ -93,6 +95,14 @@ function GroupsPage() {
   const { data: sharedExpenses = [] } = useQuery({
     queryKey: FK.expenses(familyId ?? ""),
     queryFn: () => fetchSharedExpenses(familyId!),
+    enabled: !!familyId,
+    staleTime: 20_000,
+    placeholderData: keepPreviousData,
+  });
+
+  const { data: familySettlements = [] } = useQuery({
+    queryKey: FK.settlements(familyId ?? ""),
+    queryFn: () => fetchFamilySettlements(familyId!),
     enabled: !!familyId,
     staleTime: 20_000,
     placeholderData: keepPreviousData,
@@ -160,8 +170,10 @@ function GroupsPage() {
   });
 
   const addExpenseMutation = useMutation({
-    mutationFn: ({ description, amount, participantIds, category }: { description: string; amount: number; participantIds: string[]; category?: string }) =>
-      addSharedExpense(familyId!, userId, description, amount, participantIds, category),
+    mutationFn: ({ description, amount, paidBy, spentAt, participantIds, category }: {
+      description: string; amount: number; paidBy: string; spentAt: string; participantIds: string[]; category?: string
+    }) =>
+      addSharedExpense(familyId!, paidBy, description, amount, participantIds, spentAt, category),
     onSuccess: () => void qc.invalidateQueries({ queryKey: FK.expenses(familyId ?? "") }),
     onError: (e: Error) => toast.error(e.message),
   });
@@ -172,10 +184,26 @@ function GroupsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const addSettlementMutation = useMutation({
+    mutationFn: ({ fromUserId, toUserId, amount, settledAt, description }: {
+      fromUserId: string; toUserId: string; amount: number; settledAt: string; description?: string
+    }) =>
+      addFamilySettlement(familyId!, fromUserId, toUserId, amount, settledAt, description),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.settlements(familyId ?? "") }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteSettlementMutation = useMutation({
+    mutationFn: (settlementId: string) => deleteFamilySettlement(settlementId),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.settlements(familyId ?? "") }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // ── Dialog state ──────────────────────────────────────────────────────────
   const [openCreate, setOpenCreate] = useState(false);
   const [openInvite, setOpenInvite] = useState(false);
   const [openAddExpense, setOpenAddExpense] = useState(false);
+  const [openAddSettlement, setOpenAddSettlement] = useState(false);
   const [openSettings, setOpenSettings] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [completing, setCompleting] = useState(false);
@@ -184,7 +212,7 @@ function GroupsPage() {
   const isOwner = familyData?.isOwner ?? false;
   const { family, members, memberProfiles } = familyData ?? { family: null, members: [], memberProfiles: [], goals: [] };
 
-  const memberBalances = useMemo(() => calculateMemberBalances(memberProfiles, sharedExpenses), [memberProfiles, sharedExpenses]);
+  const memberBalances = useMemo(() => calculateMemberBalances(memberProfiles, sharedExpenses, familySettlements), [memberProfiles, sharedExpenses, familySettlements]);
   const settlements = useMemo(() => calculateSettlements(memberBalances), [memberBalances]);
 
   const totalSpend = useMemo(() => sharedExpenses.reduce((s, e) => s + e.amount, 0), [sharedExpenses]);
@@ -415,9 +443,14 @@ function GroupsPage() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("groups.expenses_label")}</p>
-          <Button size="sm" variant="outline" onClick={() => setOpenAddExpense(true)}>
-            <Plus className="size-3.5 mr-1" /> {t("groups.add_expense")}
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setOpenAddExpense(true)}>
+              <Plus className="size-3.5 mr-1" /> {t("groups.add_expense")}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setOpenAddSettlement(true)}>
+              <Plus className="size-3.5 mr-1" /> {t("groups.add_settlement")}
+            </Button>
+          </div>
         </div>
 
         {sharedExpenses.length === 0 ? (
@@ -507,9 +540,16 @@ function GroupsPage() {
 
       <AddExpenseDialog open={openAddExpense} onClose={() => setOpenAddExpense(false)}
         members={memberProfiles} currency={currency} currentUserId={userId} t={t}
-        onSave={(description, amount, participantIds, category) => {
-          addExpenseMutation.mutate({ description, amount, participantIds, category });
+        onSave={(description, amount, paidBy, spentAt, participantIds, category) => {
+          addExpenseMutation.mutate({ description, amount, paidBy, spentAt, participantIds, category });
           setOpenAddExpense(false);
+        }} />
+
+      <AddSettlementDialog open={openAddSettlement} onClose={() => setOpenAddSettlement(false)}
+        members={memberProfiles} currency={currency} currentUserId={userId} t={t}
+        onSave={(fromUserId, toUserId, amount, settledAt, description) => {
+          addSettlementMutation.mutate({ fromUserId, toUserId, amount, settledAt, description });
+          setOpenAddSettlement(false);
         }} />
 
       <PlanSettingsDialog open={openSettings} onClose={() => setOpenSettings(false)}
@@ -850,17 +890,29 @@ function InviteMemberDialog({ open, onClose, familyId, onSent, t }: {
 function AddExpenseDialog({ open, onClose, members, currency, currentUserId, t, onSave }: {
   open: boolean; onClose: () => void; members: FamilyMemberProfile[];
   currency: string; currentUserId: string; t: (k: string) => string;
-  onSave: (description: string, amount: number, participantIds: string[], category?: string) => void;
+  onSave: (description: string, amount: number, paidBy: string, spentAt: string, participantIds: string[], category?: string) => void;
 }) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [paidBy, setPaidBy] = useState(currentUserId);
+  const [spentAt, setSpentAt] = useState(new Date().toISOString().slice(0, 10)); // YYYY-MM-DD
   const [category, setCategory] = useState("");
   const [participants, setParticipants] = useState<string[]>([]);
 
   useEffect(() => {
-    if (open) { setParticipants(members.map(m => m.user_id)); }
-    else { setDescription(""); setAmount(""); setCategory(""); setParticipants([]); }
-  }, [open, members]);
+    if (open) {
+      setParticipants(members.map(m => m.user_id));
+      setPaidBy(currentUserId);
+      setSpentAt(new Date().toISOString().slice(0, 10));
+    } else {
+      setDescription("");
+      setAmount("");
+      setCategory("");
+      setParticipants([]);
+      setPaidBy(currentUserId);
+      setSpentAt(new Date().toISOString().slice(0, 10));
+    }
+  }, [open, members, currentUserId]);
 
   function toggleParticipant(uid: string) {
     setParticipants(p => p.includes(uid) ? p.filter(x => x !== uid) : [...p, uid]);
@@ -880,6 +932,21 @@ function AddExpenseDialog({ open, onClose, members, currency, currentUserId, t, 
           <div>
             <Label>{t("groups.expense.amount")} ({currency})</Label>
             <Input type="number" inputMode="decimal" step="any" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} />
+          </div>
+          <div>
+            <Label>{t("groups.expense.paid_by")}</Label>
+            <select value={paidBy} onChange={e => setPaidBy(e.target.value)}
+              className="w-full h-10 rounded-xl border border-border bg-background px-3 text-sm">
+              {members.map(m => {
+                const isMe = m.user_id === currentUserId;
+                const name = isMe ? t("family.you.label") : (m.first_name ?? m.financial_username ?? "?");
+                return <option key={m.user_id} value={m.user_id}>{name}</option>;
+              })}
+            </select>
+          </div>
+          <div>
+            <Label>{t("groups.expense.when")}</Label>
+            <Input type="date" value={spentAt} onChange={e => setSpentAt(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
           </div>
           <div>
             <Label>{t("groups.expense.category")} ({t("common.optional")})</Label>
@@ -918,9 +985,90 @@ function AddExpenseDialog({ open, onClose, members, currency, currentUserId, t, 
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
-          <Button onClick={() => onSave(description, Number(amount), participants, category || undefined)}
-            disabled={!description.trim() || Number(amount) <= 0 || isNaN(Number(amount)) || participants.length === 0}>
+          <Button onClick={() => onSave(description, Number(amount), paidBy, spentAt, participants, category || undefined)}
+            disabled={!description.trim() || Number(amount) <= 0 || isNaN(Number(amount)) || participants.length === 0 || !paidBy}>
             {t("groups.expense.add.cta")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── AddSettlementDialog (Añadir Ingreso/Pago) ───────────────────────────
+
+function AddSettlementDialog({ open, onClose, members, currency, currentUserId, t, onSave }: {
+  open: boolean; onClose: () => void; members: FamilyMemberProfile[];
+  currency: string; currentUserId: string; t: (k: string) => string;
+  onSave: (fromUserId: string, toUserId: string, amount: number, settledAt: string, description?: string) => void;
+}) {
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [fromUserId, setFromUserId] = useState(currentUserId);
+  const [toUserId, setToUserId] = useState("");
+  const [settledAt, setSettledAt] = useState(new Date().toISOString().slice(0, 10));
+
+  useEffect(() => {
+    if (open) {
+      setFromUserId(currentUserId);
+      setToUserId(members.find(m => m.user_id !== currentUserId)?.user_id ?? "");
+      setSettledAt(new Date().toISOString().slice(0, 10));
+    } else {
+      setDescription("");
+      setAmount("");
+      setFromUserId(currentUserId);
+      setToUserId("");
+      setSettledAt(new Date().toISOString().slice(0, 10));
+    }
+  }, [open, members, currentUserId]);
+
+  const canSave = description.trim() && Number(amount) > 0 && !isNaN(Number(amount)) && fromUserId && toUserId && fromUserId !== toUserId;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle>{t("groups.settlement.add.title")}</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>{t("groups.settlement.description")}</Label>
+            <Input placeholder={t("groups.settlement.description.placeholder")} value={description} onChange={e => setDescription(e.target.value)} autoFocus />
+          </div>
+          <div>
+            <Label>{t("groups.settlement.amount")} ({currency})</Label>
+            <Input type="number" inputMode="decimal" step="any" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} />
+          </div>
+          <div>
+            <Label>{t("groups.settlement.from")}</Label>
+            <select value={fromUserId} onChange={e => setFromUserId(e.target.value)}
+              className="w-full h-10 rounded-xl border border-border bg-background px-3 text-sm">
+              {members.map(m => {
+                const isMe = m.user_id === currentUserId;
+                const name = isMe ? t("family.you.label") : (m.first_name ?? m.financial_username ?? "?");
+                return <option key={m.user_id} value={m.user_id}>{name}</option>;
+              })}
+            </select>
+          </div>
+          <div>
+            <Label>{t("groups.settlement.to")}</Label>
+            <select value={toUserId} onChange={e => setToUserId(e.target.value)}
+              className="w-full h-10 rounded-xl border border-border bg-background px-3 text-sm">
+              {members.filter(m => m.user_id !== fromUserId).map(m => {
+                const isMe = m.user_id === currentUserId;
+                const name = isMe ? t("family.you.label") : (m.first_name ?? m.financial_username ?? "?");
+                return <option key={m.user_id} value={m.user_id}>{name}</option>;
+              })}
+            </select>
+          </div>
+          <div>
+            <Label>{t("groups.settlement.when")}</Label>
+            <Input type="date" value={settledAt} onChange={e => setSettledAt(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={() => onSave(fromUserId, toUserId, Number(amount), settledAt, description || undefined)}
+            disabled={!canSave}>
+            {t("groups.settlement.add.cta")}
           </Button>
         </DialogFooter>
       </DialogContent>
