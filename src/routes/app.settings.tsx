@@ -362,7 +362,7 @@ function Settings() {
             desc={t("settings.investmentMode.desc")}
             value={!!(notifPrefs as Record<string, boolean>).investment_mode}
             onChange={() => {}}
-            badge="Coming soon"
+            badge={t("common.coming_soon")}
           />
           <Row
             icon={<Tags className="size-4" />}
@@ -462,7 +462,7 @@ function Settings() {
             label={t("settings.appLock.biometric")}
             value={meta.biometricEnabled}
             onChange={() => {}}
-            badge="Coming soon"
+            badge={t("common.coming_soon")}
           />
 
           {/* Last session */}
@@ -503,7 +503,7 @@ function Settings() {
           <Row
             icon={<CreditCard className="size-4" />}
             label={t("settings.bankConnections")}
-            value="Coming soon"
+            value={t("common.coming_soon")}
             onClick={() => toast("Bank connections coming soon")}
           />
           <Row

@@ -7,6 +7,7 @@ import { ArrowLeft, TrendingUp } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, Tooltip, XAxis } from "recharts";
 import { TrendBadge } from "@/components/nest";
 import { CHART_COLORS, chartCursor } from "@/lib/chart";
+import { useT } from "@/i18n";
 
 export const Route = createFileRoute("/app/finances/$id")({
   component: HoldingDetail,
@@ -26,6 +27,7 @@ type Investment = {
 };
 
 function HoldingDetail() {
+  const { t } = useT();
   const { id } = Route.useParams();
   const [inv, setInv] = useState<Investment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,11 +133,11 @@ function HoldingDetail() {
       </div>
 
       <div className="card-flat divide-y divide-border-subtle">
-        <Row label="Quantity" value={inv.quantity.toString()} />
-        <Row label="Avg cost" value={money(inv.avg_cost, inv.currency)} />
-        <Row label="Current price" value={money(inv.current_price, inv.currency)} />
-        <Row label="Cost basis" value={money(cost, inv.currency)} />
-        <Row label="Market value" value={money(value, inv.currency)} />
+        <Row label={t("finance.quantity")} value={inv.quantity.toString()} />
+        <Row label={t("finance.avg_cost")} value={money(inv.avg_cost, inv.currency)} />
+        <Row label={t("finance.current_price")} value={money(inv.current_price, inv.currency)} />
+        <Row label={t("finance.cost_basis")} value={money(cost, inv.currency)} />
+        <Row label={t("finance.market_value")} value={money(value, inv.currency)} />
         <Row
           label="P/L"
           value={`${pl >= 0 ? "+" : ""}${money(pl, inv.currency)} · ${pct(plPct, 2)}`}

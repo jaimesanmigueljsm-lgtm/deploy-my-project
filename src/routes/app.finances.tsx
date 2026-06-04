@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import { SectionHeader, EmptyState, TrendBadge, StatCard } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
+import { useT } from "@/i18n";
 import {
   useFinancesData,
   useAddInvestment,
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/app/finances")({
 });
 
 function Finances() {
+  const { t } = useT();
   const { investments, currency, isLoading } = useFinancesData();
   const convert = useCurrencyConvert();
   const deleteInvestment = useDeleteInvestment();
@@ -118,7 +120,7 @@ function Finances() {
       {/* Allocation */}
       {allocation.length > 0 && (
         <section>
-          <SectionHeader title="Asset allocation" />
+          <SectionHeader title={t("finance.allocation")} />
           <AllocationPieChart
             allocation={allocation}
             totalValue={stats.value}
@@ -253,6 +255,7 @@ function Finances() {
 // ─── Dialog ───────────────────────────────────────────────────────────────────
 
 function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useT();
   const addInvestment = useAddInvestment();
   const [type, setType] = useState<AddInvestmentPayload["type"]>("stock");
   const [ticker, setTicker] = useState("");
@@ -337,7 +340,7 @@ function InvestmentDialog({ open, onClose }: { open: boolean; onClose: () => voi
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Avg cost</Label>
+              <Label>{t("finance.avg_cost")}</Label>
               <Input
                 type="number"
                 inputMode="decimal"

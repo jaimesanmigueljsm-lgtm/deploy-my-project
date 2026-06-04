@@ -11,7 +11,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/sonner";
-import { I18nProvider } from "@/i18n";
+import { I18nProvider, useT } from "@/i18n";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { AppLockProvider } from "@/features/app-lock/use-app-lock";
 import { NoolySplash } from "@/components/nooly-splash";
@@ -21,18 +21,19 @@ import { Sentry } from "@/lib/sentry";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
+  const { t } = useT();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">That page drifted off the budget.</p>
+        <h2 className="mt-4 text-xl font-semibold">{t("error.404.headline")}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("error.404.detail")}</p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
           >
-            Back home
+            {t("error.home")}
           </Link>
         </div>
       </div>
@@ -50,19 +51,19 @@ function getSafeErrorContent(error: Error): { headline: string; detail: string; 
   const msg = error.message ?? "";
   if (msg.includes("Missing Supabase environment variable")) {
     return {
-      headline: "Configuration missing",
-      detail: "Supabase credentials are not configured. The app cannot start without them.",
+      headline: "error.config.headline",
+      detail: "error.config.detail",
       hint: msg, // Show the exact missing variables — invaluable for diagnosis
     };
   }
   if (msg.includes("Authentication required") || msg.includes("JWT")) {
-    return { headline: "Session expired", detail: "Please sign in again." };
+    return { headline: "error.session.headline", detail: "error.session.detail" };
   }
   if (msg.includes("Access denied") || msg.includes("not found")) {
-    return { headline: "Access denied", detail: "You don't have access to this resource." };
+    return { headline: "error.access.headline", detail: "error.access.detail" };
   }
   if (msg.includes("Validation failed")) {
-    return { headline: "Invalid data", detail: "Some data was invalid. Please check your inputs." };
+    return { headline: "error.validation.headline", detail: "error.validation.detail" };
   }
   if (
     msg.includes("NetworkError") ||
@@ -70,13 +71,13 @@ function getSafeErrorContent(error: Error): { headline: string; detail: string; 
     msg.includes("fetch failed")
   ) {
     return {
-      headline: "Network issue",
-      detail: "Check your connection and try again.",
+      headline: "error.network.headline",
+      detail: "error.network.detail",
     };
   }
   return {
-    headline: "Something didn't load",
-    detail: "An unexpected error occurred. Please try again.",
+    headline: "error.general.headline",
+    detail: "error.general.detail",
     hint: import.meta.env.DEV ? (msg || undefined) : undefined,
   };
 }
@@ -85,12 +86,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error("[app error]", error);
   Sentry.captureException(error);
   const router = useRouter();
+  const { t } = useT();
   const { headline, detail, hint } = getSafeErrorContent(error);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold">{headline}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
+        <h1 className="text-xl font-semibold">{t(headline)}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t(detail)}</p>
         {hint && (
           <pre className="mt-4 max-w-full overflow-auto rounded-lg bg-muted px-3 py-2 text-left text-[11px] leading-relaxed text-muted-foreground">
             {hint}
@@ -104,10 +106,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground"
           >
-            Try again
+            {t("error.try_again")}
           </button>
           <a href="/" className="rounded-full border border-input px-4 py-2 text-sm">
-            Home
+            {t("error.home")}
           </a>
         </div>
       </div>

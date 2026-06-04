@@ -183,7 +183,7 @@ function GroupsPage() {
     return (
       <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
         <header className="pt-2">
-          <h1 className="text-[28px] font-bold tracking-tight">NOOLY GRUPOS</h1>
+          <h1 className="text-[28px] font-bold tracking-tight">{t("nav.groups.header")}</h1>
         </header>
 
         {receivedInvitations.length > 0 && (
@@ -219,7 +219,7 @@ function GroupsPage() {
       {/* Header */}
       <header className="flex items-center justify-between pt-2">
         <div className="min-w-0 flex-1">
-          <h1 className="text-[28px] font-bold tracking-tight">NOOLY GRUPOS</h1>
+          <h1 className="text-[28px] font-bold tracking-tight">{t("nav.groups.header")}</h1>
           <p className="text-sm text-muted-foreground mt-1">{family.name}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -541,9 +541,9 @@ function PremiumGroupsEmptyState({
   t: (k: string) => string;
 }) {
   const suggestions = [
-    { emoji: "🍻", label: "Cena viernes" },
-    { emoji: "🎉", label: "Festival" },
-    { emoji: "🏕️", label: "Roadtrip verano" },
+    { emoji: "🍻", label: t("groups.familia.suggestion.dinner") },
+    { emoji: "🎉", label: t("groups.familia.suggestion.festival") },
+    { emoji: "🏕️", label: t("groups.familia.suggestion.roadtrip") },
   ];
 
   return (
@@ -557,10 +557,10 @@ function PremiumGroupsEmptyState({
       {/* Aspirational copy */}
       <div className="space-y-3 relative">
         <h2 className="text-[28px] font-bold leading-tight tracking-tight">
-          Los mejores planes<br />no deberían acabar en líos.
+          {t("groups.familia.empty.title")}
         </h2>
         <p className="text-muted-foreground text-base max-w-sm mx-auto">
-          Crea un grupo, comparte gastos y deja que NOOLY haga las cuentas.
+          {t("groups.familia.empty.desc")}
         </p>
       </div>
 
@@ -571,13 +571,13 @@ function PremiumGroupsEmptyState({
         className="px-8 py-6 text-base font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all"
       >
         <Plus className="size-5 mr-2" />
-        Crear grupo
+        {t("groups.familia.empty.cta")}
       </Button>
 
       {/* Suggestion chips */}
       <div className="space-y-3 pt-4">
         <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-          Ideas para empezar
+          {t("groups.familia.empty.ideas")}
         </p>
         <div className="flex flex-wrap gap-2 justify-center">
           {suggestions.map((s, i) => (

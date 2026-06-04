@@ -128,7 +128,7 @@ function Goals() {
     <div className="px-4 pt-5 space-y-4 animate-rise pb-24">
       <header className="flex items-center justify-between pt-2">
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight">NOOLY METAS</h1>
+          <h1 className="text-[28px] font-bold tracking-tight">{t("nav.goals.header")}</h1>
         </div>
         <button
           onClick={() => {
@@ -253,10 +253,10 @@ function PremiumEmptyState({
   t: (k: string) => string;
 }) {
   const suggestions = [
-    { emoji: "✈️", label: "Japón" },
-    { emoji: "🚗", label: "Coche nuevo" },
-    { emoji: "🏠", label: "Entrada casa" },
-    { emoji: "🏍️", label: "Moto" },
+    { emoji: "✈️", label: t("goals.suggestion.japan") },
+    { emoji: "🚗", label: t("goals.suggestion.new_car") },
+    { emoji: "🏠", label: t("goals.suggestion.house_deposit") },
+    { emoji: "🏍️", label: t("goals.suggestion.motorcycle") },
   ];
 
   return (
@@ -270,10 +270,10 @@ function PremiumEmptyState({
       {/* Aspirational copy */}
       <div className="space-y-3 relative">
         <h2 className="text-[28px] font-bold leading-tight tracking-tight">
-          No necesitas más dinero.<br />Solo un plan.
+          {t("goals.empty.personal.title")}<br />{t("goals.empty.personal.subtitle")}
         </h2>
         <p className="text-muted-foreground text-base max-w-sm mx-auto">
-          Crea una meta y empieza a construirla paso a paso.
+          {t("goals.empty.personal.desc")}
         </p>
       </div>
 
@@ -284,13 +284,13 @@ function PremiumEmptyState({
         className="px-8 py-6 text-base font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all"
       >
         <Plus className="size-5 mr-2" />
-        Crear primera meta
+        {t("goals.empty.personal.cta")}
       </Button>
 
       {/* Suggestion chips */}
       <div className="space-y-3 pt-4">
         <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-          Ideas para empezar
+          {t("goals.empty.personal.ideas")}
         </p>
         <div className="flex flex-wrap gap-2 justify-center">
           {suggestions.map((s, i) => (
@@ -328,10 +328,10 @@ function PremiumSharedEmptyState({
   t: (k: string) => string;
 }) {
   const suggestions = [
-    { emoji: "✈️", label: "Viaje Argentina" },
-    { emoji: "🏠", label: "Entrada casa" },
-    { emoji: "💍", label: "Boda" },
-    { emoji: "🐶", label: "Peluquería Firulais" },
+    { emoji: "✈️", label: t("goals.suggestion.travel") },
+    { emoji: "🏠", label: t("goals.suggestion.house") },
+    { emoji: "💍", label: t("goals.suggestion.wedding") },
+    { emoji: "🐶", label: t("goals.suggestion.pet") },
   ];
 
   return (
@@ -345,10 +345,10 @@ function PremiumSharedEmptyState({
       {/* Aspirational copy */}
       <div className="space-y-3 relative">
         <h2 className="text-[28px] font-bold leading-tight tracking-tight">
-          Los grandes planes<br />se construyen juntos.
+          {t("goals.empty.shared.title")}
         </h2>
         <p className="text-muted-foreground text-base max-w-sm mx-auto">
-          Invita a alguien y empezad a ahorrar para vuestro próximo objetivo.
+          {t("goals.empty.shared.desc")}
         </p>
       </div>
 
@@ -359,13 +359,13 @@ function PremiumSharedEmptyState({
         className="px-8 py-6 text-base font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all"
       >
         <Plus className="size-5 mr-2" />
-        Crear meta compartida
+        {t("goals.empty.shared.cta")}
       </Button>
 
       {/* Suggestion chips */}
       <div className="space-y-3 pt-4">
         <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-          Ideas para empezar
+          {t("goals.empty.shared.ideas")}
         </p>
         <div className="flex flex-wrap gap-2 justify-center">
           {suggestions.map((s, i) => (
