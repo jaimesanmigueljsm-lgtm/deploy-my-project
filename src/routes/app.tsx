@@ -26,15 +26,63 @@ export const Route = createFileRoute("/app")({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw redirect({ to: "/auth" });
     const uid = user.id;
-    // Pre-seed the full profile into the React Query cache using the same key
-    // that useProfile() reads. This ensures child routes see profile data
-    // immediately on mount with no loading state or extra network request.
+
+    // CRITICAL FIX: localStorage key namespaced by user ID to prevent multi-user collision
+    // Key format: nooly.onboarded.{user_id} ensures each user has independent onboarding state
+    const localStorageKey = `nooly.onboarded.${uid}`;
+    let localStorageOnboarded = false;
+    try {
+      localStorageOnboarded = localStorage.getItem(localStorageKey) === 'true';
+
+      // MIGRATION: Clean up old non-namespaced key if it exists
+      // This prevents multi-user collision from legacy keys
+      const oldKey = 'nooly.onboarded';
+      if (localStorage.getItem(oldKey) !== null) {
+        // Migrate old key to new namespaced key if not already set
+        if (!localStorageOnboarded && localStorage.getItem(oldKey) === 'true') {
+          localStorage.setItem(localStorageKey, 'true');
+          localStorageOnboarded = true;
+          console.log("[app.tsx] Migrated legacy onboarding key to namespaced key");
+        }
+        // Remove old key to prevent future collisions
+        localStorage.removeItem(oldKey);
+        console.log("[app.tsx] Cleaned up legacy onboarding key");
+      }
+    } catch {
+      // localStorage unavailable in some environments - non-critical
+    }
+
+    // FAST PATH: If localStorage says onboarded, trust it immediately (no network delay)
+    // Still fetch profile in background for other data, but don't block navigation
+    if (localStorageOnboarded) {
+      // Background fetch (non-blocking) to refresh profile data
+      queryClient.fetchQuery({
+        queryKey: queryKeys.profile(uid),
+        queryFn: async () => {
+          const { data: p } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
+          return p || null;
+        },
+        staleTime: 5 * 60_000,
+      }).catch((error) => {
+        // Ignore background fetch errors - user can still navigate with cached data
+        console.warn("[app.tsx] Background profile fetch failed:", error);
+      });
+
+      // Continue to /app immediately without waiting for DB
+      // This prevents network errors from blocking navigation
+      return;
+    }
+
+    // SLOW PATH: localStorage says NOT onboarded, verify with DB (source of truth)
+    // This only runs on first login per device or after localStorage clear
     const prof = await queryClient.fetchQuery({
       queryKey: queryKeys.profile(uid),
       queryFn: async () => {
         const { data: p, error } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
         if (error) {
           console.error("[app.tsx] Profile fetch error:", error);
+          // If fetch fails AND localStorage is empty, safer to redirect to auth
+          // This prevents infinite loops on persistent network failures
           throw error;
         }
         if (!p) {
@@ -46,20 +94,23 @@ export const Route = createFileRoute("/app")({
       staleTime: 5 * 60_000,
     });
 
-    // CRITICAL: Check onboarding completion from DB first, localStorage as backup
-    // If EITHER check passes, user is onboarded (prevents loop from cache races)
     const dbOnboarded = prof?.onboarded === true;
-    let localStorageOnboarded = false;
-    try {
-      localStorageOnboarded = localStorage.getItem('nooly.onboarded') === 'true';
-    } catch {
-      // localStorage unavailable in some environments - non-critical
-    }
 
     // Redirect to onboarding ONLY if both DB and localStorage say not onboarded
-    // This prevents race conditions where cache is stale but localStorage is current
+    // This prevents race conditions and network errors from causing false redirects
     if (!dbOnboarded && !localStorageOnboarded) {
       throw redirect({ to: "/onboarding" });
+    }
+
+    // SYNC: If DB says onboarded but localStorage doesn't, sync it
+    // This happens on first login on new device or after localStorage clear
+    if (dbOnboarded && !localStorageOnboarded) {
+      try {
+        localStorage.setItem(localStorageKey, 'true');
+        console.log("[app.tsx] Synced onboarding state to localStorage");
+      } catch (error) {
+        console.warn("[app.tsx] Failed to sync localStorage:", error);
+      }
     }
     // Apply theme synchronously before the shell renders to avoid flash.
     // localStorage is the authoritative source after the first visit — it's updated

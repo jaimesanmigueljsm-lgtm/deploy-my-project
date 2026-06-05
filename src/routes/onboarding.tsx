@@ -322,11 +322,15 @@ function Onboarding() {
       queryClient.setQueryData(queryKeys.profile(user.id), updatedProfile);
 
       // CRITICAL: Persist onboarding completion to localStorage as backup guard
+      // Key is namespaced by user ID to prevent multi-user collision
       // This prevents onboarding loop if profile query ever becomes stale/invalid
+      const localStorageKey = `nooly.onboarded.${user.id}`;
       try {
-        localStorage.setItem('nooly.onboarded', 'true');
-      } catch {
+        localStorage.setItem(localStorageKey, 'true');
+        console.log("[onboarding] Onboarding completed and synced to localStorage");
+      } catch (error) {
         // localStorage unavailable - non-critical, DB is source of truth
+        console.warn("[onboarding] Failed to set localStorage:", error);
       }
 
       navigate({ to: "/app" });
