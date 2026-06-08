@@ -17,9 +17,9 @@ const DEFAULT_META: LockMeta = {
 };
 
 const safe = typeof window !== "undefined";
-const PIN_KEY = (uid: string) => `nest.pin_hash.${uid}`;
-const META_KEY = (uid: string) => `nest.lock_meta.${uid}`;
-const PROMPTED_KEY = (uid: string) => `nest.pin_prompted.${uid}`;
+const PIN_KEY = (uid: string) => `nooly.pin_hash.${uid}`;
+const META_KEY = (uid: string) => `nooly.lock_meta.${uid}`;
+const PROMPTED_KEY = (uid: string) => `nooly.pin_prompted.${uid}`;
 
 export const pinStore = {
   read: (uid: string): string | null => {

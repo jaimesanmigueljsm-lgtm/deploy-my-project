@@ -1,5 +1,5 @@
 /**
- * types.ts — The complete type system for the NEST financial intelligence engine.
+ * types.ts — The complete type system for the NOOLY financial intelligence engine.
  *
  * Architecture:
  *   Engine input types  →  FinancialEngineContext

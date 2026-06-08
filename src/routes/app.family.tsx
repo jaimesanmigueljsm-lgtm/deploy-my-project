@@ -112,7 +112,7 @@ function GroupsPage() {
   useEffect(() => {
     if (!userId) return;
     const ch = supabase
-      .channel(`nest-inv-${userId}`)
+      .channel(`nooly-inv-${userId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "family_invitations", filter: `invited_user_id=eq.${userId}` },
         () => void qc.invalidateQueries({ queryKey: FK.received(userId) }))
       .subscribe();
@@ -122,7 +122,7 @@ function GroupsPage() {
   useEffect(() => {
     if (!familyId) return;
     const ch = supabase
-      .channel(`nest-fam-${familyId}`)
+      .channel(`nooly-fam-${familyId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "family_members", filter: `family_id=eq.${familyId}` },
         () => void qc.invalidateQueries({ queryKey: FK.data(familyId) }))
       .on("postgres_changes", { event: "*", schema: "public", table: "shared_expenses", filter: `family_id=eq.${familyId}` },

@@ -163,7 +163,7 @@ export function previewUsername(firstName: string, lastName1: string): string {
 // ─── Username search ─────────────────────────────────────────────────────────
 
 /**
- * Search for a Nest user by their exact financial username.
+ * Search for a NOOLY user by their exact financial username.
  * Calls the find_user_by_username SECURITY DEFINER RPC.
  * Returns null if not found.
  */

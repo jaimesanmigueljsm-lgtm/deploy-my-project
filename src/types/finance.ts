@@ -1,5 +1,5 @@
 /**
- * Canonical domain types for the NEST fintech app.
+ * Canonical domain types for the NOOLY fintech app.
  *
  * All types are derived from the Supabase DB schema via Pick<Tables<"table">, ...>
  * so they can never drift from the actual database columns.

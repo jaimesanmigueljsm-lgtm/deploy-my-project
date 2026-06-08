@@ -14,7 +14,7 @@ export function useExportData() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `nest-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `nooly-export-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Export downloaded");

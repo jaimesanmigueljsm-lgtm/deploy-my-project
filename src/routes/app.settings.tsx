@@ -191,7 +191,7 @@ function Settings() {
     const next = profile?.theme === "dark" ? "light" : "dark";
     document.documentElement.classList.toggle("dark", next === "dark");
     try {
-      localStorage.setItem("nest.theme", next);
+      localStorage.setItem("nooly.theme", next);
     } catch {
       /* sandboxed */
     }

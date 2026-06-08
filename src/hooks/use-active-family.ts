@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const STORAGE_KEY = "nest.active_family_id";
+const STORAGE_KEY = "nooly.active_family_id";
 
 /**
  * Lightweight multi-group switcher.

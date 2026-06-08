@@ -12,7 +12,7 @@ type Ctx = {
 
 const I18nCtx = createContext<Ctx | null>(null);
 
-const STORAGE_KEY = "nest.locale";
+const STORAGE_KEY = "nooly.locale";
 
 function detectInitial(): LocaleCode {
   if (typeof window === "undefined") return "en";

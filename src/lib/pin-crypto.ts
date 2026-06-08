@@ -22,7 +22,7 @@ async function pbkdf2HashV1(userId: string, pin: string): Promise<string> {
     {
       name: "PBKDF2",
       hash: "SHA-256",
-      salt: enc.encode(`nest-pin-salt:${userId}`),
+      salt: enc.encode(`nooly-pin-salt:${userId}`),
       iterations: ITERATIONS,
     },
     keyMaterial,
@@ -51,7 +51,7 @@ async function pbkdf2HashV2(pin: string, salt?: Uint8Array): Promise<string> {
 }
 
 async function sha256Hash(userId: string, pin: string): Promise<string> {
-  const data = enc.encode(`nest-pin:${userId}:${pin}`);
+  const data = enc.encode(`nooly-pin:${userId}:${pin}`);
   const buf = await crypto.subtle.digest("SHA-256", data);
   return toHex(buf);
 }

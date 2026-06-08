@@ -1,5 +1,5 @@
 /**
- * nest/index.tsx — Shared primitive components for the NEST design system.
+ * nest/index.tsx — Shared primitive components for the NOOLY design system.
  *
  * Design principles applied here:
  *  · Card hover: translateY(-1px) + shadow bump via .card-interactive

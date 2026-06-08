@@ -118,14 +118,14 @@ export const Route = createFileRoute("/app")({
     if (typeof document !== "undefined") {
       let isDark: boolean;
       try {
-        const stored = localStorage.getItem("nest.theme");
+        const stored = localStorage.getItem("nooly.theme");
         isDark = stored !== null ? stored === "dark" : prof?.theme === "dark";
       } catch {
         isDark = prof?.theme === "dark";
       }
       document.documentElement.classList.toggle("dark", isDark);
       try {
-        localStorage.setItem("nest.theme", isDark ? "dark" : "light");
+        localStorage.setItem("nooly.theme", isDark ? "dark" : "light");
       } catch {
         // localStorage unavailable in some sandboxed environments — safe to ignore
       }
@@ -179,7 +179,7 @@ function AppShell() {
   // Sync dark mode across browser tabs when the user changes the theme in another tab
   useEffect(() => {
     function onStorage(e: StorageEvent) {
-      if (e.key === "nest.theme") {
+      if (e.key === "nooly.theme") {
         document.documentElement.classList.toggle("dark", e.newValue === "dark");
       }
     }

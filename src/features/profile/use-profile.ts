@@ -7,7 +7,7 @@ import { fetchProfile, updateProfile, type ProfileUpdate } from "./profile.servi
 
 // ─── localStorage persistence ─────────────────────────────────────────────────
 
-const CACHE_KEY = (id: string) => `nest.profile.${id}`;
+const CACHE_KEY = (id: string) => `nooly.profile.${id}`;
 
 function readCachedProfile(id: string) {
   try {
