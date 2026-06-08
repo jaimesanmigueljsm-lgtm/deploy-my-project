@@ -546,6 +546,33 @@ export type Database = {
         }
         Relationships: []
       }
+      security_events: {
+        Row: {
+          id: string
+          user_id: string
+          event_type: string
+          device_id: string
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event_type: string
+          device_id: string
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event_type?: string
+          device_id?: string
+          metadata?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       shared_goals: {
         Row: {
           created_at: string
@@ -583,6 +610,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trusted_devices: {
+        Row: {
+          id: string
+          user_id: string
+          device_id: string
+          name: string
+          platform: string
+          browser: string
+          trusted_at: string
+          last_active_at: string
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          device_id: string
+          name: string
+          platform: string
+          browser: string
+          trusted_at?: string
+          last_active_at?: string
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          device_id?: string
+          name?: string
+          platform?: string
+          browser?: string
+          trusted_at?: string
+          last_active_at?: string
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
+      user_security: {
+        Row: {
+          user_id: string
+          pin_hash: string
+          failed_unlock_count: number
+          locked_until: string | null
+          last_active_at: string
+          auto_lock_ms: number
+          hide_balances: boolean
+          biometric_enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          pin_hash: string
+          failed_unlock_count?: number
+          locked_until?: string | null
+          last_active_at?: string
+          auto_lock_ms?: number
+          hide_balances?: boolean
+          biometric_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          pin_hash?: string
+          failed_unlock_count?: number
+          locked_until?: string | null
+          last_active_at?: string
+          auto_lock_ms?: number
+          hide_balances?: boolean
+          biometric_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -655,6 +757,15 @@ export type Database = {
           role: string
         }[]
       }
+      initialize_user_security: {
+        Args: {
+          p_pin_hash: string
+          p_auto_lock_ms?: number
+          p_hide_balances?: boolean
+          p_biometric_enabled?: boolean
+        }
+        Returns: Json
+      }
       is_family_member: {
         Args: { _family_id: string; _user_id: string }
         Returns: boolean
@@ -662,6 +773,22 @@ export type Database = {
       is_family_owner: {
         Args: { _family_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          p_event_type: string
+          p_device_id: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
+      record_failed_unlock: {
+        Args: never
+        Returns: Json
+      }
+      record_successful_unlock: {
+        Args: never
+        Returns: Json
       }
       reject_family_invite: {
         Args: { p_invitation_id: string }
@@ -675,6 +802,10 @@ export type Database = {
       update_family_name: {
         Args: { p_family_id: string; p_name: string }
         Returns: undefined
+      }
+      verify_pin_attempt: {
+        Args: never
+        Returns: Json
       }
     }
     Enums: {

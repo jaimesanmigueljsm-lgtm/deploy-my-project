@@ -101,7 +101,7 @@ export async function initializeUserSecurity(
     biometricEnabled?: boolean;
   }
 ): Promise<void> {
-  const { data, error } = await (supabase as any).rpc("initialize_user_security", {
+  const { data, error } = await supabase.rpc("initialize_user_security", {
     p_pin_hash: pinHash,
     p_auto_lock_ms: options?.autoLockMs ?? 300000,
     p_hide_balances: options?.hideBalances ?? false,
@@ -109,14 +109,15 @@ export async function initializeUserSecurity(
   });
 
   if (error) throw new Error(`Failed to initialize security: ${error.message}`);
-  if (!data?.success) throw new Error("Security initialization failed");
+  const result = data as { success: boolean } | null;
+  if (!result?.success) throw new Error("Security initialization failed");
 }
 
 /**
  * Fetch user security settings from backend
  */
 export async function getUserSecurity(userId: string): Promise<UserSecurity | null> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("user_security")
     .select("*")
     .eq("user_id", userId)
@@ -137,7 +138,12 @@ export async function updateUserSecurity(
   userId: string,
   updates: Partial<Pick<UserSecurity, "auto_lock_ms" | "hide_balances" | "biometric_enabled">>
 ): Promise<void> {
-  const payload: Record<string, any> = {
+  const payload: {
+    updated_at: string;
+    auto_lock_ms?: number;
+    hide_balances?: boolean;
+    biometric_enabled?: boolean;
+  } = {
     updated_at: new Date().toISOString(),
   };
 
@@ -146,7 +152,7 @@ export async function updateUserSecurity(
   if (updates.biometric_enabled !== undefined)
     payload.biometric_enabled = updates.biometric_enabled;
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("user_security")
     .update(payload)
     .eq("user_id", userId);
@@ -158,7 +164,7 @@ export async function updateUserSecurity(
  * Update PIN hash in backend
  */
 export async function updatePinHash(userId: string, newPinHash: string): Promise<void> {
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("user_security")
     .update({
       pin_hash: newPinHash,
@@ -178,32 +184,33 @@ export async function updatePinHash(userId: string, newPinHash: string): Promise
  * Returns current security state (app verifies hash client-side)
  */
 export async function verifyPinAttempt(): Promise<VerifyPinAttemptResult> {
-  const { data, error } = await (supabase as any).rpc("verify_pin_attempt");
+  const { data, error } = await supabase.rpc("verify_pin_attempt");
 
   if (error) throw new Error(`Failed to verify PIN attempt: ${error.message}`);
 
-  return data as VerifyPinAttemptResult;
+  return data as unknown as VerifyPinAttemptResult;
 }
 
 /**
  * Record a failed unlock attempt (increments counter)
  */
 export async function recordFailedUnlock(): Promise<RecordFailedUnlockResult> {
-  const { data, error } = await (supabase as any).rpc("record_failed_unlock");
+  const { data, error } = await supabase.rpc("record_failed_unlock");
 
   if (error) throw new Error(`Failed to record failed unlock: ${error.message}`);
 
-  return data as RecordFailedUnlockResult;
+  return data as unknown as RecordFailedUnlockResult;
 }
 
 /**
  * Record a successful unlock (resets counter)
  */
 export async function recordSuccessfulUnlock(): Promise<void> {
-  const { data, error } = await (supabase as any).rpc("record_successful_unlock");
+  const { data, error } = await supabase.rpc("record_successful_unlock");
 
   if (error) throw new Error(`Failed to record successful unlock: ${error.message}`);
-  if (!data?.success) throw new Error("Failed to record successful unlock");
+  const result = data as { success: boolean } | null;
+  if (!result?.success) throw new Error("Failed to record successful unlock");
 }
 
 // ============================================================================
@@ -218,7 +225,7 @@ export async function logSecurityEvent(
   deviceId: string,
   metadata?: Record<string, any>
 ): Promise<string> {
-  const { data, error } = await (supabase as any).rpc("log_security_event", {
+  const { data, error } = await supabase.rpc("log_security_event", {
     p_event_type: eventType,
     p_device_id: deviceId,
     p_metadata: metadata ? (metadata as any) : null,
@@ -236,7 +243,7 @@ export async function getSecurityEvents(
   userId: string,
   limit = 50
 ): Promise<SecurityEvent[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("security_events")
     .select("*")
     .eq("user_id", userId)
@@ -245,7 +252,7 @@ export async function getSecurityEvents(
 
   if (error) throw new Error(`Failed to fetch security events: ${error.message}`);
 
-  return data || [];
+  return (data as SecurityEvent[]) || [];
 }
 
 /**
@@ -256,7 +263,7 @@ export async function getDeviceSecurityEvents(
   deviceId: string,
   limit = 20
 ): Promise<SecurityEvent[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("security_events")
     .select("*")
     .eq("user_id", userId)
@@ -266,7 +273,7 @@ export async function getDeviceSecurityEvents(
 
   if (error) throw new Error(`Failed to fetch device security events: ${error.message}`);
 
-  return data || [];
+  return (data as SecurityEvent[]) || [];
 }
 
 // ============================================================================
@@ -285,7 +292,7 @@ export async function trustDevice(
     browser: string;
   }
 ): Promise<TrustedDevice> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("trusted_devices")
     .upsert(
       {
@@ -315,7 +322,7 @@ export async function updateDeviceLastActive(
   userId: string,
   deviceId: string
 ): Promise<void> {
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("trusted_devices")
     .update({ last_active_at: new Date().toISOString() })
     .eq("user_id", userId)
@@ -328,7 +335,7 @@ export async function updateDeviceLastActive(
  * Fetch all trusted devices for user
  */
 export async function getTrustedDevices(userId: string): Promise<TrustedDevice[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("trusted_devices")
     .select("*")
     .eq("user_id", userId)
@@ -344,7 +351,7 @@ export async function getTrustedDevices(userId: string): Promise<TrustedDevice[]
  * Revoke a trusted device
  */
 export async function revokeDevice(userId: string, deviceId: string): Promise<void> {
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("trusted_devices")
     .update({ revoked_at: new Date().toISOString() })
     .eq("user_id", userId)
