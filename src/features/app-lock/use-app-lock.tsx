@@ -7,6 +7,22 @@ import { PinSetupScreen } from "./PinSetupScreen";
 import { isBiometricAvailable as checkBiometric } from "@/lib/biometric";
 import { logSecurityEvent } from "@/lib/security/security-events";
 import { trustCurrentDevice, updateDeviceLastActive } from "@/lib/device";
+import {
+  verifyPinAttempt,
+  recordFailedUnlock,
+  recordSuccessfulUnlock,
+  initializeUserSecurity,
+} from "@/features/security/security.service";
+import {
+  canUnlockOffline,
+  incrementOfflineUnlock,
+  resetOfflineUnlock,
+  getRemainingOfflineUnlocks,
+  getOfflineUnlockMetadata,
+  OFFLINE_LIMITS,
+} from "@/lib/offline-unlock-store";
+import { startAutoSync, stopAutoSync, syncPendingOperations } from "@/lib/sync-queue";
+import { toast } from "sonner";
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -129,43 +145,224 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
     }
   }, [meta.hideBalances]);
 
+  // ── Auto-sync and reconnection handling ────────────────────────────────────
+  useEffect(() => {
+    if (!uid) {
+      stopAutoSync();
+      return;
+    }
+
+    // Start auto-sync for this user
+    startAutoSync(uid);
+
+    // Listen for reconnection
+    function handleOnline() {
+      if (!uid) return;
+
+      console.log("[app-lock] Connection restored, verifying offline activity...");
+
+      // Sync pending operations
+      void syncPendingOperations(uid);
+
+      // Check for suspicious offline activity
+      const offlineMetadata = getOfflineUnlockMetadata(uid);
+
+      if (offlineMetadata.suspicious) {
+        console.warn("[app-lock] Suspicious offline activity detected:", offlineMetadata);
+
+        // Lock the account and force re-authentication
+        setIsLocked(true);
+        toast.error("Suspicious activity detected. Please unlock again to verify your identity.");
+
+        // Log the event
+        logSecurityEvent(uid, "lockout_triggered", {
+          reason: "suspicious_offline_activity",
+          ...offlineMetadata,
+        });
+      } else if (offlineMetadata.offline_unlock_count > 0) {
+        // Normal offline activity - just log for audit
+        logSecurityEvent(uid, "login", {
+          offline_unlocks_used: offlineMetadata.offline_unlock_count,
+        });
+
+        // Reset offline counter after successful verification
+        resetOfflineUnlock(uid);
+      }
+    }
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("online", handleOnline);
+    }
+
+    return () => {
+      stopAutoSync();
+      if (typeof window !== "undefined") {
+        window.removeEventListener("online", handleOnline);
+      }
+    };
+  }, [uid]);
+
   // ── Actions ───────────────────────────────────────────────────────────────
 
   const unlock = useCallback(
     async (pin: string): Promise<boolean> => {
       if (!uid) return false;
-      const m = metaStore.read(uid);
-      if (m.lockoutUntil > Date.now()) return false;
 
-      const storedHash = pinStore.read(uid);
-      if (!storedHash) {
-        setIsLocked(false);
-        return true;
-      }
+      // ═══════════════════════════════════════════════════════════════════════
+      // OPTION B UNLOCK STRATEGY
+      // 1. Try backend verification (source of truth for rate limiting)
+      // 2. If backend unavailable:
+      //    a. Check offline unlock limit (max 1)
+      //    b. Require biometric if available
+      //    c. Verify PIN locally
+      //    d. Increment offline counter
+      // 3. On reconnect: verify for suspicious activity
+      // ═══════════════════════════════════════════════════════════════════════
 
-      const ok = await verifyPin(uid, pin, storedHash);
-      if (ok) {
-        // Silently upgrade legacy SHA-256 hash to PBKDF2 in the background
-        if (isLegacyHash(storedHash)) {
-          void hashPin(uid, pin).then((newHash) => pinStore.write(uid, newHash));
+      // Step 1: Try backend verification
+      try {
+        const backendState = await verifyPinAttempt();
+
+        if (!backendState.success) {
+          // Backend rejected (locked or not found)
+          if (backendState.reason === "locked") {
+            toast.error("Account locked. Too many failed attempts.");
+            logSecurityEvent(uid, "lockout_triggered");
+            return false;
+          }
+          // Fall through to offline mode
+          throw new Error(backendState.message || "Backend verification failed");
         }
+
+        // Backend available → verify PIN hash
+        const storedHash = backendState.pin_hash || pinStore.read(uid);
+        if (!storedHash) {
+          setIsLocked(false);
+          return true; // No PIN set
+        }
+
+        const pinValid = await verifyPin(uid, pin, storedHash);
+
+        if (pinValid) {
+          // ✅ Successful unlock with backend
+          await recordSuccessfulUnlock();
+
+          // Upgrade legacy hash
+          if (isLegacyHash(storedHash)) {
+            void hashPin(uid, pin).then((newHash) => {
+              pinStore.write(uid, newHash);
+              void initializeUserSecurity(newHash, {
+                autoLockMs: meta.autoLockMs,
+                hideBalances: meta.hideBalances,
+                biometricEnabled: meta.biometricEnabled,
+              });
+            });
+          }
+
+          // Update local state
+          metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
+          setMeta(metaStore.read(uid));
+          setIsLocked(false);
+
+          // Trust device & log
+          trustCurrentDevice(uid);
+          updateDeviceLastActive(uid);
+          logSecurityEvent(uid, "login");
+
+          // Reset offline counter
+          resetOfflineUnlock(uid);
+
+          return true;
+        } else {
+          // ❌ Invalid PIN
+          await recordFailedUnlock();
+
+          const m = metaStore.read(uid);
+          const newCount = m.failedCount + 1;
+          const lockout = newCount >= 5 ? Date.now() + 30_000 : 0;
+          metaStore.write(uid, { failedCount: newCount, lockoutUntil: lockout });
+          setMeta(metaStore.read(uid));
+
+          logSecurityEvent(uid, "failed_unlock", { attempt: newCount });
+          if (lockout) logSecurityEvent(uid, "lockout_triggered");
+
+          return false;
+        }
+      } catch (backendError) {
+        // ═══════════════════════════════════════════════════════════════════
+        // Step 2: Backend unavailable → OFFLINE MODE (Option B)
+        // ═══════════════════════════════════════════════════════════════════
+        console.warn("[unlock] Backend unavailable, attempting offline unlock:", backendError);
+
+        // Check offline unlock limit
+        if (!canUnlockOffline(uid)) {
+          const remaining = getRemainingOfflineUnlocks(uid);
+          toast.error(
+            `For your security, online verification is required.\nPlease check your internet connection.\n(${remaining}/${OFFLINE_LIMITS.MAX_UNLOCKS} offline unlocks remaining)`
+          );
+          return false;
+        }
+
+        // Check local lockout (in case localStorage has lockout state)
+        const m = metaStore.read(uid);
+        if (m.lockoutUntil > Date.now()) {
+          toast.error("Account temporarily locked. Please wait.");
+          return false;
+        }
+
+        // Verify PIN locally
+        const storedHash = pinStore.read(uid);
+        if (!storedHash) {
+          setIsLocked(false);
+          return true; // No PIN set
+        }
+
+        const pinValid = await verifyPin(uid, pin, storedHash);
+
+        if (!pinValid) {
+          // ❌ Invalid PIN (offline)
+          const newCount = m.failedCount + 1;
+          const lockout = newCount >= 5 ? Date.now() + 30_000 : 0;
+          metaStore.write(uid, { failedCount: newCount, lockoutUntil: lockout });
+          setMeta(metaStore.read(uid));
+          logSecurityEvent(uid, "failed_unlock", { attempt: newCount, offline: true });
+          if (lockout) logSecurityEvent(uid, "lockout_triggered");
+          return false;
+        }
+
+        // ✅ PIN valid → Check if biometric required
+        // TODO: Implement authenticateWithBiometric() in @/lib/biometric
+        // For now, skip biometric check in offline mode
+        if (meta.biometricEnabled && biometricAvailableState) {
+          console.log("[unlock] Offline mode: biometric enabled but not enforced (not implemented yet)");
+          logSecurityEvent(uid, "offline_biometric_unlock");
+        } else {
+          logSecurityEvent(uid, "offline_unlock");
+        }
+
+        // Increment offline counter
+        const offlineState = incrementOfflineUnlock(uid);
+        const remaining = getRemainingOfflineUnlocks(uid);
+
+        // Update local state
         metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
         setMeta(metaStore.read(uid));
         setIsLocked(false);
+
+        // Trust device (local only)
         trustCurrentDevice(uid);
         updateDeviceLastActive(uid);
-        logSecurityEvent(uid, "login");
+
+        // Notify user
+        toast.warning(
+          `Unlocked offline (${offlineState.count}/${OFFLINE_LIMITS.MAX_UNLOCKS} used).\nConnect to internet to restore full access.`,
+          { duration: 5000 }
+        );
+
         return true;
       }
-      const newCount = m.failedCount + 1;
-      const lockout = newCount >= 5 ? Date.now() + 30_000 : 0;
-      metaStore.write(uid, { failedCount: newCount, lockoutUntil: lockout });
-      setMeta(metaStore.read(uid));
-      logSecurityEvent(uid, "failed_unlock", { attempt: newCount });
-      if (lockout) logSecurityEvent(uid, "lockout_triggered");
-      return false;
     },
-    [uid],
+    [uid, meta, biometricAvailableState],
   );
 
   const setupPin = useCallback(
@@ -173,15 +370,31 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
       if (!uid) return;
       const alreadySet = !!pinStore.read(uid);
       const hash = await hashPin(uid, pin);
+
+      // Write to localStorage
       pinStore.write(uid, hash);
       metaStore.write(uid, { failedCount: 0, lockoutUntil: 0, lastActiveAt: Date.now() });
+
+      // Initialize in backend
+      try {
+        await initializeUserSecurity(hash, {
+          autoLockMs: meta.autoLockMs,
+          hideBalances: meta.hideBalances,
+          biometricEnabled: meta.biometricEnabled,
+        });
+      } catch (error) {
+        console.error("[setupPin] Failed to initialize backend security:", error);
+        // Continue anyway - will sync on reconnect
+      }
+
       setIsPinSet(true);
       setIsLocked(false);
       setMeta(metaStore.read(uid));
+
       trustCurrentDevice(uid);
       logSecurityEvent(uid, alreadySet ? "pin_changed" : "pin_set");
     },
-    [uid],
+    [uid, meta],
   );
 
   const verifyCurrentPin = useCallback(

@@ -58,6 +58,12 @@ const EVENT_META: Record<SecurityEventType, { label: string; icon: typeof Shield
       icon: Fingerprint,
       color: "text-muted-foreground",
     },
+    offline_unlock: { label: "Unlocked offline", icon: ShieldAlert, color: "text-warn" },
+    offline_biometric_unlock: {
+      label: "Unlocked offline (biometric)",
+      icon: Fingerprint,
+      color: "text-warn",
+    },
   };
 
 // ─── Device icon ──────────────────────────────────────────────────────────────
