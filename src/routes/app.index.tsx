@@ -35,7 +35,6 @@ import { useT } from "@/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrencyConvert } from "@/features/currency/use-exchange-rates";
 import { NotificationBell } from "@/features/notifications/notification-bell";
-import { calculateUserShareOfExpenses } from "@/features/family/family.service";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/app/")({
@@ -64,7 +63,6 @@ function Dashboard() {
     categories,
     bills,
     recommendations,
-    sharedExpenses,
     isLoading,
     range,
   } = useDashboard();
@@ -74,13 +72,10 @@ function Dashboard() {
 
   // ── Derived values (before any early return — Rules of Hooks) ────────────
   const billsTotal = useMemo(() => bills.reduce((s, b) => s + Number(b.amount), 0), [bills]);
-  const sharedExpensesTotal = useMemo(
-    () => calculateUserShareOfExpenses(user?.id ?? '', sharedExpenses),
-    [sharedExpenses, user?.id]
-  );
+  // Groups not part of personal budget - only personal expenses + bills
   const totalSpent = useMemo(
-    () => expenses.reduce((s, x) => s + x.amount, 0) + billsTotal + sharedExpensesTotal,
-    [expenses, billsTotal, sharedExpensesTotal],
+    () => expenses.reduce((s, x) => s + x.amount, 0) + billsTotal,
+    [expenses, billsTotal],
   );
   const series = useMemo(() => buildSeries(expenses, range), [expenses, range]);
   const dist = useMemo(
