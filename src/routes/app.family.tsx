@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  Plus, Users, Crown, Search, Trash2, UserPlus,
+  Plus, Users, Crown, Search, Trash2, Pencil, UserPlus,
   CircleDollarSign, Receipt, CheckCircle2, Trophy,
   ArrowRight, ChevronDown, ChevronUp, Check, X,
   Wallet, TrendingDown, PartyPopper, Settings2, LogOut,
@@ -26,7 +26,7 @@ import {
   rejectFamilyInvite, createFamily, updateFamilyName, deleteFamily,
   removeFamilyMember, leaveFamily, notifyFamilyMembers,
   getUserExpenseGroups, fetchSharedExpenses, addSharedExpense,
-  deleteSharedExpense, fetchFamilySettlements, addFamilySettlement,
+  deleteSharedExpense, updateSharedExpense, fetchFamilySettlements, addFamilySettlement,
   deleteFamilySettlement, calculateMemberBalances, calculateSettlements,
   type UserSearchResult, type ReceivedInvitation,
   type FamilyMemberProfile, type UserFamily,
@@ -183,6 +183,16 @@ function GroupsPage() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: FK.expenses(familyId ?? "") }),
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const updateExpenseMutation = useMutation({
+    mutationFn: ({ expenseId, description, amount, paidBy, spentAt, participantIds, category }: {
+      expenseId: string; description: string; amount: number; paidBy: string; spentAt: string; participantIds: string[]; category?: string;
+    }) => updateSharedExpense(expenseId, familyId!, paidBy, description, amount, participantIds, spentAt, category),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: FK.expenses(familyId ?? "") }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const [editingExpense, setEditingExpense] = useState<SharedExpense | null>(null);
 
   const addSettlementMutation = useMutation({
     mutationFn: ({ fromUserId, toUserId, amount, settledAt, description }: {
@@ -484,6 +494,7 @@ function GroupsPage() {
               <ExpenseCard key={expense.id} expense={expense} memberProfiles={memberProfiles}
                 userId={userId} currency={currency} convert={convert}
                 onDelete={() => deleteExpenseMutation.mutate(expense.id)}
+                onEdit={(expense) => setEditingExpense(expense)}
                 isDeleting={deleteExpenseMutation.isPending}
                 t={t} />
             ))}
@@ -544,6 +555,20 @@ function GroupsPage() {
           addExpenseMutation.mutate({ description, amount, paidBy, spentAt, participantIds, category });
           setOpenAddExpense(false);
         }} />
+
+      <EditExpenseDialog
+        open={!!editingExpense}
+        onClose={() => setEditingExpense(null)}
+        expense={editingExpense}
+        members={memberProfiles}
+        currency={currency}
+        currentUserId={userId}
+        t={t}
+        onSave={(expenseId, description, amount, paidBy, spentAt, participantIds, category) => {
+          updateExpenseMutation.mutate({ expenseId, description, amount, paidBy, spentAt, participantIds, category });
+          setEditingExpense(null);
+        }}
+      />
 
       <AddSettlementDialog open={openAddSettlement} onClose={() => setOpenAddSettlement(false)}
         members={memberProfiles} currency={currency} currentUserId={userId} t={t}
@@ -654,10 +679,10 @@ function PremiumGroupsEmptyState({
 
 // ─── ExpenseCard ───────────────────────────────────────────────────────────
 
-function ExpenseCard({ expense, memberProfiles, userId, currency, convert, onDelete, isDeleting, t }: {
+function ExpenseCard({ expense, memberProfiles, userId, currency, convert, onDelete, onEdit, isDeleting, t }: {
   expense: SharedExpense; memberProfiles: FamilyMemberProfile[];
   userId: string; currency: string; convert: (n: number) => number;
-  onDelete: () => void; isDeleting?: boolean; t: (k: string) => string;
+  onDelete: () => void; onEdit: (expense: SharedExpense) => void; isDeleting?: boolean; t: (k: string) => string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const payer = memberProfiles.find(m => m.user_id === expense.paid_by);
@@ -719,19 +744,28 @@ function ExpenseCard({ expense, memberProfiles, userId, currency, convert, onDel
             })}
           </div>
           {isMyExpense && (
-            <button
-              onClick={() => { if (!confirm(t("groups.expense.delete.confirm"))) return; onDelete(); }}
-              disabled={isDeleting}
-              className={cn("w-full mt-2 flex items-center justify-center gap-1.5 text-[11px] transition py-1",
-                isDeleting ? "text-muted-foreground" : "text-negative hover:text-negative/80"
-              )}
-            >
-              {isDeleting
-                ? <span className="size-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                : <Trash2 className="size-3" />
-              }
-              {isDeleting ? t("common.loading") : t("groups.expense.delete")}
-            </button>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => onEdit(expense)}
+                className="flex-1 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition py-1 border border-border-subtle rounded-lg"
+              >
+                <Pencil className="size-3" />
+                {t("common.edit")}
+              </button>
+              <button
+                onClick={() => { if (!confirm(t("groups.expense.delete.confirm"))) return; onDelete(); }}
+                disabled={isDeleting}
+                className={cn("flex-1 flex items-center justify-center gap-1.5 text-[11px] transition py-1 border border-border-subtle rounded-lg",
+                  isDeleting ? "text-muted-foreground" : "text-negative hover:text-negative/80 border-negative/20"
+                )}
+              >
+                {isDeleting
+                  ? <span className="size-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  : <Trash2 className="size-3" />
+                }
+                {isDeleting ? t("common.loading") : t("groups.expense.delete")}
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -1070,6 +1104,118 @@ function AddSettlementDialog({ open, onClose, members, currency, currentUserId, 
             disabled={!canSave}>
             {t("groups.settlement.add.cta")}
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── EditExpenseDialog ────────────────────────────────────────────────────
+
+function EditExpenseDialog({ open, onClose, expense, members, currency, currentUserId, t, onSave }: {
+  open: boolean; onClose: () => void; expense: SharedExpense | null;
+  members: FamilyMemberProfile[]; currency: string; currentUserId: string;
+  t: (k: string) => string;
+  onSave: (expenseId: string, description: string, amount: number, paidBy: string, spentAt: string, participantIds: string[], category?: string) => void;
+}) {
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [paidBy, setPaidBy] = useState(currentUserId);
+  const [spentAt, setSpentAt] = useState(new Date().toISOString().slice(0, 10));
+  const [category, setCategory] = useState("");
+  const [participants, setParticipants] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (expense && open) {
+      setDescription(expense.description);
+      setAmount(String(expense.amount));
+      setPaidBy(expense.paid_by);
+      setSpentAt(expense.spent_at.slice(0, 10));
+      setCategory(expense.category ?? "");
+      setParticipants(expense.shared_expense_participants?.map(p => p.user_id) ?? []);
+    }
+  }, [expense, open]);
+
+  function toggleParticipant(uid: string) {
+    setParticipants(p => p.includes(uid) ? p.filter(x => x !== uid) : [...p, uid]);
+  }
+
+  function save() {
+    if (!expense) return;
+    const n = Number(amount);
+    if (!description.trim() || !n || n <= 0 || participants.length === 0) {
+      toast.error(t("groups.expense.error.invalid"));
+      return;
+    }
+    onSave(expense.id, description, n, paidBy, spentAt, participants, category);
+    onClose();
+  }
+
+  const perPerson = participants.length > 0 && Number(amount) > 0 ? Number(amount) / participants.length : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{t("groups.expense.edit.title")}</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>{t("groups.expense.description")}</Label>
+            <Input placeholder={t("groups.expense.description.placeholder")} value={description} onChange={e => setDescription(e.target.value)} autoFocus />
+          </div>
+          <div>
+            <Label>{t("groups.expense.amount")} ({currency})</Label>
+            <Input type="number" inputMode="decimal" step="any" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} />
+          </div>
+          <div>
+            <Label>{t("groups.expense.paid_by")}</Label>
+            <select value={paidBy} onChange={e => setPaidBy(e.target.value)}
+              className="w-full h-10 rounded-xl border border-border bg-background px-3 text-sm">
+              {members.map(m => {
+                const isMe = m.user_id === currentUserId;
+                const name = isMe ? t("family.you.label") : (m.first_name ?? m.financial_username ?? "?");
+                return <option key={m.user_id} value={m.user_id}>{name}</option>;
+              })}
+            </select>
+          </div>
+          <div>
+            <Label>{t("groups.expense.when")}</Label>
+            <Input type="date" value={spentAt} onChange={e => setSpentAt(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+          </div>
+          <div>
+            <Label>{t("groups.expense.category")} ({t("common.optional")})</Label>
+            <Input placeholder={t("groups.expense.category.placeholder")} value={category} onChange={e => setCategory(e.target.value)} />
+          </div>
+          <div>
+            <Label className="mb-2 block">{t("groups.expense.split_with")}</Label>
+            {perPerson > 0 && (
+              <p className="text-xs text-muted-foreground mb-2">{money(perPerson, currency)}/ea</p>
+            )}
+            <div className="space-y-2">
+              {members.map(m => {
+                const isMe = m.user_id === currentUserId;
+                const name = isMe ? t("family.you.label") : (m.first_name ?? m.financial_username ?? "?");
+                const checked = participants.includes(m.user_id);
+                return (
+                  <button key={m.user_id} onClick={() => toggleParticipant(m.user_id)}
+                    className={cn("w-full flex items-center justify-between p-3 rounded-xl transition",
+                      checked ? "bg-foreground/8 border border-foreground/20" : "bg-muted border border-transparent")}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("size-7 rounded-full grid place-items-center text-xs font-bold",
+                        checked ? "bg-foreground text-background" : "bg-muted-foreground/20 text-muted-foreground")}>
+                        {name[0]?.toUpperCase()}
+                      </div>
+                      <span className="text-sm">{name}</span>
+                    </div>
+                    {checked && <CheckCircle2 className="size-4 text-foreground" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={save}>{t("common.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -556,6 +556,50 @@ export async function deleteSharedExpense(expenseId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function updateSharedExpense(
+  expenseId: string,
+  familyId: string,
+  paidBy: string,
+  description: string,
+  amount: number,
+  participantIds: string[],
+  spentAt: string,
+  category?: string | null,
+  notes?: string | null,
+): Promise<void> {
+  // Update the expense
+  const { error: expErr } = await supabase
+    .from("shared_expenses")
+    .update({
+      paid_by: paidBy,
+      description: description.trim(),
+      amount,
+      spent_at: spentAt,
+      category: category?.trim() || null,
+      notes: notes?.trim() || null,
+    })
+    .eq("id", expenseId)
+    .eq("family_id", familyId);
+
+  if (expErr) throw new Error(expErr.message);
+
+  // Delete existing participants
+  const { error: delErr } = await supabase
+    .from("shared_expense_participants")
+    .delete()
+    .eq("expense_id", expenseId);
+
+  if (delErr) throw new Error(delErr.message);
+
+  // Insert new participants
+  if (participantIds.length > 0) {
+    const { error: partErr } = await supabase
+      .from("shared_expense_participants")
+      .insert(participantIds.map((uid: string) => ({ expense_id: expenseId, user_id: uid })));
+    if (partErr) throw new Error(partErr.message);
+  }
+}
+
 // ─── Settlements (Ingresos/Pagos) ────────────────────────────────────────────
 
 export async function fetchFamilySettlements(familyId: string): Promise<FamilySettlement[]> {
