@@ -676,3 +676,30 @@ export function calculateSettlements(balances: MemberBalance[]): Settlement[] {
 
   return settlements;
 }
+
+/**
+ * Calculate total amount user owes/spent in shared expenses.
+ * Returns the sum of user's proportional shares (for dashboard calculation).
+ *
+ * @param userId - The user ID to calculate shares for
+ * @param expenses - Array of shared expenses with participants
+ * @returns Total amount the user owes (their proportional share across all expenses)
+ */
+export function calculateUserShareOfExpenses(
+  userId: string,
+  expenses: SharedExpense[]
+): number {
+  let total = 0;
+
+  for (const expense of expenses) {
+    const participants = expense.shared_expense_participants ?? [];
+    const isParticipant = participants.some(p => p.user_id === userId);
+
+    if (isParticipant && participants.length > 0) {
+      const share = expense.amount / participants.length;
+      total += share;
+    }
+  }
+
+  return total;
+}
