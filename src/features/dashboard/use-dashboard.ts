@@ -9,7 +9,6 @@ import { fetchExpenses, fetchPrevMonthTotal } from "@/features/expenses/expenses
 import {
   fetchDashboardGoals,
   fetchDashboardProfile,
-  fetchDashboardSharedExpenses,
   fetchMonthIncomeTotal,
   fetchRecommendations,
   generateInsights,
@@ -101,18 +100,10 @@ export function useDashboard() {
         staleTime: 60_000,
         placeholderData: keepPreviousData,
       },
-      // 8 — Shared expenses (for dashboard calculation)
-      {
-        queryKey: ['sharedExpenses', uid, 'dashboard', range.start, range.end],
-        queryFn: () => fetchDashboardSharedExpenses(uid, range.start, range.end),
-        enabled: !!uid,
-        staleTime: 60_000,
-        placeholderData: keepPreviousData,
-      },
     ],
   });
 
-  const [profileQ, expensesQ, prevTotalQ, incomeTotalQ, categoriesQ, billsQ, goalsQ, recsQ, sharedExpensesQ] =
+  const [profileQ, expensesQ, prevTotalQ, incomeTotalQ, categoriesQ, billsQ, goalsQ, recsQ] =
     results;
 
   return {
@@ -124,7 +115,6 @@ export function useDashboard() {
     bills: billsQ.data ?? [],
     goals: goalsQ.data ?? [],
     recommendations: recsQ.data ?? [],
-    sharedExpenses: sharedExpensesQ.data ?? [],
     // Show the skeleton only until the above-the-fold data is ready.
     isLoading: profileQ.isLoading || expensesQ.isLoading || incomeTotalQ.isLoading,
     isError: results.some((r) => r.isError),
