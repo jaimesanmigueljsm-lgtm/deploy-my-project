@@ -19,9 +19,10 @@ import { fetchExpenses } from "@/features/expenses/expenses.service";
 import { fetchIncomes, fetchBills, fetchCategories } from "@/features/budget/budget.service";
 import { fetchInvestments } from "@/features/finances/finances.service";
 import { fetchSavingsAccounts } from "@/features/savings/savings.service";
-import { fetchDashboardGoals, fetchDashboardProfile } from "./dashboard.service";
+import { fetchDashboardGoals, fetchDashboardProfile, fetchDashboardSharedExpenses } from "./dashboard.service";
 import { buildEngineContext, runFinancialEngine } from "@/core/finance";
 import type { FinancialEngineOutput } from "@/core/finance";
+import type { SharedExpense } from "@/features/family/family.service";
 
 function sixMonthWindowStart(): string {
   const d = new Date();
@@ -99,23 +100,59 @@ export function useFinancialEngine(): {
         enabled: !!uid,
         staleTime: 5 * 60_000,
       },
+      // 8 — Shared expenses (6-month window for forecast)
+      {
+        queryKey: ['sharedExpenses', uid, 'engine', windowStart, end],
+        queryFn: () => fetchDashboardSharedExpenses(uid, windowStart, end),
+        enabled: !!uid,
+        staleTime: 5 * 60_000,
+      },
     ],
   });
 
-  const [profileQ, expensesQ, incomesQ, billsQ, goalsQ, investmentsQ, categoriesQ, savingsQ] =
+  const [profileQ, expensesQ, incomesQ, billsQ, goalsQ, investmentsQ, categoriesQ, savingsQ, sharedExpensesQ] =
     results;
 
   const output = useMemo((): FinancialEngineOutput | null => {
     const profile = profileQ.data;
     const expenses = expensesQ.data;
     const incomes = incomesQ.data;
+    const sharedExpenses = sharedExpensesQ.data ?? [];
 
     // Engine requires at minimum: profile + expense history + income data
     if (!profile || !expenses || !incomes) return null;
 
+    // Convert shared expenses to expense format using cash flow logic
+    const sharedExpensesToInclude = sharedExpenses.map((se: SharedExpense) => {
+      const participants = se.shared_expense_participants ?? [];
+      const isPayer = se.paid_by === uid;
+      const isParticipant = participants.some(p => p.user_id === uid);
+
+      // Calculate amount using cash flow perspective
+      let effectiveAmount = 0;
+      if (isPayer) {
+        effectiveAmount = se.amount; // Full amount if user paid
+      } else if (isParticipant && participants.length > 0) {
+        effectiveAmount = se.amount / participants.length; // Share if user participates
+      }
+
+      // Convert to expense format (snake_case for buildEngineContext)
+      return {
+        id: se.id,
+        amount: effectiveAmount,
+        spent_at: se.spent_at,
+        category_id: null,
+        kind: 'variable' as const,
+        recurring: false,
+      };
+    }).filter(e => e.amount > 0); // Only include if user has a share
+
+    // Merge personal and shared expenses
+    const allExpenses = [...expenses, ...sharedExpensesToInclude];
+
     const ctx = buildEngineContext({
       profile,
-      expenses,
+      expenses: allExpenses,
       incomes,
       bills: billsQ.data ?? [],
       goals: goalsQ.data ?? [],
@@ -134,6 +171,8 @@ export function useFinancialEngine(): {
     investmentsQ.data,
     categoriesQ.data,
     savingsQ.data,
+    sharedExpensesQ.data,
+    uid,
   ]);
 
   return {

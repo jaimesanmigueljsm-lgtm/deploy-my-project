@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SectionError } from "@/components/section-error";
 import { useMemo, memo, useState } from "react";
 import { money, monthLabel, monthRange, shortMoney } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import {
   Sparkles,
   TrendingUp,
@@ -126,7 +127,10 @@ function Dashboard() {
       <div className="card-soft p-5 gradient-hero relative overflow-hidden">
         <div>
           <p className="text-xs text-muted-foreground">{t("dashboard.available")}</p>
-          <div className="mt-1 balance-display num-display text-[44px] font-semibold leading-tight">
+          <div className={cn(
+            "mt-1 balance-display num-display text-[44px] font-semibold leading-tight",
+            remaining >= 0 ? "text-positive" : "text-negative"
+          )}>
             {money(convert(remaining), currency)}
           </div>
           <div className="mt-2 flex items-center gap-3 text-xs">
