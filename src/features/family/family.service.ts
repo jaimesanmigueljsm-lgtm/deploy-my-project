@@ -747,3 +747,56 @@ export function calculateUserShareOfExpenses(
 
   return total;
 }
+
+/**
+ * Calculate total net debt across ALL user's families.
+ * Returns the amount user owes (negative balances summed).
+ * Ignores positive balances (conservative forecast approach).
+ *
+ * Used by financial engine to include group obligations in forecast.
+ *
+ * @param userId - The user ID to calculate debt for
+ * @returns Total amount the user owes across all families (always >= 0)
+ */
+export async function calculateUserTotalDebt(userId: string): Promise<number> {
+  // 1. Get all families user belongs to
+  const { data: memberships } = await supabase
+    .from('family_members')
+    .select('family_id')
+    .eq('user_id', userId);
+
+  if (!memberships || memberships.length === 0) return 0;
+
+  // 2. Calculate balance for each family
+  let totalDebt = 0;
+
+  for (const membership of memberships) {
+    try {
+      const familyId = membership.family_id;
+
+      // Fetch family data needed for balance calculation
+      const [members, expenses, settlements] = await Promise.all([
+        getFamilyMembersProfiles(familyId),
+        fetchSharedExpenses(familyId),
+        fetchFamilySettlements(familyId),
+      ]);
+
+      // Calculate balances for this family
+      const balances = calculateMemberBalances(members, expenses, settlements);
+      const userBalance = balances.find(b => b.user_id === userId);
+
+      // Negative balance = user owes money
+      // Add to total debt (absolute value since we're summing debts)
+      if (userBalance && userBalance.balance < 0) {
+        totalDebt += Math.abs(userBalance.balance);
+      }
+      // Positive balance = user is owed money
+      // Don't add to forecast (conservative approach - don't count on it)
+    } catch (error) {
+      // If one family fails, continue with others
+      console.error(`Failed to calculate balance for family ${membership.family_id}:`, error);
+    }
+  }
+
+  return totalDebt;
+}
