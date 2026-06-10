@@ -611,6 +611,117 @@ export type Database = {
           },
         ]
       }
+      shared_expenses: {
+        Row: {
+          id: string
+          family_id: string
+          paid_by: string
+          description: string
+          amount: number
+          category: string | null
+          notes: string | null
+          spent_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          family_id: string
+          paid_by: string
+          description: string
+          amount: number
+          category?: string | null
+          notes?: string | null
+          spent_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          family_id?: string
+          paid_by?: string
+          description?: string
+          amount?: number
+          category?: string | null
+          notes?: string | null
+          spent_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_expenses_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_expense_participants: {
+        Row: {
+          expense_id: string
+          user_id: string
+        }
+        Insert: {
+          expense_id: string
+          user_id: string
+        }
+        Update: {
+          expense_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_expense_participants_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "shared_expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_settlements: {
+        Row: {
+          id: string
+          family_id: string
+          from_user_id: string
+          to_user_id: string
+          amount: number
+          description: string | null
+          settled_at: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          family_id: string
+          from_user_id: string
+          to_user_id: string
+          amount: number
+          description?: string | null
+          settled_at?: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          family_id?: string
+          from_user_id?: string
+          to_user_id?: string
+          amount?: number
+          description?: string | null
+          settled_at?: string
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_settlements_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trusted_devices: {
         Row: {
           id: string

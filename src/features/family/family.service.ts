@@ -528,8 +528,7 @@ export async function addSharedExpense(
   category?: string | null,
   notes?: string | null,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: expense, error: expErr } = await (supabase as any)
+  const { data: expense, error: expErr } = await supabase
     .from("shared_expenses")
     .insert({
       family_id: familyId,
@@ -545,8 +544,7 @@ export async function addSharedExpense(
   if (expErr) throw new Error(expErr.message);
 
   if (participantIds.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: partErr } = await (supabase as any)
+    const { error: partErr } = await supabase
       .from("shared_expense_participants")
       .insert(participantIds.map((uid: string) => ({ expense_id: expense.id, user_id: uid })));
     if (partErr) throw new Error(partErr.message);
@@ -554,24 +552,21 @@ export async function addSharedExpense(
 }
 
 export async function deleteSharedExpense(expenseId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from("shared_expenses").delete().eq("id", expenseId);
+  const { error } = await supabase.from("shared_expenses").delete().eq("id", expenseId);
   if (error) throw new Error(error.message);
 }
 
 // ─── Settlements (Ingresos/Pagos) ────────────────────────────────────────────
 
 export async function fetchFamilySettlements(familyId: string): Promise<FamilySettlement[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("family_settlements")
     .select("*")
     .eq("family_id", familyId)
     .order("settled_at", { ascending: false })
     .limit(50);
   if (error) return []; // graceful if table doesn't exist yet
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ((data ?? []) as any[]).map((s) => ({ ...s, amount: Number(s.amount) })) as FamilySettlement[];
+  return (data ?? []).map((s) => ({ ...s, amount: Number(s.amount) })) as FamilySettlement[];
 }
 
 export async function addFamilySettlement(
@@ -582,8 +577,10 @@ export async function addFamilySettlement(
   settledAt: string,
   description?: string | null,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  const user = (await supabase.auth.getUser()).data.user;
+  if (!user) throw new Error("User not authenticated");
+
+  const { error } = await supabase
     .from("family_settlements")
     .insert({
       family_id: familyId,
@@ -592,14 +589,13 @@ export async function addFamilySettlement(
       amount,
       settled_at: settledAt,
       description: description?.trim() || null,
-      created_by: (await supabase.auth.getUser()).data.user?.id,
+      created_by: user.id,
     });
   if (error) throw new Error(error.message);
 }
 
 export async function deleteFamilySettlement(settlementId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from("family_settlements").delete().eq("id", settlementId);
+  const { error } = await supabase.from("family_settlements").delete().eq("id", settlementId);
   if (error) throw new Error(error.message);
 }
 
