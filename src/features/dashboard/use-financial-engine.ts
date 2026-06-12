@@ -20,7 +20,7 @@ import { fetchIncomes, fetchBills, fetchCategories } from "@/features/budget/bud
 import { fetchInvestments } from "@/features/finances/finances.service";
 import { fetchSavingsAccounts } from "@/features/savings/savings.service";
 import { fetchDashboardGoals, fetchDashboardProfile } from "./dashboard.service";
-import { calculateUserTotalDebt } from "@/features/family/family.service";
+import { calculateUserGroupNetBalance } from "@/features/family/family.service";
 import { buildEngineContext, runFinancialEngine } from "@/core/finance";
 import type { FinancialEngineOutput } from "@/core/finance";
 
@@ -100,54 +100,56 @@ export function useFinancialEngine(): {
         enabled: !!uid,
         staleTime: 5 * 60_000,
       },
-      // 8 — User's total group debt (net balance across all families)
+      // 8 — User's signed net balance across all groups (positive = owed to user,
+      //     negative = user owes). Consumed ONLY by the forecast engine for the
+      //     "Previsión de cierre" scorecard — health score, spending intelligence
+      //     and recommendations stay decoupled from Groups by design.
       {
-        queryKey: ['groupDebt', uid],
-        queryFn: () => calculateUserTotalDebt(uid),
+        queryKey: ['groupNetBalance', uid],
+        queryFn: () => calculateUserGroupNetBalance(uid),
         enabled: !!uid,
-        staleTime: 2 * 60_000, // Shorter stale time - debt changes frequently
+        staleTime: 2 * 60_000, // Shorter stale time - balance changes frequently
       },
     ],
   });
 
-  const [profileQ, expensesQ, incomesQ, billsQ, goalsQ, investmentsQ, categoriesQ, savingsQ, groupDebtQ] =
-    results;
+  const [
+    profileQ,
+    expensesQ,
+    incomesQ,
+    billsQ,
+    goalsQ,
+    investmentsQ,
+    categoriesQ,
+    savingsQ,
+    groupNetBalanceQ,
+  ] = results;
 
   const output = useMemo((): FinancialEngineOutput | null => {
     const profile = profileQ.data;
     const expenses = expensesQ.data;
     const incomes = incomesQ.data;
-    const groupDebt = groupDebtQ.data ?? 0;
+    const groupNetBalance = groupNetBalanceQ.data ?? 0;
 
     // Engine requires at minimum: profile + expense history + income data
     if (!profile || !expenses || !incomes) return null;
 
-    // Add group debt as synthetic expense if user owes money
-    // This way forecast includes the obligation without affecting personal budget
-    let expensesWithDebt = [...expenses];
-    if (groupDebt > 0) {
-      expensesWithDebt.push({
-        id: '__group_debt__',
-        user_id: uid,
-        amount: groupDebt,
-        description: 'Group debt obligation',
-        spent_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        category_id: null,
-        kind: 'variable',
-        recurring: false,
-      });
-    }
-
+    // Pass the group net balance as a dedicated field on the context.
+    // This replaces an earlier implementation that injected a synthetic
+    // "__group_debt__" expense into the expenses array — that hack worked for
+    // the forecast tile but polluted spending-intel category trends and could
+    // distort recommendations and the health score.  The dedicated field keeps
+    // Groups fully decoupled from every engine except the forecast.
     const ctx = buildEngineContext({
       profile,
-      expenses: expensesWithDebt,  // Personal expenses + synthetic debt expense
+      expenses,                            // Personal expenses ONLY — never group entries
       incomes,
       bills: billsQ.data ?? [],
       goals: goalsQ.data ?? [],
       investments: investmentsQ.data ?? [],
       categories: categoriesQ.data ?? [],
       savingsAccounts: savingsQ.data ?? [],
+      groupNetBalance,                     // Signed: positive = others owe me, negative = I owe
     });
 
     return runFinancialEngine(ctx);
@@ -160,8 +162,7 @@ export function useFinancialEngine(): {
     investmentsQ.data,
     categoriesQ.data,
     savingsQ.data,
-    groupDebtQ.data,  // Changed from sharedExpensesQ
-    uid,
+    groupNetBalanceQ.data,
   ]);
 
   return {

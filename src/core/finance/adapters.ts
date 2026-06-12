@@ -210,6 +210,13 @@ export function buildEngineContext(params: {
   investments: RawInvestment[];
   categories: RawCategory[];
   savingsAccounts?: RawSavingsAccount[];
+  /**
+   * Signed net balance across the user's groups.
+   * Positive = others owe the user, negative = user owes others, 0 = settled/no groups.
+   * Defaults to 0 when the caller doesn't pass it so any caller that pre-dates the
+   * Groups feature stays backward-compatible without producing a NaN forecast.
+   */
+  groupNetBalance?: number;
   asOf?: Date;
 }): FinancialEngineContext {
   return {
@@ -221,6 +228,7 @@ export function buildEngineContext(params: {
     investments: adaptInvestments(params.investments),
     categories: adaptCategories(params.categories),
     savingsAccounts: adaptSavingsAccounts(params.savingsAccounts ?? []),
+    groupNetBalance: Number(params.groupNetBalance ?? 0),
     asOf: params.asOf ?? new Date(),
   };
 }

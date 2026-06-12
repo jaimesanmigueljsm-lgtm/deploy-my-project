@@ -749,16 +749,24 @@ export function calculateUserShareOfExpenses(
 }
 
 /**
- * Calculate total net debt across ALL user's families.
- * Returns the amount user owes (negative balances summed).
- * Ignores positive balances (conservative forecast approach).
+ * Calculate the user's SIGNED net balance across ALL their groups (families).
  *
- * Used by financial engine to include group obligations in forecast.
+ * Returned semantics:
+ *   - Positive value → on aggregate, other members owe money to the user
+ *   - Negative value → on aggregate, the user owes money to other members
+ *   - Zero           → fully settled (or user has no groups)
  *
- * @param userId - The user ID to calculate debt for
- * @returns Total amount the user owes across all families (always >= 0)
+ * Used EXCLUSIVELY by the Budget Forecast engine to integrate group obligations
+ * into the projected closing balance shown in the Home "Previsión de cierre"
+ * scorecard. This number must NEVER reach the Home hero ("Disponible este mes"),
+ * the Budget tab, the Analytics tab, the recommendations engine, the
+ * spending-intel engine, or the health-score engine — those reflect the user's
+ * personal financial state only.
+ *
+ * @param userId - The user ID
+ * @returns Signed net balance (positive = owed to user, negative = user owes)
  */
-export async function calculateUserTotalDebt(userId: string): Promise<number> {
+export async function calculateUserGroupNetBalance(userId: string): Promise<number> {
   // 1. Get all families user belongs to
   const { data: memberships } = await supabase
     .from('family_members')
@@ -767,8 +775,8 @@ export async function calculateUserTotalDebt(userId: string): Promise<number> {
 
   if (!memberships || memberships.length === 0) return 0;
 
-  // 2. Calculate balance for each family
-  let totalDebt = 0;
+  // 2. Sum the user's per-family signed balance
+  let netBalance = 0;
 
   for (const membership of memberships) {
     try {
@@ -781,22 +789,21 @@ export async function calculateUserTotalDebt(userId: string): Promise<number> {
         fetchFamilySettlements(familyId),
       ]);
 
-      // Calculate balances for this family
+      // Calculate balances for this family (same logic the Groups page uses)
       const balances = calculateMemberBalances(members, expenses, settlements);
       const userBalance = balances.find(b => b.user_id === userId);
 
-      // Negative balance = user owes money
-      // Add to total debt (absolute value since we're summing debts)
-      if (userBalance && userBalance.balance < 0) {
-        totalDebt += Math.abs(userBalance.balance);
+      // Use the SIGNED balance — both directions matter for an accurate forecast.
+      // (Previous implementation only counted debts and ignored money owed to the
+      // user, which under-projected the closing balance.)
+      if (userBalance) {
+        netBalance += userBalance.balance;
       }
-      // Positive balance = user is owed money
-      // Don't add to forecast (conservative approach - don't count on it)
     } catch (error) {
       // If one family fails, continue with others
       console.error(`Failed to calculate balance for family ${membership.family_id}:`, error);
     }
   }
 
-  return totalDebt;
+  return netBalance;
 }

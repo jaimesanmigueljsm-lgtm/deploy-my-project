@@ -114,6 +114,17 @@ export interface FinancialEngineContext {
   categories: EngineCategory[];
   /** All savings accounts (checking, savings, emergency, etc.) */
   savingsAccounts: EngineSavingsAccount[];
+  /**
+   * Signed net balance across all the user's groups (families).
+   *   - Positive  → others owe the user on aggregate (will raise closing balance)
+   *   - Negative  → the user owes others on aggregate (will lower closing balance)
+   *   - 0         → fully settled or user has no groups
+   *
+   * CONSUMED ONLY BY the forecast engine for `projectedClosingBalanceWithGroup`.
+   * Health score, spending intelligence, recommendations and every other engine
+   * IGNORE this field by design — Groups are decoupled from personal-budget views.
+   */
+  groupNetBalance: number;
   /** Reference date for all time-sensitive calculations */
   asOf: Date;
 }
@@ -233,8 +244,21 @@ export interface BudgetForecast {
   /**
    * Simple closing balance: income − already spent − pending bills.
    * More conservative than projectedSavings — doesn't extrapolate variable pace.
+   *
+   * PERSONAL-ONLY: never includes the user's group net balance. Consumed by
+   * recommendations, health score and other engines that must remain decoupled
+   * from group activity.
    */
   projectedClosingBalance: number;
+  /**
+   * Same as projectedClosingBalance but adjusted by the user's signed group net
+   * balance (positive raises it, negative lowers it).
+   *
+   * CONSUMED ONLY BY the Home "Previsión de cierre" scorecard. No other UI or
+   * engine reads this — the personal budget views must show
+   * `projectedClosingBalance` to stay decoupled from Groups.
+   */
+  projectedClosingBalanceWithGroup: number;
 
   // ── Actionable ────────────────────────────────────────────────────────────
   /** (available_variable_budget - current_variable_spend) / daysRemaining */

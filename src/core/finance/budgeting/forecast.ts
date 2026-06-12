@@ -100,6 +100,15 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
   // income − already spent − pending fixed bills (does not pace-project variable)
   const projectedClosingBalance = expectedMonthlyIncome - currentSpend - pendingFixedCosts;
 
+  // ── Group-adjusted closing balance ───────────────────────────────────────
+  // Adds the user's signed net balance with all their groups.
+  //   - Positive groupNetBalance (others owe me) → raises the projected close
+  //   - Negative groupNetBalance (I owe others)  → lowers the projected close
+  // Surfaced ONLY in the Home "Previsión de cierre" scorecard. No other engine
+  // reads this — Health Score, Spending Intelligence and Recommendations all
+  // keep operating off `projectedClosingBalance` (the personal-only value).
+  const projectedClosingBalanceWithGroup = projectedClosingBalance + ctx.groupNetBalance;
+
   // ── Confidence based on elapsed days ─────────────────────────────────────
   const confidence =
     daysElapsed < MIN_DAYS_FOR_CONFIDENT_FORECAST
@@ -122,6 +131,7 @@ export function computeBudgetForecast(ctx: FinancialEngineContext): BudgetForeca
     projectedOverrun,
     overrunProbability,
     projectedClosingBalance,
+    projectedClosingBalanceWithGroup,
     safeToSpendPerDay,
     safeToSpendToday,
     variableBudgetRemaining,
