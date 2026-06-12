@@ -546,9 +546,3 @@ export function DividerLine({ label }: { label?: string } = {}) {
   }
   return <div className="h-px bg-border-subtle my-1" />;
 }
-
-// ─── Re-exports ──────────────────────────────────────────────────────────────
-// Keeps the single import path `@/components/nest` working for new components
-// extracted into their own files.
-
-export { UserAvatarLink } from "./user-avatar-link";
