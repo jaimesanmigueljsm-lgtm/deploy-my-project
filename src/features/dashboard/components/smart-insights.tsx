@@ -38,6 +38,7 @@ const TONE_ICON_CLASS: Record<InsightTone, string> = {
 function buildInsights(intel: SpendingIntelligence, t: (k: string) => string): InsightItem[] {
   const items: InsightItem[] = [];
 
+  // 1. Top anomalies (most actionable, max 2)
   for (const anomaly of intel.spendingAnomalies.slice(0, 2)) {
     const tone: InsightTone = anomaly.severity === "high" ? "warn" : "sky";
     items.push({
@@ -51,7 +52,41 @@ function buildInsights(intel: SpendingIntelligence, t: (k: string) => string): I
     });
   }
 
-  if (intel.weekendSpendingRatio > 1.5) {
+  // 2. Single fastest-growing category (always show if data exists — even modest
+  //    growth is useful context. The warning tone only triggers when growth is
+  //    aggressive (> 50%) so the user can scan severity at a glance.)
+  const topGrowing = intel.topGrowingCategories[0];
+  if (topGrowing && topGrowing.changeRatio > 0.05) {
+    items.push({
+      id: "topgrowing-category",
+      tone: topGrowing.changeRatio > 0.5 ? "warn" : "sky",
+      icon: <Zap className="size-4" />,
+      title: t("insights.topgrowing.title")
+        .replace("{cat}", topGrowing.categoryName)
+        .replace("{pct}", String(Math.round(topGrowing.changeRatio * 100))),
+      body: t("insights.topgrowing.body"),
+    });
+  }
+
+  // 3. Top shrinking category (celebrate progress when the user has reduced
+  //    something meaningfully — at least 10% drop).
+  const topShrinking = intel.topShrinkingCategories[0];
+  if (topShrinking && topShrinking.changeRatio < -0.1) {
+    items.push({
+      id: "topshrinking-category",
+      tone: "mint",
+      icon: <TrendingDown className="size-4" />,
+      title: t("insights.topshrinking.title")
+        .replace("{cat}", topShrinking.categoryName)
+        .replace("{pct}", String(Math.round(Math.abs(topShrinking.changeRatio) * 100))),
+      body: t("insights.topshrinking.body"),
+    });
+  }
+
+  // 4. Weekend pattern — threshold lowered from 1.5 to 1.3 so the card surfaces
+  //    for the much larger share of users whose weekends are noticeably (but
+  //    not dramatically) more expensive than weekdays.
+  if (intel.weekendSpendingRatio > 1.3) {
     items.push({
       id: "weekend-pattern",
       tone: "violet",
@@ -61,7 +96,8 @@ function buildInsights(intel: SpendingIntelligence, t: (k: string) => string): I
     });
   }
 
-  if (intel.monthEndConcentration > 0.4) {
+  // 5. Month-end concentration — threshold lowered from 0.4 to 0.3.
+  if (intel.monthEndConcentration > 0.3) {
     items.push({
       id: "month-end-concentration",
       tone: "sky",
@@ -74,6 +110,8 @@ function buildInsights(intel: SpendingIntelligence, t: (k: string) => string): I
     });
   }
 
+  // 6. Trajectory verdict — ALWAYS push one of the three so the section never
+  //    feels empty. Stable is the new third branch.
   if (intel.spendingTrajectory === "deteriorating") {
     items.push({
       id: "trajectory-deteriorating",
@@ -93,16 +131,16 @@ function buildInsights(intel: SpendingIntelligence, t: (k: string) => string): I
       title: t("insights.traj.good.title"),
       body: t("insights.traj.good.body"),
     });
-  }
-
-  if (intel.highGrowthCategories.length > 0) {
-    const cats = intel.highGrowthCategories.slice(0, 2).join(", ");
+  } else {
     items.push({
-      id: "high-growth-categories",
+      id: "trajectory-stable",
       tone: "sky",
-      icon: <Zap className="size-4" />,
-      title: t("insights.highgrowth.title").replace("{cats}", cats),
-      body: t("insights.highgrowth.body"),
+      icon: <TrendingDown className="size-4" />,
+      title: t("insights.traj.stable.title"),
+      body: t("insights.traj.stable.body").replace(
+        "{pct}",
+        (intel.totalSpendMoMChange * 100).toFixed(1),
+      ),
     });
   }
 

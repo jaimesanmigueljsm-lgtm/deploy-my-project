@@ -345,8 +345,11 @@ function Analytics() {
         )}
       </section>
 
-      {/* Financial health + signals + recommendations — lazy render until in view */}
-      <div ref={healthInView.ref}>
+      {/* Financial health + patterns + recommendations — lazy render until in view.
+          space-y-5 inside the wrapper guarantees the three sections breathe; without
+          it they collapsed together because the parent's space-y only applies to
+          its own direct children. */}
+      <div ref={healthInView.ref} className="space-y-5">
         {healthInView.visible && (
           <>
             <section>
@@ -360,7 +363,10 @@ function Analytics() {
 
             {(engineLoading || (engine && engine.spendingIntelligence)) && (
               <section>
-                <SectionHeader title={t("analytics.section.signals")} />
+                <SectionHeader
+                  title={t("analytics.section.patterns")}
+                  subtitle={t("analytics.section.patterns.sub")}
+                />
                 {engineLoading || !engine ? (
                   <SmartInsightsSkeleton />
                 ) : (
@@ -369,22 +375,27 @@ function Analytics() {
               </section>
             )}
 
-            {(engineLoading || (engine && engine.recommendations.length > 0)) && (
-              <section>
-                <SectionHeader
-                  title={t("dashboard.section.recommendations")}
-                  subtitle={t("dashboard.section.recommendations.sub.engine")}
-                />
-                {engineLoading || !engine ? (
-                  <RecommendationsSkeleton />
-                ) : (
-                  <RecommendationCards
-                    recommendations={engine.recommendations}
-                    currency={currency}
+            {/* Engine recommendations — filter out the "investments" category since
+                Nooly hasn't introduced an investments feature yet. Once it ships,
+                drop the filter and the cards will surface automatically. */}
+            {(() => {
+              const visibleRecs =
+                engine?.recommendations.filter((r) => r.category !== "investments") ?? [];
+              if (!engineLoading && visibleRecs.length === 0) return null;
+              return (
+                <section>
+                  <SectionHeader
+                    title={t("analytics.section.recommendations")}
+                    subtitle={t("analytics.section.recommendations.sub")}
                   />
-                )}
-              </section>
-            )}
+                  {engineLoading || !engine ? (
+                    <RecommendationsSkeleton />
+                  ) : (
+                    <RecommendationCards recommendations={visibleRecs} currency={currency} />
+                  )}
+                </section>
+              );
+            })()}
           </>
         )}
       </div>

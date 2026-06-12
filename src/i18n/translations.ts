@@ -341,6 +341,10 @@ const en: Dict = {
   "analytics.net.label": "Net result",
   "analytics.section.incomeVsExpenses": "Income vs. expenses",
   "analytics.section.signals": "Spending signals",
+  "analytics.section.patterns": "Patterns detected",
+  "analytics.section.patterns.sub": "Trends and behaviours in your spending",
+  "analytics.section.recommendations": "Recommendations for you",
+  "analytics.section.recommendations.sub": "How to improve your spending habits",
   "analytics.section.healthDetail": "Health analysis",
   "analytics.risk.none": "No risk signals detected.",
   "analytics.risk.action": "Action",
@@ -553,6 +557,15 @@ const en: Dict = {
   "insights.traj.bad.body": "Month-over-month change: +{pct}%. Review your top growing categories.",
   "insights.traj.good.title": "Spending is below your 3-month average — great momentum",
   "insights.traj.good.body": "Keep it up. Consistent lower spending adds up to real savings.",
+  "insights.traj.stable.title": "Spending is stable",
+  "insights.traj.stable.body":
+    "Month-over-month change: {pct}%. You're tracking close to your 3-month average.",
+  "insights.topgrowing.title": "{cat} grew {pct}% this month",
+  "insights.topgrowing.body":
+    "Your single fastest-growing category. Open Budget to see what changed.",
+  "insights.topshrinking.title": "{cat} dropped {pct}% this month",
+  "insights.topshrinking.body":
+    "Nice work — sustained reductions in a category compound over the year.",
   "insights.highgrowth.title": "{cats} spending grew 20%+ vs last month",
   "insights.highgrowth.body":
     "These categories are growing faster than usual. Check if these are spikes or a new trend.",
@@ -1380,6 +1393,10 @@ const es: Dict = {
   "analytics.net.label": "Resultado neto",
   "analytics.section.incomeVsExpenses": "Ingresos vs. gastos",
   "analytics.section.signals": "Señales de gasto",
+  "analytics.section.patterns": "Patrones detectados",
+  "analytics.section.patterns.sub": "Tendencias y comportamientos en tus gastos",
+  "analytics.section.recommendations": "Recomendaciones para ti",
+  "analytics.section.recommendations.sub": "Cómo mejorar tus patrones de gasto",
   "analytics.section.healthDetail": "Análisis de salud",
   "analytics.risk.none": "Sin señales de riesgo detectadas.",
   "analytics.risk.action": "Acción",
@@ -1614,6 +1631,15 @@ const es: Dict = {
     "El gasto está por debajo de tu media de los últimos 3 meses — buen ritmo",
   "insights.traj.good.body":
     "Sigue así. Un gasto consistentemente menor se traduce en ahorros reales.",
+  "insights.traj.stable.title": "Tu gasto es estable",
+  "insights.traj.stable.body":
+    "Variación mensual: {pct}%. Estás muy cerca de tu media de los últimos 3 meses.",
+  "insights.topgrowing.title": "{cat} creció {pct}% este mes",
+  "insights.topgrowing.body":
+    "Es la categoría que más sube. Abre Presupuesto para ver qué ha cambiado.",
+  "insights.topshrinking.title": "{cat} bajó {pct}% este mes",
+  "insights.topshrinking.body":
+    "Buen trabajo — las reducciones sostenidas en una categoría suman mucho al año.",
   "insights.highgrowth.title": "El gasto en {cats} creció más de un 20% respecto al mes anterior",
   "insights.highgrowth.body":
     "Estas categorías crecen más rápido de lo habitual. Comprueba si son picos puntuales o una nueva tendencia.",
@@ -2431,6 +2457,19 @@ const fr: Dict = {
   "analytics.net.label": "Résultat net",
   "analytics.section.incomeVsExpenses": "Revenus vs. dépenses",
   "analytics.section.signals": "Signaux de dépenses",
+  "analytics.section.patterns": "Modèles détectés",
+  "analytics.section.patterns.sub": "Tendances et comportements dans vos dépenses",
+  "analytics.section.recommendations": "Recommandations pour vous",
+  "analytics.section.recommendations.sub": "Comment améliorer vos habitudes de dépense",
+  "insights.traj.stable.title": "Vos dépenses sont stables",
+  "insights.traj.stable.body":
+    "Variation mensuelle : {pct}%. Vous suivez de près votre moyenne sur 3 mois.",
+  "insights.topgrowing.title": "{cat} a augmenté de {pct}% ce mois",
+  "insights.topgrowing.body":
+    "Votre catégorie qui progresse le plus. Ouvrez Budget pour voir ce qui a changé.",
+  "insights.topshrinking.title": "{cat} a baissé de {pct}% ce mois",
+  "insights.topshrinking.body":
+    "Bon travail — des réductions soutenues dans une catégorie s'accumulent sur l'année.",
   "analytics.section.healthDetail": "Analyse de santé",
   "analytics.risk.none": "Aucun signal de risque détecté.",
   "analytics.risk.action": "Action",
@@ -4734,6 +4773,19 @@ const it: Dict = {
   "analytics.net.label": "Risultato netto",
   "analytics.section.incomeVsExpenses": "Entrate vs. uscite",
   "analytics.section.signals": "Segnali di spesa",
+  "analytics.section.patterns": "Modelli rilevati",
+  "analytics.section.patterns.sub": "Tendenze e comportamenti nelle tue spese",
+  "analytics.section.recommendations": "Raccomandazioni per te",
+  "analytics.section.recommendations.sub": "Come migliorare le tue abitudini di spesa",
+  "insights.traj.stable.title": "La tua spesa è stabile",
+  "insights.traj.stable.body":
+    "Variazione mensile: {pct}%. Sei vicino alla tua media degli ultimi 3 mesi.",
+  "insights.topgrowing.title": "{cat} è cresciuta del {pct}% questo mese",
+  "insights.topgrowing.body":
+    "La tua categoria in maggiore crescita. Apri Budget per vedere cosa è cambiato.",
+  "insights.topshrinking.title": "{cat} è scesa del {pct}% questo mese",
+  "insights.topshrinking.body":
+    "Ottimo lavoro — riduzioni costanti in una categoria si sommano nell'anno.",
   "analytics.section.healthDetail": "Analisi della salute",
   "analytics.risk.none": "Nessun segnale di rischio rilevato.",
   "analytics.risk.action": "Azione",
