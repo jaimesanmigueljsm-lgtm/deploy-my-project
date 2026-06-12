@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SectionHeader, EmptyState, CategoryIcon } from "@/components/nest";
+import { SectionHeader, EmptyState, CategoryIcon, UserAvatarLink } from "@/components/nest";
 import {
   useBudgetData,
   useAddBill,
@@ -279,16 +279,19 @@ function Budget() {
 
   return (
     <div className="px-4 pt-5 space-y-4 animate-rise">
-      <header className="flex items-center justify-between pt-2">
-        <div>
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            {monthLabel()}
-          </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("budget.title")}</h1>
+      <header className="flex items-center justify-between pt-2 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <UserAvatarLink />
+          <div className="min-w-0">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+              {monthLabel()}
+            </p>
+            <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight truncate">{t("budget.title")}</h1>
+          </div>
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="size-10 rounded-full bg-foreground text-background grid place-items-center"
+          className="size-10 shrink-0 rounded-full bg-foreground text-background grid place-items-center"
         >
           <Plus className="size-4" />
         </button>

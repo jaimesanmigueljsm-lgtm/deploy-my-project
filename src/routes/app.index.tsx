@@ -26,7 +26,7 @@ import {
   Sector,
   type PieSectorDataItem,
 } from "recharts";
-import { SectionHeader, InsightCard, TrendBadge, SkeletonBlock } from "@/components/nest";
+import { SectionHeader, InsightCard, TrendBadge, SkeletonBlock, UserAvatarLink } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
 import { useDashboard, useGenerateInsights } from "@/features/dashboard/use-dashboard";
 import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
@@ -96,16 +96,19 @@ function Dashboard() {
   return (
     <div className="px-4 pt-5 space-y-5 animate-rise">
       {/* ── Header ── */}
-      <header className="flex items-center justify-between pt-2">
-        <div>
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            {monthLabel()}
-          </p>
-          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">
-            Hey, {profile?.full_name?.split(" ")[0] || "there"}
-          </h1>
+      <header className="flex items-center justify-between pt-2 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <UserAvatarLink />
+          <div className="min-w-0">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+              {monthLabel()}
+            </p>
+            <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight truncate">
+              Hey, {profile?.full_name?.split(" ")[0] || "there"}
+            </h1>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <NotificationBell />
           <Link
             to="/app/budget"

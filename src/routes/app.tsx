@@ -2,7 +2,7 @@ import { Link, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, Wallet, Target, BarChart3, Users, User } from "lucide-react";
+import { Home, Wallet, Target, BarChart3, Users } from "lucide-react";
 import { useT } from "@/i18n";
 import { OfflineBanner } from "@/components/offline-banner";
 import { queryKeys } from "@/lib/query-keys";
@@ -137,19 +137,22 @@ export const Route = createFileRoute("/app")({
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 type TabDef = {
-  to: "/app" | "/app/budget" | "/app/goals" | "/app/analytics" | "/app/family" | "/app/settings";
+  to: "/app" | "/app/budget" | "/app/goals" | "/app/analytics" | "/app/family";
   labelKey: string;
   icon: typeof Home;
   exact?: boolean;
 };
 
+// Bottom-nav holds 5 primary tabs — the sweet spot of every successful fintech
+// app (Revolut, Monzo, N26, Wise, Cash App). Settings is no longer here; it's
+// reachable from every page via the <UserAvatarLink /> in the page header.
+// The /app/settings route itself stays intact and accessible by direct URL.
 const tabs: TabDef[] = [
   { to: "/app", labelKey: "nav.home", icon: Home, exact: true },
   { to: "/app/budget", labelKey: "nav.budget", icon: Wallet },
   { to: "/app/analytics", labelKey: "nav.insights", icon: BarChart3 },
   { to: "/app/goals", labelKey: "nav.goals", icon: Target },
   { to: "/app/family", labelKey: "nav.groups", icon: Users },
-  { to: "/app/settings", labelKey: "nav.you", icon: User },
 ];
 
 // ─── Shell ────────────────────────────────────────────────────────────────────

@@ -14,7 +14,7 @@ import {
   ReferenceLine,
   Legend,
 } from "recharts";
-import { SectionHeader, EmptyState, SkeletonBlock } from "@/components/nest";
+import { SectionHeader, EmptyState, SkeletonBlock, UserAvatarLink } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle } from "@/lib/chart";
 import type { AnalyticsExpense } from "@/types/finance";
 import { useAnalyticsData } from "@/features/analytics/use-analytics";
@@ -182,11 +182,14 @@ function Analytics() {
   return (
     <div className="px-4 pt-5 space-y-5 animate-rise pb-6">
       {/* Header */}
-      <header className="pt-2">
-        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-          {t("analytics.subtitle")}
-        </p>
-        <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight">{t("analytics.title")}</h1>
+      <header className="flex items-center pt-2 gap-3">
+        <UserAvatarLink />
+        <div className="min-w-0">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+            {t("analytics.subtitle")}
+          </p>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight truncate">{t("analytics.title")}</h1>
+        </div>
       </header>
 
       {/* Period filter */}

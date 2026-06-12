@@ -14,6 +14,10 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCategoryMeta, getColorClasses } from "@/lib/categories";
 
+// Re-export the standalone components that live in sibling files so consumers
+// keep using a single canonical import path: `@/components/nest`.
+export { UserAvatarLink } from "./user-avatar-link";
+
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 // Use <Skeleton> instead of `animate-pulse bg-muted` everywhere.
 // The shimmer animation is defined in styles.css as .skeleton.
@@ -542,3 +546,9 @@ export function DividerLine({ label }: { label?: string } = {}) {
   }
   return <div className="h-px bg-border-subtle my-1" />;
 }
+
+// ─── Re-exports ──────────────────────────────────────────────────────────────
+// Keeps the single import path `@/components/nest` working for new components
+// extracted into their own files.
+
+export { UserAvatarLink } from "./user-avatar-link";

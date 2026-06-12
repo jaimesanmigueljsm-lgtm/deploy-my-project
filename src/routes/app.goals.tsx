@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { SectionHeader, EmptyState, StatCard, ProgressRing } from "@/components/nest";
+import { SectionHeader, EmptyState, StatCard, ProgressRing, UserAvatarLink } from "@/components/nest";
 import { cn } from "@/lib/utils";
 import type { Goal, GoalContribution } from "@/types/finance";
 import { GOAL_ICONS, GOAL_COLORS } from "@/features/goals/goals.constants";
@@ -126,9 +126,10 @@ function Goals() {
 
   return (
     <div className="px-4 pt-5 space-y-4 animate-rise pb-24">
-      <header className="flex items-center justify-between pt-2">
-        <div>
-          <h1 className="text-[28px] font-bold tracking-tight">{t("nav.goals.header")}</h1>
+      <header className="flex items-center justify-between pt-2 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <UserAvatarLink />
+          <h1 className="text-[28px] font-bold tracking-tight truncate">{t("nav.goals.header")}</h1>
         </div>
         <button
           onClick={() => {
@@ -139,7 +140,7 @@ function Goals() {
               setOpen(true);
             }
           }}
-          className="size-10 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition active:scale-95"
+          className="size-10 shrink-0 rounded-full bg-foreground text-background grid place-items-center hover:opacity-90 transition active:scale-95"
         >
           <Plus className="size-4" />
         </button>

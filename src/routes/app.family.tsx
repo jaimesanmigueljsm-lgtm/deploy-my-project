@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { EmptyState } from "@/components/nest";
+import { EmptyState, UserAvatarLink } from "@/components/nest";
 import { useT } from "@/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/features/profile/use-profile";
@@ -236,8 +236,9 @@ function GroupsPage() {
   if (!familyId || (!familyLoading && !family)) {
     return (
       <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
-        <header className="pt-2">
-          <h1 className="text-[28px] font-bold tracking-tight">{t("nav.groups.header")}</h1>
+        <header className="flex items-center pt-2 gap-3">
+          <UserAvatarLink />
+          <h1 className="text-[28px] font-bold tracking-tight truncate">{t("nav.groups.header")}</h1>
         </header>
 
         {receivedInvitations.length > 0 && (
@@ -271,12 +272,15 @@ function GroupsPage() {
     <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
 
       {/* Header */}
-      <header className="flex items-center justify-between pt-2">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-[28px] font-bold tracking-tight">{t("nav.groups.header")}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{family.name}</p>
+      <header className="flex items-center justify-between pt-2 gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <UserAvatarLink />
+          <div className="min-w-0">
+            <h1 className="text-[28px] font-bold tracking-tight truncate">{t("nav.groups.header")}</h1>
+            <p className="text-sm text-muted-foreground mt-1 truncate">{family.name}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {isOwner && (
             <button onClick={() => setOpenInvite(true)}
               className="size-9 rounded-full bg-muted grid place-items-center text-muted-foreground hover:text-foreground transition">
