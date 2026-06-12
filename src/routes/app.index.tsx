@@ -4,15 +4,9 @@ import { useMemo, memo, useState } from "react";
 import { money, monthLabel, monthRange, shortMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
-  Sparkles,
-  TrendingUp,
   Plus,
   ArrowUpRight,
   ArrowDownRight,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle2,
-  Lightbulb,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -26,9 +20,10 @@ import {
   Sector,
   type PieSectorDataItem,
 } from "recharts";
-import { SectionHeader, InsightCard, TrendBadge, SkeletonBlock, UserAvatarLink } from "@/components/nest";
+import { SectionHeader, TrendBadge, SkeletonBlock, UserAvatarLink } from "@/components/nest";
 import { CHART_COLORS, getChartTooltipStyle, chartCursor } from "@/lib/chart";
-import { useDashboard, useGenerateInsights } from "@/features/dashboard/use-dashboard";
+import { useDashboard } from "@/features/dashboard/use-dashboard";
+import { TipsFeed } from "@/features/tips/components/TipsFeed";
 import { useFinancialEngine } from "@/features/dashboard/use-financial-engine";
 import { ForecastWidget, ForecastSkeleton } from "@/features/dashboard/components/forecast-widget";
 import { useT } from "@/i18n";
@@ -62,13 +57,11 @@ function Dashboard() {
     incomeTotal,
     categories,
     bills,
-    recommendations,
     isLoading,
     range,
   } = useDashboard();
 
   const { output: engine, isLoading: engineLoading } = useFinancialEngine();
-  const { mutate: refreshInsights, isPending: refreshing } = useGenerateInsights();
 
   // ── Derived values (before any early return — Rules of Hooks) ────────────
   const billsTotal = useMemo(() => bills.reduce((s, b) => s + Number(b.amount), 0), [bills]);
@@ -182,74 +175,18 @@ function Dashboard() {
         </section>
       )}
 
-      {/* ── For you (AI recommendations) ── */}
+      {/* ── Consejos (curated tips from src/features/tips) ──────────────────
+            Replaces the previous AI-driven "For you" section. Renders 3 tips
+            selected by useTips(): engine-relevant ones first, then a daily
+            deterministic rotation from the catalog. Engine-driven personal
+            recommendations live in the Analytics tab via <RecommendationCards />.
+      */}
       <section className="animate-rise-delay-3 pb-4">
         <SectionHeader
-          title={t("dashboard.section.recommendations")}
-          subtitle={
-            recommendations.length > 0
-              ? t("dashboard.section.recommendations.sub.ai")
-              : t("dashboard.section.recommendations.sub.empty")
-          }
-          action={
-            <button
-              onClick={() => refreshInsights()}
-              disabled={refreshing}
-              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 disabled:opacity-50"
-            >
-              <RefreshCw className={`size-3 ${refreshing ? "animate-spin" : ""}`} />
-              {recommendations.length > 0
-                ? t("dashboard.insights.refresh")
-                : t("dashboard.insights.generate.short")}
-            </button>
-          }
+          title={t("dashboard.section.tips")}
+          subtitle={t("dashboard.section.tips.sub")}
         />
-        {recommendations.length > 0 ? (
-          <div className="space-y-2">
-            {recommendations.map((r) => {
-              const tone =
-                r.severity === "warning" ? "warn" : r.severity === "success" ? "mint" : "sky";
-              const Icon =
-                r.severity === "warning"
-                  ? AlertTriangle
-                  : r.severity === "success"
-                    ? CheckCircle2
-                    : Lightbulb;
-              return (
-                <InsightCard
-                  key={r.id}
-                  tone={tone}
-                  icon={<Icon className="size-4" />}
-                  title={r.title}
-                  body={r.body}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <>
-            <InsightCard
-              tone="mint"
-              icon={<Lightbulb className="size-4" />}
-              title={t("dashboard.insight.roundup.title")}
-              body={t("dashboard.insight.roundup.body")}
-            />
-            <InsightCard
-              tone="sky"
-              icon={<TrendingUp className="size-4" />}
-              title={t("dashboard.insight.idlecash.title")}
-              body={t("dashboard.insight.idlecash.body")}
-            />
-            <button
-              onClick={() => refreshInsights()}
-              disabled={refreshing}
-              className="w-full card-flat p-3 text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1.5 transition disabled:opacity-50"
-            >
-              <Sparkles className="size-3.5" />
-              {refreshing ? t("dashboard.insights.analyzing") : t("dashboard.insights.generate")}
-            </button>
-          </>
-        )}
+        <TipsFeed count={3} />
       </section>
     </div>
   );

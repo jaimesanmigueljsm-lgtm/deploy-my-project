@@ -216,6 +216,58 @@ const en: Dict = {
   "dashboard.section.recommendations.sub.engine": "Ranked by financial impact",
   "dashboard.section.recommendations.sub.ai": "AI-generated from your data",
   "dashboard.section.recommendations.sub.empty": "Smart moves this week",
+
+  // ── Tips section (Home "Consejos") ────────────────────────────────────────
+  "dashboard.section.tips": "Tips",
+  "dashboard.section.tips.sub": "Useful financial habits, refreshed daily",
+
+  "tip.roundup-savings.title": "Auto round-up savings",
+  "tip.roundup-savings.body":
+    "Round every purchase up to the next euro and stash the difference. Effortless saving — typical users build €25–30/month without noticing.",
+
+  "tip.rule-50-30-20.title": "The 50/30/20 rule",
+  "tip.rule-50-30-20.body":
+    "50% needs, 30% wants, 20% savings. The foundation of nearly every personal-finance plan that actually works.",
+
+  "tip.audit-subscriptions.title": "Audit your subscriptions",
+  "tip.audit-subscriptions.body":
+    "Around 30% of people pay every month for services they don't use. Open Budget, scan recurring charges, cancel one. One gesture.",
+
+  "tip.wait-24h.title": "The 24-hour rule",
+  "tip.wait-24h.body":
+    "Before buying anything non-essential over €50, wait a day. If you still want it tomorrow, it's a good buy. If not, you just saved.",
+
+  "tip.pay-yourself-first.title": "Pay yourself first",
+  "tip.pay-yourself-first.body":
+    "Move money to savings BEFORE paying bills and treats. What you don't see, you don't spend. Flip the order and everything changes.",
+
+  "tip.emergency-fund.title": "Build a 3–6 month buffer",
+  "tip.emergency-fund.body":
+    "An emergency fund is your financial seatbelt. Start small: €1 a day for a year = €365. Grow from there.",
+
+  "tip.automate-savings.title": "Automate your savings",
+  "tip.automate-savings.body":
+    "Set a monthly auto-transfer to a separate savings account, ideally the day after payday. Willpower not required.",
+
+  "tip.shopping-list.title": "Always shop with a list",
+  "tip.shopping-list.body":
+    "Going to the supermarket with a fixed list cuts spending by ~23%. Add what you need at home, buy only that.",
+
+  "tip.compare-bank-fees.title": "Compare bank fees yearly",
+  "tip.compare-bank-fees.body":
+    "Switching to a fee-free account is often worth €100+ a year. Check your statements once and decide whether you're getting value.",
+
+  "tip.renegotiate-bills.title": "Renegotiate your bills",
+  "tip.renegotiate-bills.body":
+    "Call your energy, internet and mobile providers once a year and ask for the best new-customer rate. Average saving: €30/month.",
+
+  "tip.invest-surplus.title": "Invest what you won't need",
+  "tip.invest-surplus.body":
+    "Cash you won't touch in 5+ years can work harder than in a savings account. A diversified ETF is the textbook starting point.",
+
+  "tip.separate-fun-card.title": "A separate card for treats",
+  "tip.separate-fun-card.body":
+    "Move your monthly fun-money budget to a second card. When it's gone, it's gone — guilt-free, drama-free.",
   "dashboard.section.activity": "Recent activity",
   "dashboard.section.bills": "Upcoming bills",
   "dashboard.section.goals": "Savings goals",
@@ -1206,6 +1258,58 @@ const es: Dict = {
   "dashboard.section.recommendations.sub.engine": "Ordenado por impacto financiero",
   "dashboard.section.recommendations.sub.ai": "Generado por IA con tus datos",
   "dashboard.section.recommendations.sub.empty": "Movimientos inteligentes esta semana",
+
+  // ── Sección Consejos (Inicio) ─────────────────────────────────────────────
+  "dashboard.section.tips": "Consejos",
+  "dashboard.section.tips.sub": "Hábitos financieros útiles, actualizados a diario",
+
+  "tip.roundup-savings.title": "Redondeo automático",
+  "tip.roundup-savings.body":
+    "Cada compra se redondea al euro y la diferencia va al ahorro. Sin pensar, sin sufrir: los usuarios medios acumulan 25–30 € al mes así.",
+
+  "tip.rule-50-30-20.title": "Regla 50/30/20",
+  "tip.rule-50-30-20.body":
+    "50% necesidades, 30% caprichos, 20% ahorro. Es la base del 99% de los planes financieros que funcionan.",
+
+  "tip.audit-subscriptions.title": "Audita tus suscripciones",
+  "tip.audit-subscriptions.body":
+    "El 30% de las personas paga cada mes por servicios que no usa. Revisa la lista en Presupuesto y cancela una. Un solo gesto.",
+
+  "tip.wait-24h.title": "Regla de las 24 horas",
+  "tip.wait-24h.body":
+    "Antes de comprar algo no esencial mayor de 50 €, espera un día. Si al día siguiente sigues queriéndolo, es buena compra. Si no, has ahorrado.",
+
+  "tip.pay-yourself-first.title": "Págate a ti primero",
+  "tip.pay-yourself-first.body":
+    "Transfiere al ahorro ANTES de pagar facturas y caprichos. Lo que no ves no lo gastas. Cambia el orden mental y todo cambia.",
+
+  "tip.emergency-fund.title": "Fondo de emergencia (3–6 meses)",
+  "tip.emergency-fund.body":
+    "Es el cinturón de seguridad financiera. Empieza pequeño: 1 € al día durante un año = 365 €. Crece desde ahí.",
+
+  "tip.automate-savings.title": "Domicilia el ahorro",
+  "tip.automate-savings.body":
+    "Programa una transferencia mensual a una cuenta de ahorro separada, idealmente el día después de cobrar. Sin necesidad de fuerza de voluntad.",
+
+  "tip.shopping-list.title": "Compra siempre con lista",
+  "tip.shopping-list.body":
+    "Ir al súper con lista cerrada reduce el gasto un 23%. Apunta en casa lo que necesitas y compra solo eso.",
+
+  "tip.compare-bank-fees.title": "Compara comisiones bancarias",
+  "tip.compare-bank-fees.body":
+    "Cambiar a una cuenta sin comisiones suele ahorrar 100 €+ al año. Revisa tus extractos una vez y decide si tu banco te aporta valor.",
+
+  "tip.renegotiate-bills.title": "Renegocia tarifas anuales",
+  "tip.renegotiate-bills.body":
+    "Llama a luz, internet y móvil una vez al año y pide la mejor tarifa de nuevo cliente. Ahorro medio: 30 € al mes.",
+
+  "tip.invest-surplus.title": "Invierte lo que no necesites",
+  "tip.invest-surplus.body":
+    "El dinero que no vayas a tocar en 5+ años puede trabajar mejor que en una cuenta de ahorro. Un ETF diversificado es el punto de partida clásico.",
+
+  "tip.separate-fun-card.title": "Tarjeta separada para caprichos",
+  "tip.separate-fun-card.body":
+    "Mueve tu presupuesto mensual de caprichos a una segunda tarjeta. Cuando se acaba, se acaba — sin culpa ni dramas.",
   "dashboard.section.activity": "Actividad reciente",
   "dashboard.section.bills": "Próximos recibos",
   "dashboard.section.goals": "Metas de ahorro",
@@ -2207,6 +2311,58 @@ const fr: Dict = {
   "dashboard.section.recommendations.sub.engine": "Classé par impact financier",
   "dashboard.section.recommendations.sub.ai": "Généré par l'IA",
   "dashboard.section.recommendations.sub.empty": "Conseils de la semaine",
+
+  // ── Section Conseils (Accueil) ────────────────────────────────────────────
+  "dashboard.section.tips": "Conseils",
+  "dashboard.section.tips.sub": "Habitudes financières utiles, renouvelées chaque jour",
+
+  "tip.roundup-savings.title": "Arrondi automatique",
+  "tip.roundup-savings.body":
+    "Chaque achat est arrondi à l'euro supérieur et la différence va à l'épargne. Sans effort : les utilisateurs moyens accumulent 25–30 €/mois ainsi.",
+
+  "tip.rule-50-30-20.title": "La règle 50/30/20",
+  "tip.rule-50-30-20.body":
+    "50 % besoins, 30 % envies, 20 % épargne. C'est la base de la quasi-totalité des plans financiers qui fonctionnent vraiment.",
+
+  "tip.audit-subscriptions.title": "Auditez vos abonnements",
+  "tip.audit-subscriptions.body":
+    "Près de 30 % des gens paient chaque mois pour des services qu'ils n'utilisent pas. Ouvrez Budget, repérez les prélèvements récurrents, annulez-en un.",
+
+  "tip.wait-24h.title": "La règle des 24 heures",
+  "tip.wait-24h.body":
+    "Avant d'acheter quelque chose de non essentiel à plus de 50 €, attendez un jour. Si vous le voulez toujours demain, c'est un bon achat.",
+
+  "tip.pay-yourself-first.title": "Payez-vous d'abord",
+  "tip.pay-yourself-first.body":
+    "Virez vers l'épargne AVANT de payer factures et plaisirs. Ce que vous ne voyez pas, vous ne le dépensez pas. Changez l'ordre, tout change.",
+
+  "tip.emergency-fund.title": "Fonds d'urgence (3 à 6 mois)",
+  "tip.emergency-fund.body":
+    "C'est votre ceinture de sécurité financière. Commencez petit : 1 € par jour pendant un an = 365 €. Grandissez à partir de là.",
+
+  "tip.automate-savings.title": "Automatisez votre épargne",
+  "tip.automate-savings.body":
+    "Programmez un virement mensuel vers un compte d'épargne séparé, idéalement le lendemain de la paie. Aucune volonté requise.",
+
+  "tip.shopping-list.title": "Faites toujours une liste",
+  "tip.shopping-list.body":
+    "Aller au supermarché avec une liste fixe réduit les dépenses d'environ 23 %. Notez ce dont vous avez besoin chez vous, achetez uniquement cela.",
+
+  "tip.compare-bank-fees.title": "Comparez les frais bancaires",
+  "tip.compare-bank-fees.body":
+    "Passer à un compte sans frais peut valoir 100 €+ par an. Vérifiez vos relevés une fois et décidez si la banque vous apporte vraiment de la valeur.",
+
+  "tip.renegotiate-bills.title": "Renégociez vos factures",
+  "tip.renegotiate-bills.body":
+    "Appelez vos fournisseurs d'énergie, internet et mobile une fois par an et demandez le meilleur tarif nouveau client. Économie moyenne : 30 €/mois.",
+
+  "tip.invest-surplus.title": "Investissez ce dont vous n'avez pas besoin",
+  "tip.invest-surplus.body":
+    "L'argent que vous ne toucherez pas avant 5+ ans peut travailler mieux qu'en compte d'épargne. Un ETF diversifié est le point de départ classique.",
+
+  "tip.separate-fun-card.title": "Une carte séparée pour les envies",
+  "tip.separate-fun-card.body":
+    "Mettez votre budget mensuel de plaisirs sur une seconde carte. Quand c'est fini, c'est fini — sans culpabilité ni drame.",
   "dashboard.section.activity": "Activité récente",
   "dashboard.section.bills": "Prochaines factures",
   "dashboard.section.goals": "Objectifs d'épargne",
@@ -4457,6 +4613,58 @@ const it: Dict = {
   "dashboard.section.recommendations.sub.engine": "Ordinato per impatto finanziario",
   "dashboard.section.recommendations.sub.ai": "Generato dall'IA con i tuoi dati",
   "dashboard.section.recommendations.sub.empty": "Mosse intelligenti questa settimana",
+
+  // ── Sezione Consigli (Home) ───────────────────────────────────────────────
+  "dashboard.section.tips": "Consigli",
+  "dashboard.section.tips.sub": "Abitudini finanziarie utili, aggiornate ogni giorno",
+
+  "tip.roundup-savings.title": "Arrotondamento automatico",
+  "tip.roundup-savings.body":
+    "Ogni acquisto viene arrotondato all'euro e la differenza va al risparmio. Senza sforzo: gli utenti medi accumulano 25–30 € al mese così.",
+
+  "tip.rule-50-30-20.title": "Regola 50/30/20",
+  "tip.rule-50-30-20.body":
+    "50% bisogni, 30% piaceri, 20% risparmio. È la base del 99% dei piani finanziari che funzionano davvero.",
+
+  "tip.audit-subscriptions.title": "Verifica i tuoi abbonamenti",
+  "tip.audit-subscriptions.body":
+    "Il 30% delle persone paga ogni mese servizi che non usa. Apri Budget, controlla gli addebiti ricorrenti, cancellane uno. Un solo gesto.",
+
+  "tip.wait-24h.title": "La regola delle 24 ore",
+  "tip.wait-24h.body":
+    "Prima di comprare qualcosa di non essenziale oltre i 50 €, aspetta un giorno. Se domani lo vuoi ancora, è un buon acquisto.",
+
+  "tip.pay-yourself-first.title": "Paga prima te stesso",
+  "tip.pay-yourself-first.body":
+    "Sposta i soldi sul risparmio PRIMA di pagare bollette e piaceri. Quello che non vedi, non lo spendi. Cambia l'ordine e tutto cambia.",
+
+  "tip.emergency-fund.title": "Fondo di emergenza (3–6 mesi)",
+  "tip.emergency-fund.body":
+    "È la tua cintura di sicurezza finanziaria. Inizia piccolo: 1 € al giorno per un anno = 365 €. Cresci da lì.",
+
+  "tip.automate-savings.title": "Automatizza il risparmio",
+  "tip.automate-savings.body":
+    "Imposta un bonifico mensile a un conto di risparmio separato, idealmente il giorno dopo lo stipendio. Niente forza di volontà richiesta.",
+
+  "tip.shopping-list.title": "Fai sempre la lista",
+  "tip.shopping-list.body":
+    "Andare al supermercato con una lista fissa riduce la spesa del 23% circa. Annota a casa cosa ti serve e compra solo quello.",
+
+  "tip.compare-bank-fees.title": "Confronta le commissioni bancarie",
+  "tip.compare-bank-fees.body":
+    "Passare a un conto senza commissioni può valere 100 €+ all'anno. Controlla gli estratti una volta e decidi se ne stai ricevendo valore.",
+
+  "tip.renegotiate-bills.title": "Rinegozia le tue bollette",
+  "tip.renegotiate-bills.body":
+    "Chiama luce, internet e mobile una volta all'anno e chiedi la migliore tariffa per nuovi clienti. Risparmio medio: 30 €/mese.",
+
+  "tip.invest-surplus.title": "Investi quello che non ti serve",
+  "tip.invest-surplus.body":
+    "Il denaro che non toccherai per 5+ anni può lavorare meglio che su un conto di risparmio. Un ETF diversificato è il punto di partenza classico.",
+
+  "tip.separate-fun-card.title": "Carta separata per i piaceri",
+  "tip.separate-fun-card.body":
+    "Sposta il budget mensile dei piaceri su una seconda carta. Quando finiscono, finiscono — senza sensi di colpa né drammi.",
   "dashboard.section.activity": "Attività recente",
   "dashboard.section.bills": "Prossime fatture",
   "dashboard.section.goals": "Obiettivi di risparmio",
