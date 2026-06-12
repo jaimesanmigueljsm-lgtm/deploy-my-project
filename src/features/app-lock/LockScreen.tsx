@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Fingerprint } from "lucide-react";
 import { useAppLock } from "./use-app-lock";
@@ -6,7 +6,7 @@ import { PinKeypad } from "./PinKeypad";
 import { useT } from "@/i18n";
 
 export function LockScreen() {
-  const { unlock, meta, biometricAvailable } = useAppLock();
+  const { unlock, unlockBiometric, meta, biometricAvailable } = useAppLock();
   const { t } = useT();
 
   const [pin, setPin] = useState("");
@@ -14,6 +14,32 @@ export function LockScreen() {
   const [errored, setErrored] = useState(false);
   const [checking, setChecking] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [bioBusy, setBioBusy] = useState(false);
+
+  // Only show / auto-trigger biometric if user enabled it AND the device supports it
+  const bioEnabled = meta.biometricEnabled && biometricAvailable;
+
+  // Auto-trigger biometric once when the LockScreen mounts. Single attempt —
+  // if user cancels, the PIN remains as fallback. useRef guards against React
+  // re-renders firing it multiple times in StrictMode.
+  const triedAutoBio = useRef(false);
+  useEffect(() => {
+    if (triedAutoBio.current) return;
+    if (!bioEnabled) return;
+    triedAutoBio.current = true;
+    setBioBusy(true);
+    void unlockBiometric().finally(() => setBioBusy(false));
+  }, [bioEnabled, unlockBiometric]);
+
+  const handleBiometricPress = useCallback(async () => {
+    if (bioBusy || !bioEnabled) return;
+    setBioBusy(true);
+    try {
+      await unlockBiometric();
+    } finally {
+      setBioBusy(false);
+    }
+  }, [bioBusy, bioEnabled, unlockBiometric]);
 
   // Lockout countdown
   useEffect(() => {
@@ -209,6 +235,8 @@ export function LockScreen() {
       </motion.div>
 
       {/* ── Keypad ────────────────────────────────────────────────────────── */}
+
+      {/* ── Keypad ────────────────────────────────────────────────────────── */}
       <motion.div
         className="w-full px-6 pb-4"
         initial={{ opacity: 0, y: 12 }}
@@ -224,13 +252,18 @@ export function LockScreen() {
       </motion.div>
 
       {/* ── Biometric ─────────────────────────────────────────────────────── */}
-      {biometricAvailable && (
+      {bioEnabled && (
         <button
-          className="flex flex-col items-center gap-1.5 mt-2 pb-2 transition-opacity hover:opacity-70"
+          onClick={handleBiometricPress}
+          disabled={bioBusy || isLockedOut}
+          className="flex flex-col items-center gap-1.5 mt-2 pb-2 transition-opacity hover:opacity-70 disabled:opacity-50"
           style={{ color: "rgba(255,255,255,0.40)" }}
+          aria-label={t("lock.useBiometric")}
         >
-          <Fingerprint className="size-7" />
-          <span className="text-[11px]">{t("lock.useBiometric")}</span>
+          <Fingerprint className={`size-7 ${bioBusy ? "animate-pulse" : ""}`} />
+          <span className="text-[11px]">
+            {bioBusy ? t("lock.biometric.checking") : t("lock.useBiometric")}
+          </span>
         </button>
       )}
     </div>

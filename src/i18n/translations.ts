@@ -345,6 +345,22 @@ const en: Dict = {
   "analytics.section.patterns.sub": "Trends and behaviours in your spending",
   "analytics.section.recommendations": "Recommendations for you",
   "analytics.section.recommendations.sub": "How to improve your spending habits",
+  "security.biometric.title": "Face ID / fingerprint",
+  "security.biometric.active": "Active",
+  "security.biometric.enable": "Enable",
+  "security.biometric.activating": "Activating…",
+  "security.biometric.disable": "Disable",
+  "security.biometric.unsupported": "Not available on this device",
+  "security.biometric.availableHint":
+    "Unlock with your face or fingerprint instead of typing the PIN",
+  "security.biometric.enabledHint":
+    "You can unlock with Face ID or fingerprint. PIN remains available as fallback.",
+  "security.biometric.enabled": "Biometric unlock activated",
+  "security.biometric.disabled": "Biometric unlock disabled",
+  "security.biometric.enableFailed": "Couldn't enable biometric. Try again.",
+  "security.biometric.disableConfirm":
+    "Disable biometric unlock? You'll still be able to unlock with your PIN.",
+  "security.biometric.pinFirst": "Set a PIN first — it's required as the fallback for biometric.",
   "analytics.section.healthDetail": "Health analysis",
   "analytics.risk.none": "No risk signals detected.",
   "analytics.risk.action": "Action",
@@ -882,7 +898,8 @@ const en: Dict = {
   "lock.wrongPin": "Incorrect PIN",
   "lock.attemptsLeft": "{count} attempts remaining",
   "lock.lockedOut": "Too many attempts. Try again in {seconds}s",
-  "lock.useBiometric": "Use Face ID",
+  "lock.useBiometric": "Use Face ID / fingerprint",
+  "lock.biometric.checking": "Checking…",
   "settings.security.dialog.signedIn": "Signed in as",
   "settings.security.tab.reset": "Reset link",
   "settings.security.tab.password": "Password",
@@ -1397,6 +1414,23 @@ const es: Dict = {
   "analytics.section.patterns.sub": "Tendencias y comportamientos en tus gastos",
   "analytics.section.recommendations": "Recomendaciones para ti",
   "analytics.section.recommendations.sub": "Cómo mejorar tus patrones de gasto",
+  "security.biometric.title": "Face ID / huella",
+  "security.biometric.active": "Activo",
+  "security.biometric.enable": "Activar",
+  "security.biometric.activating": "Activando…",
+  "security.biometric.disable": "Desactivar",
+  "security.biometric.unsupported": "No disponible en este dispositivo",
+  "security.biometric.availableHint":
+    "Desbloquea con tu cara o huella en lugar de escribir el PIN",
+  "security.biometric.enabledHint":
+    "Puedes desbloquear con Face ID o huella. El PIN sigue disponible como respaldo.",
+  "security.biometric.enabled": "Desbloqueo biométrico activado",
+  "security.biometric.disabled": "Desbloqueo biométrico desactivado",
+  "security.biometric.enableFailed": "No se pudo activar el biométrico. Inténtalo de nuevo.",
+  "security.biometric.disableConfirm":
+    "¿Desactivar el desbloqueo biométrico? Seguirás pudiendo desbloquear con tu PIN.",
+  "security.biometric.pinFirst":
+    "Primero configura un PIN — es necesario como respaldo del biométrico.",
   "analytics.section.healthDetail": "Análisis de salud",
   "analytics.risk.none": "Sin señales de riesgo detectadas.",
   "analytics.risk.action": "Acción",
@@ -1965,7 +1999,8 @@ const es: Dict = {
   "lock.wrongPin": "PIN incorrecto",
   "lock.attemptsLeft": "{count} intentos restantes",
   "lock.lockedOut": "Demasiados intentos. Inténtalo en {seconds}s",
-  "lock.useBiometric": "Usar Face ID",
+  "lock.useBiometric": "Usar Face ID / huella",
+  "lock.biometric.checking": "Comprobando…",
   "settings.security.dialog.signedIn": "Sesión iniciada como",
   "settings.security.tab.reset": "Enlace de acceso",
   "settings.security.tab.password": "Contraseña",
@@ -2461,6 +2496,25 @@ const fr: Dict = {
   "analytics.section.patterns.sub": "Tendances et comportements dans vos dépenses",
   "analytics.section.recommendations": "Recommandations pour vous",
   "analytics.section.recommendations.sub": "Comment améliorer vos habitudes de dépense",
+  "lock.useBiometric": "Utiliser Face ID / empreinte",
+  "lock.biometric.checking": "Vérification…",
+  "security.biometric.title": "Face ID / empreinte",
+  "security.biometric.active": "Actif",
+  "security.biometric.enable": "Activer",
+  "security.biometric.activating": "Activation…",
+  "security.biometric.disable": "Désactiver",
+  "security.biometric.unsupported": "Non disponible sur cet appareil",
+  "security.biometric.availableHint":
+    "Déverrouillez avec votre visage ou empreinte au lieu du code PIN",
+  "security.biometric.enabledHint":
+    "Vous pouvez déverrouiller avec Face ID ou empreinte. Le PIN reste disponible en secours.",
+  "security.biometric.enabled": "Déverrouillage biométrique activé",
+  "security.biometric.disabled": "Déverrouillage biométrique désactivé",
+  "security.biometric.enableFailed": "Impossible d'activer la biométrie. Réessayez.",
+  "security.biometric.disableConfirm":
+    "Désactiver le déverrouillage biométrique ? Vous pourrez toujours utiliser votre PIN.",
+  "security.biometric.pinFirst":
+    "Configurez d'abord un PIN — il sert de secours pour la biométrie.",
   "insights.traj.stable.title": "Vos dépenses sont stables",
   "insights.traj.stable.body":
     "Variation mensuelle : {pct}%. Vous suivez de près votre moyenne sur 3 mois.",
@@ -4777,6 +4831,25 @@ const it: Dict = {
   "analytics.section.patterns.sub": "Tendenze e comportamenti nelle tue spese",
   "analytics.section.recommendations": "Raccomandazioni per te",
   "analytics.section.recommendations.sub": "Come migliorare le tue abitudini di spesa",
+  "lock.useBiometric": "Usa Face ID / impronta",
+  "lock.biometric.checking": "Verifica…",
+  "security.biometric.title": "Face ID / impronta",
+  "security.biometric.active": "Attivo",
+  "security.biometric.enable": "Attiva",
+  "security.biometric.activating": "Attivazione…",
+  "security.biometric.disable": "Disattiva",
+  "security.biometric.unsupported": "Non disponibile su questo dispositivo",
+  "security.biometric.availableHint":
+    "Sblocca con il viso o l'impronta invece di digitare il PIN",
+  "security.biometric.enabledHint":
+    "Puoi sbloccare con Face ID o impronta. Il PIN resta disponibile come fallback.",
+  "security.biometric.enabled": "Sblocco biometrico attivato",
+  "security.biometric.disabled": "Sblocco biometrico disattivato",
+  "security.biometric.enableFailed": "Impossibile attivare il biometrico. Riprova.",
+  "security.biometric.disableConfirm":
+    "Disattivare lo sblocco biometrico? Potrai comunque sbloccare con il PIN.",
+  "security.biometric.pinFirst":
+    "Imposta prima un PIN — è necessario come fallback del biometrico.",
   "insights.traj.stable.title": "La tua spesa è stabile",
   "insights.traj.stable.body":
     "Variazione mensile: {pct}%. Sei vicino alla tua media degli ultimi 3 mesi.",

@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { useT } from "@/i18n";
+import { logSecurityEvent } from "@/lib/security/security-events";
 import {
   Smartphone,
   Monitor,
@@ -24,7 +27,14 @@ import {
   type SecurityEvent,
   type SecurityEventType,
 } from "@/lib/security/security-events";
-import { getBiometricCapabilities, type BiometricCapabilities } from "@/lib/biometric";
+import {
+  getBiometricCapabilities,
+  registerBiometric,
+  unregisterBiometric,
+  hasBiometricCredential,
+  type BiometricCapabilities,
+} from "@/lib/biometric";
+import { useAppLock } from "@/features/app-lock/use-app-lock";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -153,43 +163,113 @@ function EventRow({ event }: { event: SecurityEvent }) {
   );
 }
 
-// ─── Biometric status ─────────────────────────────────────────────────────────
+// ─── Biometric toggle (interactive) ───────────────────────────────────────────
 
-function BiometricStatus({ caps }: { caps: BiometricCapabilities | null }) {
+function BiometricToggle({
+  uid,
+  caps,
+  isPinSet,
+}: {
+  uid: string;
+  caps: BiometricCapabilities | null;
+  isPinSet: boolean;
+}) {
+  const { meta, updateMeta } = useAppLock();
+  const { t } = useT();
+  const [busy, setBusy] = useState(false);
+  const [enabled, setEnabled] = useState<boolean>(!!meta.biometricEnabled);
+
+  useEffect(() => {
+    setEnabled(!!meta.biometricEnabled && hasBiometricCredential(uid));
+  }, [uid, meta.biometricEnabled]);
+
   if (!caps) return null;
 
   const available =
     caps.platformAuthenticator || caps.nativeFaceId || caps.nativeTouchId || caps.nativeAndroid;
+
+  async function handleEnable() {
+    if (!isPinSet) {
+      toast.error(t("security.biometric.pinFirst"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const ok = await registerBiometric(uid, "Nooly user");
+      if (!ok) {
+        toast.error(t("security.biometric.enableFailed"));
+        return;
+      }
+      updateMeta({ biometricEnabled: true });
+      setEnabled(true);
+      logSecurityEvent(uid, "biometric_enabled");
+      toast.success(t("security.biometric.enabled"));
+    } catch (e) {
+      console.warn("[biometric register] failed:", e);
+      toast.error(t("security.biometric.enableFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleDisable() {
+    if (!confirm(t("security.biometric.disableConfirm"))) return;
+    unregisterBiometric(uid);
+    updateMeta({ biometricEnabled: false });
+    setEnabled(false);
+    logSecurityEvent(uid, "biometric_disabled");
+    toast.success(t("security.biometric.disabled"));
+  }
 
   return (
     <div className="px-4 py-3.5 flex items-center gap-3">
       <div
         className={cn(
           "size-9 rounded-xl grid place-items-center shrink-0",
-          available ? "bg-positive-soft text-positive" : "bg-muted text-muted-foreground",
+          enabled
+            ? "bg-positive-soft text-positive"
+            : available
+              ? "bg-muted text-muted-foreground"
+              : "bg-muted text-muted-foreground/60",
         )}
       >
         <Fingerprint className="size-4" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium">Biometric auth</span>
-          <span
-            className={cn(
-              "text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full",
-              available ? "bg-positive-soft text-positive" : "bg-muted text-muted-foreground",
-            )}
-          >
-            {available ? "Available" : "Not available"}
-          </span>
+          <span className="text-sm font-medium">{t("security.biometric.title")}</span>
+          {enabled && (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-positive-soft text-positive">
+              {t("security.biometric.active")}
+            </span>
+          )}
         </div>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          {caps.platformAuthenticator
-            ? "Platform authenticator detected (Touch ID / Face ID / Windows Hello)"
-            : "No platform authenticator found on this device"}
+          {!available
+            ? t("security.biometric.unsupported")
+            : enabled
+              ? t("security.biometric.enabledHint")
+              : t("security.biometric.availableHint")}
         </p>
       </div>
-      {available && <CheckCircle2 className="size-4 text-positive shrink-0" />}
+      {available && (
+        <button
+          onClick={enabled ? handleDisable : handleEnable}
+          disabled={busy || (!enabled && !isPinSet)}
+          className={cn(
+            "shrink-0 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors",
+            enabled
+              ? "bg-negative-soft text-negative hover:bg-negative-soft/80"
+              : "bg-positive text-positive-foreground hover:opacity-90 disabled:opacity-50",
+          )}
+        >
+          {busy
+            ? t("security.biometric.activating")
+            : enabled
+              ? t("security.biometric.disable")
+              : t("security.biometric.enable")}
+        </button>
+      )}
     </div>
   );
 }
@@ -247,7 +327,7 @@ export function SecurityCenter({ uid, isPinSet }: { uid: string; isPinSet: boole
             <AlertTriangle className="size-4 text-warn shrink-0" />
           )}
         </div>
-        <BiometricStatus caps={bioCaps} />
+        <BiometricToggle uid={uid} caps={bioCaps} isPinSet={isPinSet} />
       </div>
 
       {/* Trusted devices */}
