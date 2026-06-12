@@ -39,6 +39,13 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useAppLock } from "@/features/app-lock/use-app-lock";
+import {
+  registerBiometric,
+  unregisterBiometric,
+  getBiometricCapabilities,
+  hasBiometricCredential,
+} from "@/lib/biometric";
+import { logSecurityEvent } from "@/lib/security/security-events";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -186,6 +193,55 @@ function Settings() {
   const [openCategories, setOpenCategories] = useState(false);
   const [openSecurityCenter, setOpenSecurityCenter] = useState(false);
   const { isPinSet, meta, openSetup, updateMeta } = useAppLock();
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioBusy, setBioBusy] = useState(false);
+
+  useEffect(() => {
+    void getBiometricCapabilities().then((caps) => {
+      setBioAvailable(
+        caps.platformAuthenticator ||
+          caps.nativeFaceId ||
+          caps.nativeTouchId ||
+          caps.nativeAndroid,
+      );
+    });
+  }, []);
+
+  async function handleBiometricToggle() {
+    const uid = user?.id;
+    if (!uid) return;
+    // Activating: needs PIN configured (fallback) and not busy
+    if (!meta.biometricEnabled) {
+      if (!isPinSet) {
+        toast.error(t("security.biometric.pinFirst"));
+        return;
+      }
+      if (bioBusy) return;
+      setBioBusy(true);
+      try {
+        const ok = await registerBiometric(uid, profile?.full_name ?? email ?? "Nooly user");
+        if (!ok) {
+          toast.error(t("security.biometric.enableFailed"));
+          return;
+        }
+        updateMeta({ biometricEnabled: true });
+        logSecurityEvent(uid, "biometric_enabled");
+        toast.success(t("security.biometric.enabled"));
+      } catch (e) {
+        console.warn("[biometric register] failed:", e);
+        toast.error(t("security.biometric.enableFailed"));
+      } finally {
+        setBioBusy(false);
+      }
+      return;
+    }
+    // Deactivating: confirm first
+    if (!confirm(t("security.biometric.disableConfirm"))) return;
+    unregisterBiometric(uid);
+    updateMeta({ biometricEnabled: false });
+    logSecurityEvent(uid, "biometric_disabled");
+    toast.success(t("security.biometric.disabled"));
+  }
 
   function toggleTheme() {
     const next = profile?.theme === "dark" ? "light" : "dark";
@@ -456,13 +512,20 @@ function Settings() {
             onChange={() => updateMeta({ hideBalances: !meta.hideBalances })}
           />
 
-          {/* Biometric — coming soon */}
+          {/* Biometric — Face ID / fingerprint */}
           <RowToggle
             icon={<Fingerprint className="size-4" />}
             label={t("settings.appLock.biometric")}
-            value={meta.biometricEnabled}
-            onChange={() => {}}
-            badge={t("common.coming_soon")}
+            desc={
+              !bioAvailable
+                ? t("security.biometric.unsupported")
+                : meta.biometricEnabled
+                  ? t("security.biometric.enabledHint")
+                  : t("security.biometric.availableHint")
+            }
+            value={meta.biometricEnabled && bioAvailable && !!user?.id && hasBiometricCredential(user.id)}
+            onChange={handleBiometricToggle}
+            badge={!bioAvailable ? t("security.biometric.unsupported") : undefined}
           />
 
           {/* Last session */}
