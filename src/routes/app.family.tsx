@@ -238,7 +238,7 @@ function GroupsPage() {
       <div className="px-4 pt-5 space-y-5 animate-rise pb-24">
         <header className="flex items-center pt-2 gap-3">
           <UserAvatarLink />
-          <h1 className="text-[28px] font-bold tracking-tight truncate">{t("nav.groups.header")}</h1>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight truncate">{t("nav.groups.header")}</h1>
         </header>
 
         {receivedInvitations.length > 0 && (
@@ -276,7 +276,7 @@ function GroupsPage() {
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <UserAvatarLink />
           <div className="min-w-0">
-            <h1 className="text-[28px] font-bold tracking-tight truncate">{t("nav.groups.header")}</h1>
+            <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight truncate">{t("nav.groups.header")}</h1>
             <p className="text-sm text-muted-foreground mt-1 truncate">{family.name}</p>
           </div>
         </div>

@@ -129,7 +129,7 @@ function Goals() {
       <header className="flex items-center justify-between pt-2 gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <UserAvatarLink />
-          <h1 className="text-[28px] font-bold tracking-tight truncate">{t("nav.goals.header")}</h1>
+          <h1 className="text-[22px] font-semibold mt-0.5 tracking-tight truncate">{t("nav.goals.header")}</h1>
         </div>
         <button
           onClick={() => {
